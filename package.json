@@ -1,0 +1,73 @@
+{
+  "name": "neogestify-ui-components",
+  "version": "1.0.1",
+  "description": "Biblioteca de componentes UI reutilizables con React, Tailwind y SweetAlert",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./package.json": "./package.json",
+    "./html": {
+      "types": "./dist/components/html/index.d.ts",
+      "import": "./dist/components/html/index.mjs",
+      "require": "./dist/components/html/index.js"
+    },
+    "./icons": {
+      "types": "./dist/components/icons/index.d.ts",
+      "import": "./dist/components/icons/index.mjs",
+      "require": "./dist/components/icons/index.js"
+    },
+    "./alerts": {
+      "types": "./dist/components/alerts/index.d.ts",
+      "import": "./dist/components/alerts/index.mjs",
+      "require": "./dist/components/alerts/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "exports-tailwind": {
+    "content": "./src/**/*.{ts,tsx}"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "keywords": [
+    "react",
+    "components",
+    "ui",
+    "tailwind",
+    "sweetalert"
+  ],
+  "author": "",
+  "license": "MIT",
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0",
+    "sweetalert2": "^11.0.0",
+    "sweetalert2-react-content": "^5.0.0",
+    "tailwindcss": "^4.1.0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "@types/react-dom": "^18.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.15.0",
+    "@typescript-eslint/parser": "^6.15.0",
+    "eslint": "^8.56.0",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "sweetalert2": "^11.10.3",
+    "sweetalert2-react-content": "^5.0.7",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  }
+}
