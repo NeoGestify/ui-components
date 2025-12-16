@@ -58,6 +58,39 @@ export const Input: FC<InputProps> = ({
     );
   }
 
+  if (type === 'file') {
+    return (
+      <div className="space-y-1 w-full">
+        {label && typeof label === 'string' ? (
+          <label
+            htmlFor={inputId}
+            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {label}
+          </label>
+        ) : (
+          label
+        )}
+        <input
+          id={inputId}
+          type="file"
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 dark:file:bg-indigo-900 dark:file:text-indigo-300 dark:hover:file:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+          {...props}
+        />
+        {error && (
+          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
+            {error}
+          </p>
+        )}
+        {helperText && !error && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {helperText}
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-1 w-full">
       {label && typeof label === 'string' ? (
