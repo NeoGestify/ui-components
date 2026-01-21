@@ -13,34 +13,21 @@ Biblioteca de componentes UI reutilizables con React, Tailwind CSS y SweetAlert2
 
 ## Instalación
 
-### Opción 1: Workspace local (Monorepo)
-
 Si estás usando workspaces con npm/bun:
 
-```bash
-# En tu proyecto principal
-bun add @mi-empresa/ui-components@workspace:*
-```
-
-### Opción 2: Link local
+### NPM
 
 ```bash
-# En la carpeta ui-components
-bun link
-
 # En tu proyecto
-bun link @mi-empresa/ui-components
+npm i neogestify-ui-components
 ```
 
-### Opción 3: Repositorio Git
-
-```json
-{
-  "dependencies": {
-    "@mi-empresa/ui-components": "git+https://github.com/tu-usuario/ui-components.git"
-  }
-}
+### BUN
+```bash
+# En tu proyecto
+npm i neogestify-ui-components
 ```
+
 
 ## Configuración
 
