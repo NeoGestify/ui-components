@@ -5,7 +5,7 @@ import Form from '../../src/components/html/Form';
 import Select from '../../src/components/html/Select';
 import Table from '../../src/components/html/Table';
 import Modal, { ModalRef } from '../../src/components/html/Modal';
-import ThemeToggle from '../../src/components/theme/ThemeToggle';
+import ThemeToggle from '../../src/context/theme/ThemeToggle';
 import { useTheme } from '../../src/context/theme/useTheme';
 import {
   HomeIcon,

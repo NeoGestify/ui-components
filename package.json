@@ -1,6 +1,6 @@
 {
   "name": "neogestify-ui-components",
-  "version": "1.1.3",
+  "version": "1.2.7",
   "description": "Biblioteca de componentes UI reutilizables con React, Tailwind y SweetAlert",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -26,6 +26,11 @@
       "types": "./dist/components/alerts/index.d.ts",
       "import": "./dist/components/alerts/index.mjs",
       "require": "./dist/components/alerts/index.js"
+    },
+    "./theme": {
+      "types": "./dist/context/theme/index.d.ts",
+      "import": "./dist/context/theme/index.mjs",
+      "require": "./dist/context/theme/index.js"
     }
   },
   "files": [

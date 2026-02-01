@@ -2,44 +2,27 @@
 
 ## Instalación en tus proyectos
 
-### Opción 1: Link local (desarrollo)
+### Bun
 
 ```bash
-# En ui-components
-cd /mnt/1TBNso/proyectosPersonales/ui-components
-bun link
-
-# En tu proyecto
-cd /mnt/1TBNso/proyectosPersonales/tu-proyecto
-bun link @mi-empresa/ui-components
+  bun i neogestify-ui-components
 ```
 
-### Opción 2: Path relativo en package.json
+### pnpm
 
-```json
-{
-  "dependencies": {
-    "@mi-empresa/ui-components": "file:../ui-components"
-  }
-}
+```bash
+  pnpm i neogestify-ui-components
+```
+
+### npm
+
+```bash
+  npm i neogestify-ui-components
 ```
 
 ## Configuración de Tailwind en tu proyecto
 
 Asegúrate de tener esta configuración:
-
-```js
-// tailwind.config.js (Tailwind 4.1)
-export default {
-  content: [
-    "./src/**/*.{js,jsx,ts,tsx}",
-    "./node_modules/@mi-empresa/ui-components/dist/**/*.{js,mjs}"
-  ],
-  darkMode: 'class',
-}
-```
-
-Para Tailwind 4.1, en tu CSS:
 
 ```css
 /* src/index.css */
