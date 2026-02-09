@@ -1,6 +1,6 @@
 {
   "name": "neogestify-ui-components",
-  "version": "1.2.7",
+  "version": "1.2.8",
   "description": "Biblioteca de componentes UI reutilizables con React, Tailwind y SweetAlert",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -59,20 +59,20 @@
     "react-dom": "^18.0.0 || ^19.0.0",
     "sweetalert2": "^11.0.0",
     "sweetalert2-react-content": "^5.0.0",
-    "tailwindcss": "^4.1.0"
+    "tailwindcss": "^4.1.17"
   },
   "dependencies": {},
   "devDependencies": {
-    "@types/react": "^18.0.0",
-    "@types/react-dom": "^18.0.0",
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0",
-    "eslint": "^8.56.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0",
-    "sweetalert2": "^11.10.3",
-    "sweetalert2-react-content": "^5.0.7",
-    "tsup": "^8.0.1",
-    "typescript": "^5.3.3"
+    "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.7",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.57.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "sweetalert2": "^11.26.18",
+    "sweetalert2-react-content": "^5.1.1",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3"
   }
 }

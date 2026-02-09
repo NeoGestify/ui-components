@@ -81,6 +81,9 @@ export const AlertaExito = (title: string, text: string, onConfirm?: () => void,
 export const AlertaError = (title: string, text: string, onConfirm?: () => void, options?: { allowOutsideClick?: boolean; allowEscapeKey?: boolean }) =>
     Alerta({ title, text, icon: 'error', confirmButtonText: 'Aceptar', onConfirm, ...options });
 
+export const AlertaInfo = (title: string, text: string, onConfirm?: () => void, options?: { allowOutsideClick?: boolean; allowEscapeKey?: boolean }) =>
+    Alerta({ title, text, icon: 'info', confirmButtonText: 'Entendido', onConfirm, ...options });
+
 export const AlertaAdvertencia = (title: string, text: string, onConfirm?: () => void, onCancel?: () => void, options?: { allowOutsideClick?: boolean; allowEscapeKey?: boolean }) =>
     Alerta({ title, text, icon: 'warning', confirmButtonText: 'Sí, continuar', cancelButtonText: 'Cancelar', showCancelButton: true, onConfirm, onCancel, ...options });
 

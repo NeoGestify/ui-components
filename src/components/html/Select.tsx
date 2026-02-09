@@ -30,7 +30,7 @@ export const Select: FC<SelectProps> = ({
   const selectId = id || `select-${Math.random().toString(36).substring(2, 9)}`;
 
   const getVariantClasses = () => {
-    const baseClasses = 'w-full bg-white dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors';
+    const baseClasses = 'w-full bg-white dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors [&>option]:bg-white [&>option]:dark:bg-gray-800 [&>option]:text-gray-900 [&>option]:dark:text-white [&>option]:py-2 [&>option:checked]:bg-indigo-50 [&>option:checked]:dark:bg-indigo-900/50 [&>option:disabled]:opacity-50 [&>option:disabled]:cursor-not-allowed';
 
     if (variant === 'small') {
       return `${baseClasses} px-2.5 py-1.5 text-sm border-gray-300 dark:border-gray-600`;
