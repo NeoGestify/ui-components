@@ -30,13 +30,17 @@ export const Select: FC<SelectProps> = ({
   const selectId = id || `select-${Math.random().toString(36).substring(2, 9)}`;
 
   const getVariantClasses = () => {
-    const baseClasses = 'w-full bg-white dark:bg-gray-700 border rounded-lg text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-colors [&>option]:bg-white [&>option]:dark:bg-gray-800 [&>option]:text-gray-900 [&>option]:dark:text-white [&>option]:py-2 [&>option:checked]:bg-indigo-50 [&>option:checked]:dark:bg-indigo-900/50 [&>option:disabled]:opacity-50 [&>option:disabled]:cursor-not-allowed';
+    const baseClasses = 'appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 focus:z-10 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200';
 
     if (variant === 'small') {
-      return `${baseClasses} px-2.5 py-1.5 text-sm border-gray-300 dark:border-gray-600`;
+      return `${baseClasses.replace('px-3 py-2', 'px-2.5 py-1.5 text-sm')} border-gray-300 dark:border-gray-600`;
     }
 
-    return `${baseClasses} px-3 py-2 border-gray-300 dark:border-gray-600 ${error ? 'border-red-300 dark:border-red-600 focus:ring-red-500' : ''}`;
+    return `${baseClasses} border-gray-300 dark:border-gray-600 ${error ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400 focus:border-red-500' : ''}`;
+  };
+
+  const getOptionClasses = (option: Option) => {
+    return `bg-white dark:bg-gray-800 text-gray-900 dark:text-white py-2 ${option.disabled ? 'opacity-50 cursor-not-allowed' : ''}`;
   };
 
   const combinedClassName = `${getVariantClasses()} ${className}`.trim();
@@ -44,7 +48,7 @@ export const Select: FC<SelectProps> = ({
   return (
     <div className="space-y-1 w-full">
       {label && typeof label === 'string' ? (
-        <label htmlFor={selectId} className="block text-xs font-normal text-gray-700 dark:text-gray-300">
+        <label htmlFor={selectId} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
           {label}
         </label>
       ) : (
@@ -52,7 +56,7 @@ export const Select: FC<SelectProps> = ({
       )}
       <select id={selectId} className={combinedClassName} {...props}>
         {placeholder && placeholder.trim() && (
-          <option value="" disabled>
+          <option value="" disabled className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 py-2">
             {placeholder}
           </option>
         )}
@@ -62,13 +66,14 @@ export const Select: FC<SelectProps> = ({
             value={option.value}
             disabled={option.disabled}
             selected={option.selected}
+            className={getOptionClasses(option)}
           >
             {option.label}
           </option>
         ))}
       </select>
       {helperText && (
-        <p className={`mt-1 text-sm ${error ? 'text-red-600 dark:text-red-400' : 'text-gray-600 dark:text-gray-400'}`}>
+        <p className={`text-sm ${error ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
           {helperText}
         </p>
       )}
