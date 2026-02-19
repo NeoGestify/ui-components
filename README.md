@@ -2,6 +2,8 @@
 
 Biblioteca de componentes UI reutilizables con React, Tailwind CSS y SweetAlert2.
 
+[Construyamos juntos esta libreria](https://github.com/NeoGestify/ui-components)
+
 ## Características
 
 - Componentes HTML preestilizados (Button, Input, Form, Select, Table, Modal)
@@ -25,7 +27,7 @@ npm i neogestify-ui-components
 ### BUN
 ```bash
 # En tu proyecto
-npm i neogestify-ui-components
+bun i neogestify-ui-components
 ```
 
 
@@ -51,19 +53,8 @@ En tu archivo CSS principal (por ejemplo `src/index.css`):
 @import "tailwindcss";
 
 @source "../node_modules/neogestify-ui-components/src";
-```
 
-**Alternativa con tailwind.config.js:**
-
-```js
-// tailwind.config.js
-export default {
-  content: [
-    "./src/**/*.{js,jsx,ts,tsx}",
-    "./node_modules/neogestify-ui-components/src/**/*.{ts,tsx}"
-  ],
-  darkMode: 'class',
-}
+@variant dark (&:where(.dark, .dark *)) {}
 ```
 
 > 📖 **Para más detalles sobre la configuración de Tailwind v4, incluyendo monorepos y troubleshooting, consulta [TAILWIND_V4_SETUP.md](./TAILWIND_V4_SETUP.md)**

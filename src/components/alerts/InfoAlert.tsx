@@ -16,8 +16,9 @@ export default function InfoAlert({ title, text }: InfoAlertProps) {
     return (
         <Button
             type="button"
-            variant="icon"
+            variant="custom"
             onClick={() => Question()}
+            className="p-1 text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
         >
             <QuestionIcon className="w-4 h-4" />
         </Button>
