@@ -33,7 +33,7 @@ export const TextArea: FC<TextAreaProps> = ({
     minimal: 'border-0 bg-transparent focus:ring-0 focus:border-0'
   };
 
-  const baseClasses = 'appearance-none relative block w-full placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 focus:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 resize-vertical';
+  const baseClasses = 'appearance-none relative block w-full placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md border focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 focus:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 resize-y';
 
   const errorClasses = error ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400 focus:border-red-500' : '';
 
