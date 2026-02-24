@@ -2,8 +2,6 @@
 
 Biblioteca de componentes UI reutilizables con React, Tailwind CSS y SweetAlert2.
 
-[Construyamos juntos esta libreria](https://github.com/NeoGestify/ui-components)
-
 ## Características
 
 - Componentes HTML preestilizados (Button, Input, Form, Select, Table, Modal)
@@ -27,7 +25,7 @@ npm i neogestify-ui-components
 ### BUN
 ```bash
 # En tu proyecto
-bun i neogestify-ui-components
+npm i neogestify-ui-components
 ```
 
 
@@ -53,11 +51,20 @@ En tu archivo CSS principal (por ejemplo `src/index.css`):
 @import "tailwindcss";
 
 @source "../node_modules/neogestify-ui-components/src";
-
-@variant dark (&:where(.dark, .dark *)) {}
 ```
 
-> 📖 **Para más detalles sobre la configuración de Tailwind v4, incluyendo monorepos y troubleshooting, consulta [TAILWIND_V4_SETUP.md](./TAILWIND_V4_SETUP.md)**
+**Agrega este script a tu index.html**
+```html
+<script>
+      // Prevenir flash de contenido sin estilo (FOUC)
+      const theme = localStorage.getItem('theme') || 'light';
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+</script>
+```
 
 ### 3. Instala las dependencias peer
 
@@ -72,7 +79,7 @@ La biblioteca está organizada en módulos independientes:
 ### Componentes HTML
 
 ```tsx
-import { Button, Input, Form, Select, Table, Modal } from '@mi-empresa/ui-components/html';
+import { Button, Input, Form, Select, Table, Modal } from 'neogestify-ui-components/html';
 
 function MiComponente() {
   return (
@@ -108,7 +115,7 @@ import {
   SaveIcon,
   DeleteIcon,
   EditIcon
-} from '@mi-empresa/ui-components/icons';
+} from 'neogestify-ui-components/icons';
 
 function MiComponente() {
   return (
@@ -129,7 +136,7 @@ import {
   AlertaAdvertencia,
   AlertaConfirmacion,
   AlertaToast
-} from '@mi-empresa/ui-components/alerts';
+} from 'neogestify-ui-components/alerts';
 
 function MiComponente() {
   const handleGuardar = async () => {
@@ -170,7 +177,7 @@ Envuelve tu aplicación con el `ThemeProvider`:
 
 ```tsx
 // main.tsx o App.tsx
-import { ThemeProvider } from '@mi-empresa/ui-components/context/theme';
+import { ThemeProvider } from 'neogestify-ui-components/theme';
 
 function Main() {
   return (
@@ -184,7 +191,7 @@ function Main() {
 #### 2. Usar el ThemeToggle
 
 ```tsx
-import { ThemeToggle } from '@mi-empresa/ui-components/theme';
+import { ThemeToggle } from 'neogestify-ui-components/theme';
 
 function Header() {
   return (
@@ -198,7 +205,7 @@ function Header() {
 #### 3. Usar el hook useTheme
 
 ```tsx
-import { useTheme } from '@mi-empresa/ui-components/context/theme';
+import { useTheme } from 'neogestify-ui-components/theme';
 
 function MiComponente() {
   const { theme, toggleTheme, setTheme } = useTheme();
