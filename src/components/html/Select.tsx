@@ -56,7 +56,7 @@ export const Select: FC<SelectProps> = ({
       )}
       <select id={selectId} className={combinedClassName} {...props}>
         {placeholder && placeholder.trim() && (
-          <option value="" disabled className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 py-2">
+          <option value="" disabled selected className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 py-2">
             {placeholder}
           </option>
         )}
