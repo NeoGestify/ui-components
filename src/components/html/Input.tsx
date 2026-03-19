@@ -22,10 +22,11 @@ export const Input: FC<InputProps> = ({
   const errorClasses = error ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400 focus:border-red-500' : 'border-gray-300 dark:border-gray-600';
   const classes = `${baseClasses} ${errorClasses} ${className}`;
 
-  // ── Checkbox ──────────────────────────────────────────────────────────────
-  const checkboxBaseClasses = 'h-4 w-4 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer';
-  const checkboxErrorClasses = error ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400' : '';
-  const checkboxClasses = `${checkboxBaseClasses} ${checkboxErrorClasses}`.trim();
+  // ── Checkbox / Radio ──────────────────────────────────────────────────────
+  const toggleShape = type === 'radio' ? 'rounded-full' : 'rounded';
+  const toggleBaseClasses = `h-4 w-4 ${toggleShape} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer`;
+  const toggleErrorClasses = error ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400' : '';
+  const toggleClasses = `${toggleBaseClasses} ${toggleErrorClasses}`.trim();
 
   // ── File input ────────────────────────────────────────────────────────────
   const fileBaseClasses = 'block w-full sm:text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-medium file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/50 dark:file:text-indigo-300 hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800/50 file:transition-colors file:duration-200 file:cursor-pointer';
@@ -36,14 +37,14 @@ export const Input: FC<InputProps> = ({
   const wrapperBase = 'space-y-1 w-full';
   const wrapperClasses = hasHidden ? `${wrapperBase} hidden` : wrapperBase;
 
-  if (type === 'checkbox') {
+  if (type === 'checkbox' || type === 'radio') {
     return (
       <div className={wrapperClasses}>
         <div className="flex items-center space-x-2">
           <input
             id={inputId}
-            type="checkbox"
-            className={checkboxClasses}
+            type={type}
+            className={toggleClasses}
             {...props}
           />
           {label && typeof label === 'string' ? (
