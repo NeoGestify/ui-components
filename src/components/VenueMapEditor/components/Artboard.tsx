@@ -29,7 +29,10 @@ const HANDLE_PX = 8;
 
 interface ArtboardProps {
   area: FloorArea;
+  /** Called with the new area when a resize handle is dragged. */
   onResize: (area: FloorArea) => void;
+  /** Called with the incremental (dx, dy) when the artboard body is dragged. */
+  onMove?: (dx: number, dy: number) => void;
   svgRef: RefObject<SVGSVGElement | null>;
   panZoomRef: PanZoomRef;
   zoom: number;
@@ -100,6 +103,7 @@ function applyHandleDelta(
 export function Artboard({
   area,
   onResize,
+  onMove,
   svgRef,
   panZoomRef,
   zoom,
@@ -135,11 +139,10 @@ export function Artboard({
     [handleHandleDown],
   );
 
-  // ── Body drag (move the whole artboard) ─────────────────────────────────────
+  // ── Body drag (move the whole artboard + its elements) ──────────────────────
   const { handleMouseDown: handleBodyDown } = useDrag(svgRef, panZoomRef, {
     onDragMove: (dx, dy) => {
-      const a = areaRef.current;
-      onResize({ ...a, x: (a.x ?? 0) + dx, y: (a.y ?? 0) + dy });
+      onMove?.(dx, dy);
     },
   });
 

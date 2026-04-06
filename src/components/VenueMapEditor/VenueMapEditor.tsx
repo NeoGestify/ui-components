@@ -111,10 +111,31 @@ export function VenueMapEditor({
     [map, push],
   );
 
-  // ── Area resize ──────────────────────────────────────────────────────────
+  // ── Area resize (handle drag — only shape changes, elements stay put) ───
   const handleAreaResize = useCallback(
     (updatedFloor: Floor) => replaceFloor(updatedFloor),
     [replaceFloor],
+  );
+
+  // ── Area move (body drag — area + all elements shift by the same delta) ─
+  const handleAreaMove = useCallback(
+    (dx: number, dy: number) => {
+      if (!activeFloor) return;
+      replaceFloor({
+        ...activeFloor,
+        area: {
+          ...activeFloor.area,
+          x: (activeFloor.area.x ?? 0) + dx,
+          y: (activeFloor.area.y ?? 0) + dy,
+        },
+        elements: activeFloor.elements.map(el => ({
+          ...el,
+          x: el.x + dx,
+          y: el.y + dy,
+        })),
+      });
+    },
+    [activeFloor, replaceFloor],
   );
 
   // ── Element operations ───────────────────────────────────────────────────
@@ -422,6 +443,7 @@ export function VenueMapEditor({
               elementTypeDefs={elementTypeDefs.current}
               selectedIds={selectedIds}
               onAreaResize={handleAreaResize}
+              onAreaMove={handleAreaMove}
               onSelectElement={select}
               onSelectSet={selectSet}
               onClearSelection={clearSelection}

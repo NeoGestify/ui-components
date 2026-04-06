@@ -27,6 +27,7 @@ interface EditorCanvasProps {
   elementTypeDefs: Map<string, ElementTypeDef>;
   selectedIds: ReadonlySet<string>;
   onAreaResize: (floor: Floor) => void;
+  onAreaMove: (dx: number, dy: number) => void;
   onSelectElement: (id: string, multi: boolean) => void;
   onSelectSet: (ids: string[]) => void;
   onClearSelection: () => void;
@@ -55,6 +56,7 @@ export function EditorCanvas({
   elementTypeDefs,
   selectedIds,
   onAreaResize,
+  onAreaMove,
   onSelectElement,
   onSelectSet,
   onClearSelection,
@@ -201,10 +203,11 @@ export function EditorCanvas({
         <Artboard
           area={floor.area}
           onResize={area => onAreaResize({ ...floor, area })}
+          onMove={onAreaMove}
           svgRef={svgRef}
           panZoomRef={panZoomRef}
           zoom={zoom}
-          readOnly={readOnly}
+          readOnly={readOnly || tool !== 'SELECT'}
         />
 
         {/* Elements */}
