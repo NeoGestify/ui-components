@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import {
   IconCursor, IconGrid, IconHand, IconReset, IconZoomIn, IconZoomOut,
-  IconUndo, IconRedo, IconPlace, IconErase, TrashIcon,
+  IconUndo, IconRedo, IconPlace, IconErase, IconWall, TrashIcon,
 } from '../../icons';
 import type { ToolMode, DomainConfig, ElementTypeDef } from '../types';
 
@@ -115,6 +115,9 @@ export function Toolbar({
         </ToolButton>
         <ToolButton title="Desplazar (H)" active={tool === 'PAN'} onClick={() => onToolChange('PAN')}>
           <IconHand className="w-4 h-4" />
+        </ToolButton>
+        <ToolButton title="Dibujar pared (W)" active={tool === 'WALL'} onClick={() => onToolChange('WALL')}>
+          <IconWall className="w-4 h-4" />
         </ToolButton>
         <ToolButton title="Colocar elemento (P)" active={tool === 'PLACE'} onClick={() => onToolChange('PLACE')}>
           <IconPlace className="w-4 h-4" />

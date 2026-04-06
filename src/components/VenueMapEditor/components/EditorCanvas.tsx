@@ -1,18 +1,41 @@
 import { useRef, useEffect, useState, useCallback } from 'react';
 import type { MouseEvent as ReactMouseEvent } from 'react';
-import type { Floor, ElementTypeDef, ToolMode } from '../types';
+import type { Floor, WallNode, ElementTypeDef, ToolMode } from '../types';
 import type { PanZoomState } from '../hooks/usePanZoom';
 import { usePanZoom } from '../hooks/usePanZoom';
+import { findNearestNode, snapPoint } from '../utils/snapUtils';
+import { wallSegmentPath } from '../utils/wallGeometry';
 import { GridOverlay } from './GridOverlay';
 import { Artboard } from './Artboard';
+import { WallLayer } from './WallLayer';
 import { ElementNode } from './ElementNode';
 
-// ─── Lasso rect ───────────────────────────────────────────────────────────────
+// ─── Constants ────────────────────────────────────────────────────────────────
+
+const SNAP_PX           = 10;   // screen pixels for wall-node snap
+const DEFAULT_THICKNESS = 8;    // canvas units
+
+// ─── Lasso ────────────────────────────────────────────────────────────────────
 
 interface LassoRect { x: number; y: number; w: number; h: number }
 
 function rectsIntersect(a: LassoRect, b: LassoRect): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+}
+
+// ─── Wall-draw state ──────────────────────────────────────────────────────────
+
+interface WallDraw {
+  /** Fixed start point (snapped or free). */
+  startX: number;
+  startY: number;
+  /** Non-null when startX/Y snapped to an existing node. */
+  snapStartNode: WallNode | null;
+  /** Current cursor position in canvas coords. */
+  previewX: number;
+  previewY: number;
+  /** Non-null when cursor is snapping to an existing end node. */
+  snapEndNode: WallNode | null;
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -39,6 +62,9 @@ interface EditorCanvasProps {
   onRotateCommit: (id: string, rotation: number) => void;
   onDeleteElement: (id: string) => void;
   onPlaceElement: (canvasX: number, canvasY: number) => void;
+  onAddWall?: (x1: number, y1: number, x2: number, y2: number,
+               snapStartId: string | null, snapEndId: string | null) => void;
+  onDeleteWall?: (wallId: string) => void;
   onZoomChange?: (zoom: number) => void;
   onRegisterZoomBy?: (fn: (factor: number) => void) => void;
   onRegisterResetView?: (fn: () => void) => void;
@@ -68,6 +94,8 @@ export function EditorCanvas({
   onRotateCommit,
   onDeleteElement,
   onPlaceElement,
+  onAddWall,
+  onDeleteWall,
   onZoomChange,
   onRegisterZoomBy,
   onRegisterResetView,
@@ -89,6 +117,14 @@ export function EditorCanvas({
   // ── Lasso state ─────────────────────────────────────────────────────────────
   const [lasso, setLasso] = useState<LassoRect | null>(null);
   const lassoStart = useRef<{ cx: number; cy: number } | null>(null);
+
+  // ── Wall draw state ──────────────────────────────────────────────────────────
+  const [wallDraw, setWallDraw] = useState<WallDraw | null>(null);
+
+  // Cancel wall draw when switching away from WALL tool
+  useEffect(() => {
+    if (tool !== 'WALL') setWallDraw(null);
+  }, [tool]);
 
   // ── Expose callbacks ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -115,16 +151,69 @@ export function EditorCanvas({
     return { x: (clientX - rect.left - panX) / zoom, y: (clientY - rect.top - panY) / zoom };
   }, []);
 
-  // ── SVG background mouse events ─────────────────────────────────────────────
+  // ── Wall snap helper ─────────────────────────────────────────────────────────
+  const findSnapNode = useCallback((
+    cx: number, cy: number,
+    excludeId?: string | null,
+  ): WallNode | null => {
+    const threshold = SNAP_PX / panZoomRef.current.zoom;
+    const candidates = excludeId
+      ? floor.wallNodes.filter(n => n.id !== excludeId)
+      : floor.wallNodes;
+    return findNearestNode(cx, cy, candidates, threshold) as WallNode | null;
+  }, [floor.wallNodes]);
+
+  // ── SVG mouse events ─────────────────────────────────────────────────────────
   const handleSvgMouseDown = useCallback((e: ReactMouseEvent<SVGSVGElement>) => {
-    // Middle-click always pans; left-click pans when PAN tool active
     if (e.button === 1 || (e.button === 0 && tool === 'PAN')) {
       handlePanMouseDown(e);
       return;
     }
     if (e.button !== 0) return;
 
-    const { x: cx, y: cy } = toCanvas(e.clientX, e.clientY);
+    const raw = toCanvas(e.clientX, e.clientY);
+    const { x: cx, y: cy } = snapPoint(raw.x, raw.y, gridSize, snapEnabled);
+
+    // ── WALL mode ──
+    if (tool === 'WALL') {
+      if (!wallDraw) {
+        // First click: set start point
+        const snapNode = findSnapNode(cx, cy, null);
+        const sx = snapNode ? snapNode.x : cx;
+        const sy = snapNode ? snapNode.y : cy;
+        setWallDraw({
+          startX: sx, startY: sy,
+          snapStartNode: snapNode,
+          previewX: cx, previewY: cy,
+          snapEndNode: null,
+        });
+      } else {
+        // Second click: complete the wall
+        const snapNode = findSnapNode(cx, cy, wallDraw.snapStartNode?.id ?? null);
+        const ex = snapNode ? snapNode.x : cx;
+        const ey = snapNode ? snapNode.y : cy;
+
+        // Ignore zero-length walls
+        const dist = Math.hypot(ex - wallDraw.startX, ey - wallDraw.startY);
+        if (dist > 2) {
+          onAddWall?.(
+            wallDraw.startX, wallDraw.startY,
+            ex, ey,
+            wallDraw.snapStartNode?.id ?? null,
+            snapNode?.id ?? null,
+          );
+        }
+
+        // Chain: start next wall from end point
+        setWallDraw({
+          startX: ex, startY: ey,
+          snapStartNode: snapNode,
+          previewX: cx, previewY: cy,
+          snapEndNode: null,
+        });
+      }
+      return;
+    }
 
     if (tool === 'PLACE') {
       onPlaceElement(cx, cy);
@@ -132,38 +221,45 @@ export function EditorCanvas({
     }
 
     if (tool === 'SELECT') {
-      // Start lasso on background click
       lassoStart.current = { cx, cy };
       setLasso({ x: cx, y: cy, w: 0, h: 0 });
     }
-  }, [handlePanMouseDown, tool, toCanvas, onPlaceElement]);
+  }, [handlePanMouseDown, tool, toCanvas, gridSize, snapEnabled,
+      wallDraw, findSnapNode, onAddWall, onPlaceElement]);
 
   const handleSvgMouseMove = useCallback((e: ReactMouseEvent<SVGSVGElement>) => {
     handlePanMouseMove(e);
 
+    const raw = toCanvas(e.clientX, e.clientY);
+    const { x: cx, y: cy } = snapPoint(raw.x, raw.y, gridSize, snapEnabled);
+
+    if (tool === 'WALL' && wallDraw) {
+      const snapNode = findSnapNode(cx, cy, wallDraw.snapStartNode?.id ?? null);
+      setWallDraw(prev => prev
+        ? { ...prev, previewX: cx, previewY: cy, snapEndNode: snapNode }
+        : null,
+      );
+      return;
+    }
+
     if (tool === 'SELECT' && lassoStart.current) {
-      const { x: cx, y: cy } = toCanvas(e.clientX, e.clientY);
       const lx = Math.min(cx, lassoStart.current.cx);
       const ly = Math.min(cy, lassoStart.current.cy);
-      const lw = Math.abs(cx - lassoStart.current.cx);
-      const lh = Math.abs(cy - lassoStart.current.cy);
-      setLasso({ x: lx, y: ly, w: lw, h: lh });
+      setLasso({ x: lx, y: ly, w: Math.abs(cx - lassoStart.current.cx), h: Math.abs(cy - lassoStart.current.cy) });
     }
-  }, [handlePanMouseMove, tool, toCanvas]);
+  }, [handlePanMouseMove, tool, toCanvas, gridSize, snapEnabled, wallDraw, findSnapNode]);
 
   const handleSvgMouseUp = useCallback((e: ReactMouseEvent<SVGSVGElement>) => {
     handlePanMouseUp(e);
 
     if (lassoStart.current && lasso) {
       if (lasso.w > 4 / panZoom.zoom || lasso.h > 4 / panZoom.zoom) {
-        // Select elements inside lasso
         const ids = floor.elements
           .filter(el => rectsIntersect(lasso, { x: el.x, y: el.y, w: el.width, h: el.height }))
           .map(el => el.id);
         if (ids.length > 0) onSelectSet(ids);
         else if (!e.ctrlKey && !e.metaKey) onClearSelection();
       } else {
-        // Small drag = click on background → clear selection
         if (!e.ctrlKey && !e.metaKey) onClearSelection();
       }
       lassoStart.current = null;
@@ -171,14 +267,31 @@ export function EditorCanvas({
     }
   }, [handlePanMouseUp, lasso, panZoom.zoom, floor.elements, onSelectSet, onClearSelection]);
 
-  // ── Derived ─────────────────────────────────────────────────────────────────
+  const handleContextMenu = useCallback((e: ReactMouseEvent<SVGSVGElement>) => {
+    e.preventDefault();
+    // Right-click cancels in-progress wall drawing
+    if (tool === 'WALL') setWallDraw(null);
+  }, [tool]);
+
+  // ── Derived ──────────────────────────────────────────────────────────────────
   const cursor = isPanning ? 'grabbing'
-    : tool === 'PAN'   ? 'grab'
-    : tool === 'PLACE' ? 'crosshair'
-    : tool === 'ERASE' ? 'crosshair'
+    : tool === 'PAN'    ? 'grab'
+    : tool === 'WALL'   ? 'crosshair'
+    : tool === 'PLACE'  ? 'crosshair'
+    : tool === 'ERASE'  ? 'crosshair'
     : 'default';
 
   const { panX, panY, zoom } = panZoom;
+
+  // Preview wall path (while drawing)
+  const previewPath = wallDraw && (() => {
+    const ex = wallDraw.snapEndNode?.x ?? wallDraw.previewX;
+    const ey = wallDraw.snapEndNode?.y ?? wallDraw.previewY;
+    const dist = Math.hypot(ex - wallDraw.startX, ey - wallDraw.startY);
+    return dist > 2
+      ? wallSegmentPath(wallDraw.startX, wallDraw.startY, ex, ey, DEFAULT_THICKNESS, null, null)
+      : null;
+  })();
 
   return (
     <svg
@@ -190,7 +303,7 @@ export function EditorCanvas({
       onMouseMove={handleSvgMouseMove}
       onMouseUp={handleSvgMouseUp}
       onMouseLeave={handleMouseLeave}
-      onContextMenu={e => e.preventDefault()}
+      onContextMenu={handleContextMenu}
     >
       <g transform={`translate(${panX}, ${panY}) scale(${zoom})`}>
         {/* Canvas background */}
@@ -208,6 +321,15 @@ export function EditorCanvas({
           panZoomRef={panZoomRef}
           zoom={zoom}
           readOnly={readOnly || tool !== 'SELECT'}
+        />
+
+        {/* Walls */}
+        <WallLayer
+          nodes={floor.wallNodes}
+          walls={floor.walls}
+          zoom={zoom}
+          tool={tool}
+          onDeleteWall={onDeleteWall}
         />
 
         {/* Elements */}
@@ -248,6 +370,40 @@ export function EditorCanvas({
             strokeDasharray={`${4 / zoom},${2 / zoom}`}
             style={{ pointerEvents: 'none' }}
           />
+        )}
+
+        {/* ── Wall draw preview ── */}
+        {wallDraw && (
+          <>
+            {/* Preview wall body */}
+            {previewPath && (
+              <path
+                d={previewPath}
+                fill="#94a3b8"
+                fillOpacity={0.45}
+                stroke="#3b82f6"
+                strokeWidth={1 / zoom}
+                strokeDasharray={`${5 / zoom},${3 / zoom}`}
+                style={{ pointerEvents: 'none' }}
+              />
+            )}
+            {/* Start node anchor */}
+            <circle
+              cx={wallDraw.startX} cy={wallDraw.startY}
+              r={5 / zoom}
+              fill="#3b82f6" stroke="white" strokeWidth={1.5 / zoom}
+              style={{ pointerEvents: 'none' }}
+            />
+            {/* Snap ring around the nearest end node */}
+            {wallDraw.snapEndNode && (
+              <circle
+                cx={wallDraw.snapEndNode.x} cy={wallDraw.snapEndNode.y}
+                r={9 / zoom}
+                fill="none" stroke="#3b82f6" strokeWidth={2 / zoom}
+                style={{ pointerEvents: 'none' }}
+              />
+            )}
+          </>
         )}
       </g>
     </svg>

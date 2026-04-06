@@ -5,6 +5,8 @@ import type {
   VenueMap,
   Floor,
   MapElement,
+  WallNode,
+  Wall,
   ToolMode,
 } from './types';
 import { Toolbar } from './components/Toolbar';
@@ -157,6 +159,59 @@ export function VenueMapEditor({
       });
     },
     [activeFloor, replaceFloor],
+  );
+
+  // ── Wall operations ──────────────────────────────────────────────────────
+
+  const DEFAULT_WALL_THICKNESS = 8;
+
+  const handleAddWall = useCallback(
+    (x1: number, y1: number, x2: number, y2: number,
+     snapStartId: string | null, snapEndId: string | null) => {
+      if (!activeFloor) return;
+      const nodes: WallNode[] = [...activeFloor.wallNodes];
+
+      let nodeAId: string;
+      if (snapStartId) {
+        nodeAId = snapStartId;
+      } else {
+        const n: WallNode = { id: genId(), x: x1, y: y1 };
+        nodes.push(n);
+        nodeAId = n.id;
+      }
+
+      let nodeBId: string;
+      if (snapEndId) {
+        nodeBId = snapEndId;
+      } else {
+        const n: WallNode = { id: genId(), x: x2, y: y2 };
+        nodes.push(n);
+        nodeBId = n.id;
+      }
+
+      const newWall: Wall = {
+        id: genId(),
+        nodeAId,
+        nodeBId,
+        thickness: DEFAULT_WALL_THICKNESS,
+        material: 'concrete',
+      };
+
+      pushFloor({ ...activeFloor, wallNodes: nodes, walls: [...activeFloor.walls, newWall] });
+    },
+    [activeFloor, pushFloor, DEFAULT_WALL_THICKNESS],
+  );
+
+  const handleDeleteWall = useCallback(
+    (wallId: string) => {
+      if (!activeFloor) return;
+      const remainingWalls = activeFloor.walls.filter(w => w.id !== wallId);
+      // Remove nodes that no longer connect any wall
+      const usedNodeIds = new Set(remainingWalls.flatMap(w => [w.nodeAId, w.nodeBId]));
+      const remainingNodes = activeFloor.wallNodes.filter(n => usedNodeIds.has(n.id));
+      pushFloor({ ...activeFloor, walls: remainingWalls, wallNodes: remainingNodes });
+    },
+    [activeFloor, pushFloor],
   );
 
   // ── Element operations ───────────────────────────────────────────────────
@@ -385,6 +440,7 @@ export function VenueMapEditor({
       switch (e.key) {
         case 'v': case 'V': setTool('SELECT'); break;
         case 'h': case 'H': setTool('PAN'); break;
+        case 'w': case 'W': setTool('WALL'); break;
         case 'p': case 'P': setTool('PLACE'); break;
         case 'e': case 'E': setTool('ERASE'); break;
         case 'Escape': setTool('SELECT'); break;
@@ -487,6 +543,8 @@ export function VenueMapEditor({
               onRotateCommit={handleRotateCommit}
               onDeleteElement={handleDeleteElement}
               onPlaceElement={handlePlaceElement}
+              onAddWall={handleAddWall}
+              onDeleteWall={handleDeleteWall}
               onZoomChange={setZoom}
               onRegisterZoomBy={fn => { zoomByRef.current = fn; }}
               onRegisterResetView={fn => { resetViewRef.current = fn; }}

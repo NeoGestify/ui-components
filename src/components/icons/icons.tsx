@@ -639,3 +639,13 @@ export function IconDuplicate({ className }: Props) {
     </svg>
   );
 }
+
+export function IconWall({ className }: Props) {
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+      {/* Two parallel lines forming a wall corner — represents wall cross-section */}
+      <path strokeWidth="2" d="M3 14 L3 2 L14 2" />
+      <path strokeWidth="2" d="M6 14 L6 5 L14 5" />
+    </svg>
+  );
+}
