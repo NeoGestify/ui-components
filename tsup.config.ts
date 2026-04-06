@@ -7,6 +7,7 @@ export default defineConfig({
     'components/icons/index': 'src/components/icons/index.ts',
     'components/alerts/index': 'src/components/alerts/index.ts',
     'context/theme/index': 'src/context/theme/index.ts',
+    'components/VenueMapEditor/index': 'src/components/VenueMapEditor/index.ts',
   },
   format: ['cjs', 'esm'],
   dts: true,
