@@ -25,14 +25,21 @@ export function usePanZoom(initialZoom = 1) {
 
   // ── Wheel zoom ──────────────────────────────────────────────────────────────
   const handleWheel = useCallback((e: ReactWheelEvent<SVGSVGElement>) => {
-    e.preventDefault();
+    // NOTE: e.preventDefault() is intentionally NOT called here.
+    // React registers synthetic wheel events as passive, so calling preventDefault
+    // would throw a warning and be ignored. The non-passive native listener added
+    // in EditorCanvas handles scroll prevention instead.
     const factor = e.deltaY < 0 ? ZOOM_FACTOR : 1 / ZOOM_FACTOR;
+
+    // Read all event values NOW — before setState — because e.currentTarget
+    // is nulled out by React after the event handler returns (event pooling).
+    const svgEl = e.currentTarget as SVGSVGElement;
+    const rect = svgEl.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
 
     setState(prev => {
       const newZoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, prev.zoom * factor));
-      const rect = (e.currentTarget as SVGSVGElement).getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
       // Keep the canvas point under the cursor fixed.
       const canvasX = (mouseX - prev.panX) / prev.zoom;
       const canvasY = (mouseY - prev.panY) / prev.zoom;
