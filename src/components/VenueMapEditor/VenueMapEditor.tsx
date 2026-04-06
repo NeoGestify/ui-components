@@ -51,8 +51,9 @@ export function VenueMapEditor({
   height = '600px',
   gridSize = 20,
   showGrid: showGridProp = true,
-  snapToGrid: snapEnabled = true,
+  snapToGrid: snapEnabled = false,
   readOnly = false,
+  fixed = false,
 }: VenueMapEditorProps) {
   const initialMapRef = useRef<VenueMap>(initialMap ?? createDefaultMap());
 
@@ -250,6 +251,15 @@ export function VenueMapEditor({
       if (!activeFloor || !activePlaceTypeId) return;
       const typeDef = elementTypeDefs.current.get(activePlaceTypeId);
       if (!typeDef) return;
+
+      // Reject placement outside the floor area
+      const { area } = activeFloor;
+      if (area.shape === 'rect') {
+        const ax = area.x ?? 0, ay = area.y ?? 0;
+        const aw = area.width ?? 0, ah = area.height ?? 0;
+        if (canvasX < ax || canvasX > ax + aw || canvasY < ay || canvasY > ay + ah) return;
+      }
+
       const newEl: MapElement = {
         id: genId(),
         type: activePlaceTypeId,
@@ -333,6 +343,11 @@ export function VenueMapEditor({
     return () => window.removeEventListener('keydown', onKey);
   }, [undo, redo, selectedIds, handleDuplicateElements, handleDeleteElements]);
 
+  // ── Fixed / read-only derived state ─────────────────────────────────────
+  // fixed=true: viewer-only — no editing, left-click drags the canvas
+  const effectiveReadOnly = readOnly || fixed;
+  const effectiveTool: ToolMode = fixed ? 'PAN' : tool;
+
   // ── Container style ──────────────────────────────────────────────────────
   const containerStyle: CSSProperties = {
     width,
@@ -349,7 +364,7 @@ export function VenueMapEditor({
   return (
     <div style={containerStyle}>
       {/* Toolbar */}
-      {!readOnly && (
+      {!effectiveReadOnly && (
         <Toolbar
           tool={tool}
           onToolChange={t => { setTool(t); if (t !== 'PLACE') clearSelection(); }}
@@ -399,10 +414,10 @@ export function VenueMapEditor({
             <EditorCanvas
               key={activeFloor.id}
               floor={activeFloor}
-              tool={tool}
+              tool={effectiveTool}
               gridSize={gridSize}
               showGrid={showGrid}
-              readOnly={readOnly}
+              readOnly={effectiveReadOnly}
               snapEnabled={snapEnabled}
               elementTypeDefs={elementTypeDefs.current}
               selectedIds={selectedIds}
@@ -426,7 +441,7 @@ export function VenueMapEditor({
         </div>
 
         {/* Properties panel */}
-        {!readOnly && selectedElements.length > 0 && (
+        {!effectiveReadOnly && selectedElements.length > 0 && (
           <PropertiesPanel
             elements={selectedElements}
             typeDefs={elementTypeDefs.current}

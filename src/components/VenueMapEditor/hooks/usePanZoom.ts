@@ -11,7 +11,7 @@ const ZOOM_MIN = 0.1;
 const ZOOM_MAX = 10;
 const ZOOM_FACTOR = 1.1;
 
-export function usePanZoom(initialZoom = 1) {
+export function usePanZoom(initialZoom = 1, leftClickPan = false) {
   const [state, setState] = useState<PanZoomState>({
     panX: 80,
     panY: 80,
@@ -51,14 +51,15 @@ export function usePanZoom(initialZoom = 1) {
     });
   }, []);
 
-  // ── Middle-click pan ────────────────────────────────────────────────────────
+  // ── Pan (middle-click, or left-click when leftClickPan=true) ────────────────
   const handleMouseDown = useCallback((e: ReactMouseEvent<SVGSVGElement>) => {
-    if (e.button !== 1) return;
+    const valid = leftClickPan ? (e.button === 0 || e.button === 1) : e.button === 1;
+    if (!valid) return;
     e.preventDefault();
     isPanningRef.current = true;
     setIsPanning(true);
     lastPosRef.current = { x: e.clientX, y: e.clientY };
-  }, []);
+  }, [leftClickPan]);
 
   const handleMouseMove = useCallback((e: ReactMouseEvent<SVGSVGElement>) => {
     if (!isPanningRef.current) return;
@@ -68,8 +69,8 @@ export function usePanZoom(initialZoom = 1) {
     setState(prev => ({ ...prev, panX: prev.panX + dx, panY: prev.panY + dy }));
   }, []);
 
-  const stopPan = useCallback((e: ReactMouseEvent<SVGSVGElement>) => {
-    if (e.button !== 1 && !isPanningRef.current) return;
+  const stopPan = useCallback((_e: ReactMouseEvent<SVGSVGElement>) => {
+    if (!isPanningRef.current) return;
     isPanningRef.current = false;
     setIsPanning(false);
   }, []);

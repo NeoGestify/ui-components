@@ -108,6 +108,8 @@ export interface VenueMapEditorProps {
   showGrid?: boolean;
   snapToGrid?: boolean;
   readOnly?: boolean;
+  /** Viewer-only mode: pan and zoom are allowed but nothing can be edited. */
+  fixed?: boolean;
 }
 
 export interface VenueMapViewerProps extends VenueMapEditorProps {

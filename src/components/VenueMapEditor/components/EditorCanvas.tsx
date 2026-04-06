@@ -79,7 +79,7 @@ export function EditorCanvas({
     handleMouseUp: handlePanMouseUp,
     handleMouseLeave,
     zoomBy, resetView,
-  } = usePanZoom(1);
+  } = usePanZoom(1, tool === 'PAN');
 
   const panZoomRef = useRef<PanZoomState>(panZoom);
   panZoomRef.current = panZoom;
@@ -115,8 +115,11 @@ export function EditorCanvas({
 
   // ── SVG background mouse events ─────────────────────────────────────────────
   const handleSvgMouseDown = useCallback((e: ReactMouseEvent<SVGSVGElement>) => {
-    // Middle-click → pan
-    if (e.button === 1) { handlePanMouseDown(e); return; }
+    // Middle-click always pans; left-click pans when PAN tool active
+    if (e.button === 1 || (e.button === 0 && tool === 'PAN')) {
+      handlePanMouseDown(e);
+      return;
+    }
     if (e.button !== 0) return;
 
     const { x: cx, y: cy } = toCanvas(e.clientX, e.clientY);

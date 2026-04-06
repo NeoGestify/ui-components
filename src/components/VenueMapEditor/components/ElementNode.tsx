@@ -97,29 +97,34 @@ export function ElementNode({
 
   // ── Move drag ───────────────────────────────────────────────────────────────
   const startPos = useRef({ elX: 0, elY: 0, mouseX: 0, mouseY: 0 });
+  const lastMovePos = useRef({ x: 0, y: 0 });
 
   const { handleMouseDown: handleBodyDown } = useDrag(svgRef, panZoomRef, {
     onDragStart: (mx, my) => {
       startPos.current = { elX: element.x, elY: element.y, mouseX: mx, mouseY: my };
+      lastMovePos.current = { x: element.x, y: element.y };
     },
     onDragMove: (_dx, _dy, canvasX, canvasY) => {
       let nx = startPos.current.elX + (canvasX - startPos.current.mouseX);
       let ny = startPos.current.elY + (canvasY - startPos.current.mouseY);
       if (snapEnabled) { nx = snapToGrid(nx, gridSize); ny = snapToGrid(ny, gridSize); }
+      lastMovePos.current = { x: nx, y: ny };
       onMove(nx, ny);
     },
-    onDragEnd: (_cx, _cy) => {
-      onMoveCommit(element.x, element.y);
+    onDragEnd: () => {
+      onMoveCommit(lastMovePos.current.x, lastMovePos.current.y);
     },
   });
 
   // ── Resize drag ─────────────────────────────────────────────────────────────
   const activeHandle = useRef<HandleType | null>(null);
   const startGeom = useRef({ x: 0, y: 0, w: 0, h: 0, mouseX: 0, mouseY: 0 });
+  const lastResizeGeom = useRef({ x: 0, y: 0, w: 0, h: 0 });
 
   const { handleMouseDown: handleHandleDown } = useDrag(svgRef, panZoomRef, {
     onDragStart: (mx, my) => {
       startGeom.current = { x: element.x, y: element.y, w: element.width, h: element.height, mouseX: mx, mouseY: my };
+      lastResizeGeom.current = { x: element.x, y: element.y, w: element.width, h: element.height };
     },
     onDragMove: (_dx, _dy, canvasX, canvasY) => {
       const type = activeHandle.current;
@@ -146,10 +151,12 @@ export function ElementNode({
         nw = Math.max(MIN_SIZE, snapToGrid(nw, gridSize));
         nh = Math.max(MIN_SIZE, snapToGrid(nh, gridSize));
       }
+      lastResizeGeom.current = { x: nx, y: ny, w: nw, h: nh };
       onResize(nx, ny, nw, nh);
     },
     onDragEnd: () => {
-      onResizeCommit(element.x, element.y, element.width, element.height);
+      const { x: rx, y: ry, w: rw, h: rh } = lastResizeGeom.current;
+      onResizeCommit(rx, ry, rw, rh);
       activeHandle.current = null;
     },
   });
@@ -177,6 +184,10 @@ export function ElementNode({
       const initAngle = Math.atan2(mcy - cy, mcx - cx) * (180 / Math.PI);
       rotStart.current.angleOffset = element.rotation - initAngle;
 
+      // Track the live rotation so onUp always commits the final value,
+      // not the stale element.rotation captured in the useCallback closure.
+      let currentRot = element.rotation;
+
       const onMove = (ev: MouseEvent) => {
         const rect = svgRef.current?.getBoundingClientRect();
         if (!rect) return;
@@ -185,11 +196,12 @@ export function ElementNode({
         const my2 = (ev.clientY - rect.top - py) / z2;
         let newRot = Math.atan2(my2 - cy, mx2 - cx) * (180 / Math.PI) + rotStart.current.angleOffset;
         if (ev.shiftKey) newRot = Math.round(newRot / 15) * 15;
+        currentRot = newRot;
         onRotate(newRot);
       };
 
       const onUp = () => {
-        onRotateCommit(element.rotation);
+        onRotateCommit(currentRot);
         window.removeEventListener('mousemove', onMove);
         window.removeEventListener('mouseup', onUp);
       };
