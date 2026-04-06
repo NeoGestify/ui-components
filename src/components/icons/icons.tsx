@@ -111,19 +111,6 @@ export function LogoutIcon({ className }: Props) {
     )
 }
 
-export function TruckIcon({ className }: Props) {
-    return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-            />
-        </svg>
-    )
-}
-
 export function HomeIcon({ className }: Props) {
     return (
         <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -498,7 +485,7 @@ export function PasteIcon({ className }: Props) {
 
 export function RestaurantMenuIcon({ className }: Props) {
     return (
-        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24"><path fill="currentColor" d="M6 22q-.825 0-1.412-.587T4 20v-2q-.425 0-.712-.288T3 17t.288-.712T4 16v-3q-.425 0-.712-.288T3 12t.288-.712T4 11V8q-.425 0-.712-.288T3 7t.288-.712T4 6V4q0-.825.588-1.412T6 2h12q.825 0 1.413.588T20 4v16q0 .825-.587 1.413T18 22zm0-2h12V4H6v2q.425 0 .713.288T7 7t-.288.713T6 8v3q.425 0 .713.288T7 12t-.288.713T6 13v3q.425 0 .713.288T7 17t-.288.713T6 18zm3.5-7v3.25q0 .325.213.538t.537.212.538-.213.212-.537V13q.65-.175 1.075-.712t.425-1.213V7.5q0-.2-.15-.35T12 7t-.35.15-.15.35v3.275h-.75V7.5q0-.2-.15-.35T10.25 7t-.35.15-.15.35v3.275H9V7.5q0-.2-.15-.35T8.5 7t-.35.15T8 7.5v3.575q0 .675.425 1.213T9.5 13m5.5 0v3.25q0 .325.213.538t.537.212.538-.213.212-.537V7.575q0-.275-.187-.425T15.825 7q-.325 0-.712.175t-.738.525q-.425.425-.65.963T13.5 9.825V12q0 .425.288.713T14.5 13zm-9 7V4z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24"><path fill="currentColor" d="M6 22q-.825 0-1.412-.587T4 20v-2q-.425 0-.712-.288T3 17t.288-.712T4 16v-3q-.425 0-.712-.288T3 12t.288-.712T4 11V8q-.425 0-.712-.288T3 7t.288-.712T4 6V4q0-.825.588-1.412T6 2h12q.825 0 1.413.588T20 4v16q0 .825-.587 1.413T18 22zm0-2h12V4H6v2q.425 0 .713.288T7 7t-.288.713T6 8v3q.425 0 .713.288T7 12t-.288.713T6 13v3q.425 0 .713.288T7 17t-.288.713T6 18zm3.5-7v3.25q0 .325.213.538t.537.212.538-.213.212-.537V13q.65-.175 1.075-.712t.425-1.213V7.5q0-.2-.15-.35T12 7t-.35.15-.15.35v3.275h-.75V7.5q0-.2-.15-.35T10.25 7t-.35.15-.15.35v3.275H9V7.5q0-.2-.15-.35T8.5 7t-.35.15T8 7.5v3.575q0 .675.425 1.213T9.5 13m5.5 0v3.25q0 .325.213.538t.537.212.538-.213.212-.537V7.575q0-.275-.187-.425T15.825 7q-.325 0-.712.175t-.738.525q-.425.425-.65.963T13.5 9.825V12q0 .425.288.713T14.5 13zm-9 7V4z" /></svg>
     )
 }
 
@@ -546,6 +533,14 @@ export function MonitorIcon({ className }: Props) {
     return (
         <svg className={className} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
             <path fill="currentColor" d="M4 18q-.825 0-1.412-.587T2 16V5q0-.825.588-1.412T4 3h16q.825 0 1.413.588T22 5v11q0 .825-.587 1.413T20 18h-3l.7.7q.15.15.225.338t.075.387V20q0 .425-.288.712T17 21H7q-.425 0-.712-.288T6 20v-.575q0-.2.075-.387T6.3 18.7L7 18zm0-2h16V5H4zm0 0V5z" />
+        </svg>
+    )
+}
+
+export function TruckIcon({ className }: Props) {
+    return (
+        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.25 18.75a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 0 1-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 0 0-3.213-9.193 2.056 2.056 0 0 0-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 0 0-10.026 0 1.106 1.106 0 0 0-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
         </svg>
     )
 }

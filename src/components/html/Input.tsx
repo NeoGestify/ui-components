@@ -4,12 +4,16 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string | ReactNode;
   error?: string;
   helperText?: string;
+  icon?: ReactNode;
+  iconSide?: 'left' | 'right';
 }
 
 export const Input: FC<InputProps> = ({
   label,
   error,
   helperText,
+  icon,
+  iconSide = 'left',
   className = '',
   id,
   type,
@@ -20,7 +24,9 @@ export const Input: FC<InputProps> = ({
   // ── Default text input ────────────────────────────────────────────────────
   const baseClasses = 'appearance-none relative block w-full px-3 py-2 border placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-800 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 focus:z-10 sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200';
   const errorClasses = error ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400 focus:border-red-500' : 'border-gray-300 dark:border-gray-600';
-  const classes = `${baseClasses} ${errorClasses} ${className}`;
+  const iconPaddingLeft = icon && iconSide === 'left' ? 'pl-9' : '';
+  const iconPaddingRight = icon && iconSide === 'right' ? 'pr-9' : '';
+  const classes = `${baseClasses} ${errorClasses} ${iconPaddingLeft} ${iconPaddingRight} ${className}`.trim();
 
   // ── Checkbox / Radio ──────────────────────────────────────────────────────
   const toggleShape = type === 'radio' ? 'rounded-full' : 'rounded';
@@ -37,37 +43,31 @@ export const Input: FC<InputProps> = ({
   const wrapperBase = 'space-y-1 w-full';
   const wrapperClasses = hasHidden ? `${wrapperBase} hidden` : wrapperBase;
 
+  const labelNode = label && (
+    typeof label === 'string' ? (
+      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+        {label}
+      </label>
+    ) : label
+  );
+
+  const errorNode = error && (
+    <p className="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>
+  );
+
+  const helperNode = helperText && !error && (
+    <p className="text-sm text-gray-500 dark:text-gray-400">{helperText}</p>
+  );
+
   if (type === 'checkbox' || type === 'radio') {
     return (
       <div className={wrapperClasses}>
         <div className="flex items-center space-x-2">
-          <input
-            id={inputId}
-            type={type}
-            className={toggleClasses}
-            {...props}
-          />
-          {label && typeof label === 'string' ? (
-            <label
-              htmlFor={inputId}
-              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              {label}
-            </label>
-          ) : (
-            label
-          )}
+          <input id={inputId} type={type} className={toggleClasses} {...props} />
+          {labelNode}
         </div>
-        {error && (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-            {error}
-          </p>
-        )}
-        {helperText && !error && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {helperText}
-          </p>
-        )}
+        {errorNode}
+        {helperNode}
       </div>
     );
   }
@@ -75,64 +75,32 @@ export const Input: FC<InputProps> = ({
   if (type === 'file') {
     return (
       <div className={wrapperClasses}>
-        {label && typeof label === 'string' ? (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-          >
-            {label}
-          </label>
-        ) : (
-          label
-        )}
-        <input
-          id={inputId}
-          type="file"
-          className={fileClasses}
-          {...props}
-        />
-        {error && (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-            {error}
-          </p>
-        )}
-        {helperText && !error && (
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {helperText}
-          </p>
-        )}
+        {labelNode}
+        <input id={inputId} type="file" className={fileClasses} {...props} />
+        {errorNode}
+        {helperNode}
       </div>
     );
   }
 
   return (
     <div className={wrapperClasses}>
-      {label && typeof label === 'string' ? (
-        <label
-          htmlFor={inputId}
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300"
-        >
-          {label}
-        </label>
-      ) : (
-        label
-      )}
-      <input
-        id={inputId}
-        className={classes}
-        type={type}
-        {...props}
-      />
-      {error && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-          {error}
-        </p>
-      )}
-      {helperText && !error && (
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {helperText}
-        </p>
-      )}
+      {labelNode}
+      <div className="relative">
+        {icon && iconSide === 'left' && (
+          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 text-gray-400 dark:text-gray-500">
+            {icon}
+          </div>
+        )}
+        <input id={inputId} className={classes} type={type} {...props} />
+        {icon && iconSide === 'right' && (
+          <div className="pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center pr-3 text-gray-400 dark:text-gray-500">
+            {icon}
+          </div>
+        )}
+      </div>
+      {errorNode}
+      {helperNode}
     </div>
   );
 };
