@@ -598,3 +598,44 @@ export function IconReset({ className }: Props) {
     </svg>
   );
 }
+
+export function IconUndo({ className }: Props) {
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+      <path d="M2.5 5.5A.5.5 0 013 5h5a5 5 0 110 10H3a.5.5 0 010-1h5a4 4 0 100-8H3.707l1.647 1.646a.5.5 0 01-.708.708l-2.5-2.5a.5.5 0 010-.708l2.5-2.5a.5.5 0 01.708.708L3.207 5H3a.5.5 0 01-.5-.5z" />
+    </svg>
+  );
+}
+
+export function IconRedo({ className }: Props) {
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+      <path d="M13.5 5.5A.5.5 0 0113 5H8a4 4 0 100 8h5a.5.5 0 010 1H8A5 5 0 118 5h4.293l-1.647-1.646a.5.5 0 01.708-.708l2.5 2.5a.5.5 0 010 .708l-2.5 2.5a.5.5 0 01-.708-.708L12.793 6H13a.5.5 0 01.5.5z" />
+    </svg>
+  );
+}
+
+export function IconPlace({ className }: Props) {
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+      <path d="M2 2a.5.5 0 01.5-.5h2a.5.5 0 010 1H3v1.5a.5.5 0 01-1 0V2zm11 0a.5.5 0 00-.5-.5h-2a.5.5 0 000 1H12v1.5a.5.5 0 001 0V2zM2 14a.5.5 0 00.5.5h2a.5.5 0 000-1H3v-1.5a.5.5 0 00-1 0V14zm11 0a.5.5 0 01-.5.5h-2a.5.5 0 010-1H12v-1.5a.5.5 0 011 0V14zM8 4.5a.5.5 0 000 1V7H6.5a.5.5 0 000 1H8v1.5a.5.5 0 001 0V8h1.5a.5.5 0 000-1H9V5.5a.5.5 0 00-1 0z" />
+    </svg>
+  );
+}
+
+export function IconErase({ className }: Props) {
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+      <path d="M8.086 2.207a2 2 0 012.828 0l2.879 2.878a2 2 0 010 2.83l-7.513 7.51A2 2 0 014.872 16H2.4a1 1 0 01-.966-.741L.8 13.2a2 2 0 01.5-1.946l7.786-9.047zM7.586 5L5 7.586 8.414 11 11 8.414 7.586 5zM6 12L4 10l-1.5 1.5a1 1 0 000 1.414l.587.587A1 1 0 003.793 15H5l1-1-1-1 1-1z" />
+    </svg>
+  );
+}
+
+export function IconDuplicate({ className }: Props) {
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+      <path d="M4 2a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H4zm0 1h8a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z" />
+      <path d="M2 5H1a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1v-1H9v1H1V6h1V5z" />
+    </svg>
+  );
+}

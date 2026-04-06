@@ -4,10 +4,14 @@ import type {
   VenueMapEditorProps,
   VenueMap,
   Floor,
+  MapElement,
   ToolMode,
 } from './types';
 import { Toolbar } from './components/Toolbar';
 import { EditorCanvas } from './components/EditorCanvas';
+import { PropertiesPanel } from './components/PropertiesPanel';
+import { useHistory } from './hooks/useHistory';
+import { useSelection } from './hooks/useSelection';
 import { genId } from './utils/idGen';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -39,66 +43,260 @@ function updateFloor(map: VenueMap, updatedFloor: Floor): VenueMap {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-/**
- * VenueMapEditor — Phase 1
- *
- * Renders an infinite SVG canvas with:
- *  - Pan via middle-click drag
- *  - Zoom via scroll wheel
- *  - A resizable artboard (FloorArea)
- *  - Toggleable grid overlay
- *  - Toolbar with SELECT / PAN tools and zoom controls
- */
 export function VenueMapEditor({
+  domainConfig,
   initialMap,
   onChange,
   width = '100%',
   height = '600px',
   gridSize = 20,
   showGrid: showGridProp = true,
+  snapToGrid: snapEnabled = true,
   readOnly = false,
 }: VenueMapEditorProps) {
-  const [map, setMap] = useState<VenueMap>(() => initialMap ?? createDefaultMap());
+  const initialMapRef = useRef<VenueMap>(initialMap ?? createDefaultMap());
+
+  const { map, canUndo, canRedo, push, replace, undo, redo } = useHistory(
+    initialMapRef.current,
+  );
+  const { selectedIds, select, selectSet, clear: clearSelection } = useSelection();
+
   const [activeFloorId, setActiveFloorId] = useState<string>(
-    () => (initialMap ?? createDefaultMap()).floors[0]?.id ?? '',
+    () => initialMapRef.current.floors[0]?.id ?? '',
   );
   const [tool, setTool] = useState<ToolMode>('SELECT');
   const [showGrid, setShowGrid] = useState(showGridProp);
-
-  // Re-render trigger when zoom changes (for the toolbar % label).
   const [zoom, setZoom] = useState(1);
+  const [activePlaceTypeId, setActivePlaceTypeId] = useState<string | null>(
+    () => domainConfig.elementTypes[0]?.id ?? null,
+  );
 
-  // A stable ref to a "zoomBy" / "resetView" callback that EditorCanvas will set.
   const zoomByRef = useRef<(factor: number) => void>(() => undefined);
   const resetViewRef = useRef<() => void>(() => undefined);
 
-  // ── Sync initialMap changes from outside ─────────────────────────────────
+  // ── Build elementTypeDefs map ────────────────────────────────────────────
+  const elementTypeDefs = useRef(new Map(domainConfig.elementTypes.map(t => [t.id, t])));
   useEffect(() => {
-    if (initialMap) {
-      setMap(initialMap);
+    elementTypeDefs.current = new Map(domainConfig.elementTypes.map(t => [t.id, t]));
+  }, [domainConfig]);
+
+  // ── Sync initialMap prop changes ─────────────────────────────────────────
+  // (rare — only when parent completely replaces the map)
+  const prevInitial = useRef(initialMap);
+  useEffect(() => {
+    if (initialMap && initialMap !== prevInitial.current) {
+      prevInitial.current = initialMap;
+      push(initialMap);
       setActiveFloorId(initialMap.floors[0]?.id ?? '');
     }
-  }, [initialMap]);
+  }, [initialMap, push]);
 
-  // ── Notify parent on every map change ────────────────────────────────────
-  const updateMap = useCallback(
-    (next: VenueMap) => {
-      setMap(next);
-      onChange?.(next);
-    },
-    [onChange],
-  );
+  // ── Notify parent ────────────────────────────────────────────────────────
+  useEffect(() => {
+    onChange?.(map);
+  }, [map, onChange]);
 
   // ── Active floor ─────────────────────────────────────────────────────────
-  const activeFloor =
-    map.floors.find(f => f.id === activeFloorId) ?? map.floors[0];
+  const activeFloor = map.floors.find(f => f.id === activeFloorId) ?? map.floors[0];
 
-  const handleAreaResize = useCallback(
-    (updatedFloor: Floor) => {
-      updateMap(updateFloor(map, updatedFloor));
-    },
-    [map, updateMap],
+  // ── Floor updaters ───────────────────────────────────────────────────────
+  const replaceFloor = useCallback(
+    (floor: Floor) => replace(updateFloor(map, floor)),
+    [map, replace],
   );
+
+  const pushFloor = useCallback(
+    (floor: Floor) => push(updateFloor(map, floor)),
+    [map, push],
+  );
+
+  // ── Area resize ──────────────────────────────────────────────────────────
+  const handleAreaResize = useCallback(
+    (updatedFloor: Floor) => replaceFloor(updatedFloor),
+    [replaceFloor],
+  );
+
+  // ── Element operations ───────────────────────────────────────────────────
+
+  /** Live move (no history entry). */
+  const handleMoveElement = useCallback(
+    (id: string, x: number, y: number) => {
+      if (!activeFloor) return;
+      replaceFloor({
+        ...activeFloor,
+        elements: activeFloor.elements.map(el =>
+          el.id === id ? { ...el, x, y } : el,
+        ),
+      });
+    },
+    [activeFloor, replaceFloor],
+  );
+
+  /** Commit move to history. */
+  const handleMoveCommit = useCallback(
+    (id: string, x: number, y: number) => {
+      if (!activeFloor) return;
+      pushFloor({
+        ...activeFloor,
+        elements: activeFloor.elements.map(el =>
+          el.id === id ? { ...el, x, y } : el,
+        ),
+      });
+    },
+    [activeFloor, pushFloor],
+  );
+
+  /** Live resize. */
+  const handleResizeElement = useCallback(
+    (id: string, x: number, y: number, w: number, h: number) => {
+      if (!activeFloor) return;
+      replaceFloor({
+        ...activeFloor,
+        elements: activeFloor.elements.map(el =>
+          el.id === id ? { ...el, x, y, width: w, height: h } : el,
+        ),
+      });
+    },
+    [activeFloor, replaceFloor],
+  );
+
+  /** Commit resize. */
+  const handleResizeCommit = useCallback(
+    (id: string, x: number, y: number, w: number, h: number) => {
+      if (!activeFloor) return;
+      pushFloor({
+        ...activeFloor,
+        elements: activeFloor.elements.map(el =>
+          el.id === id ? { ...el, x, y, width: w, height: h } : el,
+        ),
+      });
+    },
+    [activeFloor, pushFloor],
+  );
+
+  /** Live rotate. */
+  const handleRotateElement = useCallback(
+    (id: string, rotation: number) => {
+      if (!activeFloor) return;
+      replaceFloor({
+        ...activeFloor,
+        elements: activeFloor.elements.map(el =>
+          el.id === id ? { ...el, rotation } : el,
+        ),
+      });
+    },
+    [activeFloor, replaceFloor],
+  );
+
+  /** Commit rotate. */
+  const handleRotateCommit = useCallback(
+    (id: string, rotation: number) => {
+      if (!activeFloor) return;
+      pushFloor({
+        ...activeFloor,
+        elements: activeFloor.elements.map(el =>
+          el.id === id ? { ...el, rotation } : el,
+        ),
+      });
+    },
+    [activeFloor, pushFloor],
+  );
+
+  /** Delete one element (from ElementNode erase/delete). */
+  const handleDeleteElement = useCallback(
+    (id: string) => {
+      if (!activeFloor) return;
+      clearSelection();
+      pushFloor({
+        ...activeFloor,
+        elements: activeFloor.elements.filter(el => el.id !== id),
+      });
+    },
+    [activeFloor, pushFloor, clearSelection],
+  );
+
+  /** Delete multiple elements (from PropertiesPanel). */
+  const handleDeleteElements = useCallback(
+    (ids: string[]) => {
+      if (!activeFloor) return;
+      const idSet = new Set(ids);
+      clearSelection();
+      pushFloor({
+        ...activeFloor,
+        elements: activeFloor.elements.filter(el => !idSet.has(el.id)),
+      });
+    },
+    [activeFloor, pushFloor, clearSelection],
+  );
+
+  /** Duplicate elements. */
+  const handleDuplicateElements = useCallback(
+    (ids: string[]) => {
+      if (!activeFloor) return;
+      const idSet = new Set(ids);
+      const copies: MapElement[] = activeFloor.elements
+        .filter(el => idSet.has(el.id))
+        .map(el => ({ ...el, id: genId(), x: el.x + 20, y: el.y + 20 }));
+      const newFloor = { ...activeFloor, elements: [...activeFloor.elements, ...copies] };
+      pushFloor(newFloor);
+      selectSet(copies.map(c => c.id));
+    },
+    [activeFloor, pushFloor, selectSet],
+  );
+
+  /** Place a new element at canvas coordinates. */
+  const handlePlaceElement = useCallback(
+    (canvasX: number, canvasY: number) => {
+      if (!activeFloor || !activePlaceTypeId) return;
+      const typeDef = elementTypeDefs.current.get(activePlaceTypeId);
+      if (!typeDef) return;
+      const newEl: MapElement = {
+        id: genId(),
+        type: activePlaceTypeId,
+        x: canvasX - typeDef.defaultWidth / 2,
+        y: canvasY - typeDef.defaultHeight / 2,
+        width: typeDef.defaultWidth,
+        height: typeDef.defaultHeight,
+        rotation: 0,
+      };
+      pushFloor({ ...activeFloor, elements: [...activeFloor.elements, newEl] });
+      select(newEl.id, false);
+    },
+    [activeFloor, activePlaceTypeId, pushFloor, select],
+  );
+
+  /** Update element label from PropertiesPanel. */
+  const handleChangeLabel = useCallback(
+    (id: string, label: string) => {
+      if (!activeFloor) return;
+      pushFloor({
+        ...activeFloor,
+        elements: activeFloor.elements.map(el =>
+          el.id === id ? { ...el, label } : el,
+        ),
+      });
+    },
+    [activeFloor, pushFloor],
+  );
+
+  /** Update element geometry from PropertiesPanel numeric fields. */
+  const handleChangeGeometry = useCallback(
+    (id: string, x: number, y: number, w: number, h: number, r: number) => {
+      if (!activeFloor) return;
+      pushFloor({
+        ...activeFloor,
+        elements: activeFloor.elements.map(el =>
+          el.id === id ? { ...el, x, y, width: w, height: h, rotation: r } : el,
+        ),
+      });
+    },
+    [activeFloor, pushFloor],
+  );
+
+  // ── Selected elements (for PropertiesPanel) ──────────────────────────────
+  const selectedElements = activeFloor
+    ? activeFloor.elements.filter(el => selectedIds.has(el.id))
+    : [];
 
   // ── Keyboard shortcuts ───────────────────────────────────────────────────
   useEffect(() => {
@@ -106,33 +304,36 @@ export function VenueMapEditor({
       const tag = (e.target as HTMLElement).tagName;
       if (tag === 'INPUT' || tag === 'TEXTAREA') return;
 
+      const ctrl = e.ctrlKey || e.metaKey;
+
+      if (ctrl && e.key === 'z') { e.preventDefault(); undo(); return; }
+      if (ctrl && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); redo(); return; }
+      if (ctrl && (e.key === 'd' || e.key === 'D')) {
+        e.preventDefault();
+        if (selectedIds.size > 0) handleDuplicateElements([...selectedIds]);
+        return;
+      }
+
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedIds.size > 0) handleDeleteElements([...selectedIds]);
+        return;
+      }
+
       switch (e.key) {
-        case 'v':
-        case 'V':
-          setTool('SELECT');
-          break;
-        case 'h':
-        case 'H':
-          setTool('PAN');
-          break;
-        case 'Escape':
-          setTool('SELECT');
-          break;
-        case '+':
-        case '=':
-          zoomByRef.current(1.2);
-          break;
-        case '-':
-        case '_':
-          zoomByRef.current(1 / 1.2);
-          break;
+        case 'v': case 'V': setTool('SELECT'); break;
+        case 'h': case 'H': setTool('PAN'); break;
+        case 'p': case 'P': setTool('PLACE'); break;
+        case 'e': case 'E': setTool('ERASE'); break;
+        case 'Escape': setTool('SELECT'); break;
+        case '+': case '=': zoomByRef.current(1.2); break;
+        case '-': case '_': zoomByRef.current(1 / 1.2); break;
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
+  }, [undo, redo, selectedIds, handleDuplicateElements, handleDeleteElements]);
 
-  // ── Container styles ─────────────────────────────────────────────────────
+  // ── Container style ──────────────────────────────────────────────────────
   const containerStyle: CSSProperties = {
     width,
     height,
@@ -145,30 +346,30 @@ export function VenueMapEditor({
     fontFamily: 'system-ui, sans-serif',
   };
 
-  // ── Pan/zoom bridge ──────────────────────────────────────────────────────
-  // EditorCanvas owns the pan/zoom state internally. We give it callbacks so
-  // the toolbar zoom buttons (and keyboard shortcuts) can trigger changes.
-  // The ref approach avoids circular state — EditorCanvas keeps its own state
-  // but tells us the current zoom for the toolbar label.
-  const handleZoomChange = useCallback((z: number) => setZoom(z), []);
-
   return (
     <div style={containerStyle}>
       {/* Toolbar */}
       {!readOnly && (
         <Toolbar
           tool={tool}
-          onToolChange={setTool}
+          onToolChange={t => { setTool(t); if (t !== 'PLACE') clearSelection(); }}
           showGrid={showGrid}
           onToggleGrid={() => setShowGrid(g => !g)}
           zoom={zoom}
           onZoomIn={() => zoomByRef.current(1.2)}
           onZoomOut={() => zoomByRef.current(1 / 1.2)}
           onResetView={() => resetViewRef.current()}
+          canUndo={canUndo}
+          canRedo={canRedo}
+          onUndo={undo}
+          onRedo={redo}
+          domainConfig={domainConfig}
+          activePlaceTypeId={activePlaceTypeId}
+          onActivePlaceTypeChange={setActivePlaceTypeId}
         />
       )}
 
-      {/* Floor tabs (Phase 4 — placeholder row for single floor) */}
+      {/* Floor tabs */}
       {map.floors.length > 1 && (
         <div className="flex gap-1 px-2 py-1 border-b border-slate-200 bg-slate-50 text-xs">
           {map.floors
@@ -191,20 +392,48 @@ export function VenueMapEditor({
         </div>
       )}
 
-      {/* Canvas */}
-      <div className="flex-1 min-h-0 relative">
-        {activeFloor && (
-          <EditorCanvas
-            key={activeFloor.id}
-            floor={activeFloor}
-            tool={tool}
-            gridSize={gridSize}
-            showGrid={showGrid}
-            readOnly={readOnly}
-            onAreaResize={handleAreaResize}
-            onZoomChange={handleZoomChange}
-            onRegisterZoomBy={fn => { zoomByRef.current = fn; }}
-            onRegisterResetView={fn => { resetViewRef.current = fn; }}
+      {/* Canvas + Properties panel */}
+      <div className="flex flex-1 min-h-0">
+        <div className="flex-1 min-w-0 relative">
+          {activeFloor && (
+            <EditorCanvas
+              key={activeFloor.id}
+              floor={activeFloor}
+              tool={tool}
+              gridSize={gridSize}
+              showGrid={showGrid}
+              readOnly={readOnly}
+              snapEnabled={snapEnabled}
+              elementTypeDefs={elementTypeDefs.current}
+              selectedIds={selectedIds}
+              onAreaResize={handleAreaResize}
+              onSelectElement={select}
+              onSelectSet={selectSet}
+              onClearSelection={clearSelection}
+              onMoveElement={handleMoveElement}
+              onMoveCommit={handleMoveCommit}
+              onResizeElement={handleResizeElement}
+              onResizeCommit={handleResizeCommit}
+              onRotateElement={handleRotateElement}
+              onRotateCommit={handleRotateCommit}
+              onDeleteElement={handleDeleteElement}
+              onPlaceElement={handlePlaceElement}
+              onZoomChange={setZoom}
+              onRegisterZoomBy={fn => { zoomByRef.current = fn; }}
+              onRegisterResetView={fn => { resetViewRef.current = fn; }}
+            />
+          )}
+        </div>
+
+        {/* Properties panel */}
+        {!readOnly && selectedElements.length > 0 && (
+          <PropertiesPanel
+            elements={selectedElements}
+            typeDefs={elementTypeDefs.current}
+            onChangeLabel={handleChangeLabel}
+            onChangeGeometry={handleChangeGeometry}
+            onDelete={handleDeleteElements}
+            onDuplicate={handleDuplicateElements}
           />
         )}
       </div>
