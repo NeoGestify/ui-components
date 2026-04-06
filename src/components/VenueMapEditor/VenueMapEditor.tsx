@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import type { CSSProperties } from 'react';
 import type {
   VenueMapEditorProps,
@@ -8,21 +8,19 @@ import type {
   WallNode,
   Wall,
   ToolMode,
+  FloorArea,
+  AreaShape,
 } from './types';
 import { Toolbar } from './components/Toolbar';
 import { EditorCanvas } from './components/EditorCanvas';
 import { PropertiesPanel } from './components/PropertiesPanel';
+import { FloorTabs } from './components/FloorTabs';
 import { useHistory } from './hooks/useHistory';
 import { useSelection } from './hooks/useSelection';
 import { genId } from './utils/idGen';
-import type { FloorArea } from './types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Clamp an element's top-left corner so it stays fully inside the floor area.
- * If the element is wider/taller than the floor, center it on that axis instead.
- */
 function clampToFloor(
   x: number, y: number,
   w: number, h: number,
@@ -64,6 +62,40 @@ function updateFloor(map: VenueMap, updatedFloor: Floor): VenueMap {
   };
 }
 
+function rectToPolygon(area: FloorArea): FloorArea {
+  const ax = area.x ?? 0;
+  const ay = area.y ?? 0;
+  const aw = area.width ?? 400;
+  const ah = area.height ?? 300;
+  return {
+    shape: 'polygon',
+    points: [
+      [ax, ay],
+      [ax + aw, ay],
+      [ax + aw, ay + ah],
+      [ax, ay + ah],
+    ],
+  };
+}
+
+function polygonToRect(area: FloorArea): FloorArea {
+  const pts = area.points ?? [];
+  if (pts.length === 0) return { shape: 'rect', x: 60, y: 60, width: 400, height: 300 };
+  const xs = pts.map(p => p[0]);
+  const ys = pts.map(p => p[1]);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  const maxX = Math.max(...xs);
+  const maxY = Math.max(...ys);
+  return {
+    shape: 'rect',
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function VenueMapEditor({
@@ -77,6 +109,8 @@ export function VenueMapEditor({
   snapToGrid: snapEnabled = false,
   readOnly = false,
   fixed = false,
+  elementStatus,
+  onElementClick,
 }: VenueMapEditorProps) {
   const initialMapRef = useRef<VenueMap>(initialMap ?? createDefaultMap());
 
@@ -97,15 +131,13 @@ export function VenueMapEditor({
 
   const zoomByRef = useRef<(factor: number) => void>(() => undefined);
   const resetViewRef = useRef<() => void>(() => undefined);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Build elementTypeDefs map ────────────────────────────────────────────
   const elementTypeDefs = useRef(new Map(domainConfig.elementTypes.map(t => [t.id, t])));
   useEffect(() => {
     elementTypeDefs.current = new Map(domainConfig.elementTypes.map(t => [t.id, t]));
   }, [domainConfig]);
 
-  // ── Sync initialMap prop changes ─────────────────────────────────────────
-  // (rare — only when parent completely replaces the map)
   const prevInitial = useRef(initialMap);
   useEffect(() => {
     if (initialMap && initialMap !== prevInitial.current) {
@@ -115,15 +147,12 @@ export function VenueMapEditor({
     }
   }, [initialMap, push]);
 
-  // ── Notify parent ────────────────────────────────────────────────────────
   useEffect(() => {
     onChange?.(map);
   }, [map, onChange]);
 
-  // ── Active floor ─────────────────────────────────────────────────────────
   const activeFloor = map.floors.find(f => f.id === activeFloorId) ?? map.floors[0];
 
-  // ── Floor updaters ───────────────────────────────────────────────────────
   const replaceFloor = useCallback(
     (floor: Floor) => replace(updateFloor(map, floor)),
     [map, replace],
@@ -134,28 +163,132 @@ export function VenueMapEditor({
     [map, push],
   );
 
-  // ── Area resize (handle drag — only shape changes, elements stay put) ───
+  // ── Area resize (handle drag) ────────────────────────────────────────────
   const handleAreaResize = useCallback(
     (updatedFloor: Floor) => replaceFloor(updatedFloor),
     [replaceFloor],
   );
 
-  // ── Area move (body drag — area + walls + elements shift by the same delta)
+  // ── Area resize commit (push to history) ─────────────────────────────────
+  const handleAreaResizeCommit = useCallback(
+    (updatedFloor: Floor) => pushFloor(updatedFloor),
+    [pushFloor],
+  );
+
+  // ── Area move (body drag) ────────────────────────────────────────────────
   const handleAreaMove = useCallback(
     (dx: number, dy: number) => {
       if (!activeFloor) return;
+      const area = activeFloor.area;
+      const newArea: FloorArea = area.shape === 'polygon'
+        ? { ...area, points: (area.points ?? []).map(([x, y]) => [x + dx, y + dy] as [number, number]) }
+        : { ...area, x: (area.x ?? 0) + dx, y: (area.y ?? 0) + dy };
       replaceFloor({
         ...activeFloor,
-        area: {
-          ...activeFloor.area,
-          x: (activeFloor.area.x ?? 0) + dx,
-          y: (activeFloor.area.y ?? 0) + dy,
-        },
+        area: newArea,
         wallNodes: activeFloor.wallNodes.map(n => ({ ...n, x: n.x + dx, y: n.y + dy })),
         elements: activeFloor.elements.map(el => ({ ...el, x: el.x + dx, y: el.y + dy })),
       });
     },
     [activeFloor, replaceFloor],
+  );
+
+  // ── Area shape toggle ────────────────────────────────────────────────────
+  const handleToggleAreaShape = useCallback(() => {
+    if (!activeFloor) return;
+    const { area } = activeFloor;
+    const newArea: FloorArea = area.shape === 'polygon'
+      ? polygonToRect(area)
+      : rectToPolygon(area);
+    pushFloor({ ...activeFloor, area: newArea });
+  }, [activeFloor, pushFloor]);
+
+  // ── Floor operations ─────────────────────────────────────────────────────
+
+  const handleAddFloor = useCallback(() => {
+    const maxOrder = map.floors.reduce((m, f) => Math.max(m, f.order), -1);
+    const newFloor: Floor = {
+      id: genId(),
+      name: `Planta ${map.floors.length + 1}`,
+      order: maxOrder + 1,
+      area: { shape: 'rect', x: 60, y: 60, width: 600, height: 400 },
+      wallNodes: [],
+      walls: [],
+      elements: [],
+    };
+    const newMap: VenueMap = { ...map, floors: [...map.floors, newFloor] };
+    push(newMap);
+    setActiveFloorId(newFloor.id);
+  }, [map, push]);
+
+  const handleRenameFloor = useCallback(
+    (id: string, name: string) => {
+      const floor = map.floors.find(f => f.id === id);
+      if (!floor) return;
+      push(updateFloor(map, { ...floor, name }));
+    },
+    [map, push],
+  );
+
+  const handleDeleteFloor = useCallback(
+    (id: string) => {
+      if (map.floors.length <= 1) return;
+      const remaining = map.floors.filter(f => f.id !== id);
+      const newMap: VenueMap = { ...map, floors: remaining };
+      push(newMap);
+      if (activeFloorId === id) {
+        setActiveFloorId(remaining[0]?.id ?? '');
+      }
+    },
+    [map, push, activeFloorId],
+  );
+
+  const handleReorderFloor = useCallback(
+    (id: string, direction: 'left' | 'right') => {
+      const sorted = map.floors.slice().sort((a, b) => a.order - b.order);
+      const idx = sorted.findIndex(f => f.id === id);
+      if (idx < 0) return;
+      const swapIdx = direction === 'left' ? idx - 1 : idx + 1;
+      if (swapIdx < 0 || swapIdx >= sorted.length) return;
+      const a = sorted[idx];
+      const b = sorted[swapIdx];
+      const updatedFloors = map.floors.map(f => {
+        if (f.id === a.id) return { ...f, order: b.order };
+        if (f.id === b.id) return { ...f, order: a.order };
+        return f;
+      });
+      push({ ...map, floors: updatedFloors });
+    },
+    [map, push],
+  );
+
+  // ── Export / Import ──────────────────────────────────────────────────────
+
+  const handleExportMap = useCallback(() => {
+    const blob = new Blob([JSON.stringify(map, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${map.name || 'mapa'}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [map]);
+
+  const handleImportMap = useCallback(
+    (file: File) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target?.result as string) as VenueMap;
+          push(parsed);
+          setActiveFloorId(parsed.floors[0]?.id ?? '');
+        } catch {
+          // ignore parse errors
+        }
+      };
+      reader.readAsText(file);
+    },
+    [push],
   );
 
   // ── Wall operations ──────────────────────────────────────────────────────
@@ -203,7 +336,6 @@ export function VenueMapEditor({
     (wallId: string) => {
       if (!activeFloor) return;
       const remainingWalls = activeFloor.walls.filter(w => w.id !== wallId);
-      // Remove nodes that no longer connect any wall
       const usedNodeIds = new Set(remainingWalls.flatMap(w => [w.nodeAId, w.nodeBId]));
       const remainingNodes = activeFloor.wallNodes.filter(n => usedNodeIds.has(n.id));
       pushFloor({ ...activeFloor, walls: remainingWalls, wallNodes: remainingNodes });
@@ -213,7 +345,6 @@ export function VenueMapEditor({
 
   // ── Element operations ───────────────────────────────────────────────────
 
-  /** Live move (no history entry) — clamped to floor bounds. */
   const handleMoveElement = useCallback(
     (id: string, x: number, y: number) => {
       if (!activeFloor) return;
@@ -228,7 +359,6 @@ export function VenueMapEditor({
     [activeFloor, replaceFloor],
   );
 
-  /** Commit move to history — clamped to floor bounds. */
   const handleMoveCommit = useCallback(
     (id: string, x: number, y: number) => {
       if (!activeFloor) return;
@@ -243,7 +373,6 @@ export function VenueMapEditor({
     [activeFloor, pushFloor],
   );
 
-  /** Live resize. */
   const handleResizeElement = useCallback(
     (id: string, x: number, y: number, w: number, h: number) => {
       if (!activeFloor) return;
@@ -257,7 +386,6 @@ export function VenueMapEditor({
     [activeFloor, replaceFloor],
   );
 
-  /** Commit resize. */
   const handleResizeCommit = useCallback(
     (id: string, x: number, y: number, w: number, h: number) => {
       if (!activeFloor) return;
@@ -271,7 +399,6 @@ export function VenueMapEditor({
     [activeFloor, pushFloor],
   );
 
-  /** Live rotate. */
   const handleRotateElement = useCallback(
     (id: string, rotation: number) => {
       if (!activeFloor) return;
@@ -285,7 +412,6 @@ export function VenueMapEditor({
     [activeFloor, replaceFloor],
   );
 
-  /** Commit rotate. */
   const handleRotateCommit = useCallback(
     (id: string, rotation: number) => {
       if (!activeFloor) return;
@@ -299,7 +425,6 @@ export function VenueMapEditor({
     [activeFloor, pushFloor],
   );
 
-  /** Delete one element (from ElementNode erase/delete). */
   const handleDeleteElement = useCallback(
     (id: string) => {
       if (!activeFloor) return;
@@ -312,7 +437,6 @@ export function VenueMapEditor({
     [activeFloor, pushFloor, clearSelection],
   );
 
-  /** Delete multiple elements (from PropertiesPanel). */
   const handleDeleteElements = useCallback(
     (ids: string[]) => {
       if (!activeFloor) return;
@@ -326,7 +450,6 @@ export function VenueMapEditor({
     [activeFloor, pushFloor, clearSelection],
   );
 
-  /** Duplicate elements. */
   const handleDuplicateElements = useCallback(
     (ids: string[]) => {
       if (!activeFloor) return;
@@ -341,14 +464,12 @@ export function VenueMapEditor({
     [activeFloor, pushFloor, selectSet],
   );
 
-  /** Place a new element at canvas coordinates. */
   const handlePlaceElement = useCallback(
     (canvasX: number, canvasY: number) => {
       if (!activeFloor || !activePlaceTypeId) return;
       const typeDef = elementTypeDefs.current.get(activePlaceTypeId);
       if (!typeDef) return;
 
-      // Reject clicks that land outside the floor area entirely
       const { area } = activeFloor;
       if (area.shape === 'rect') {
         const ax = area.x ?? 0, ay = area.y ?? 0;
@@ -356,7 +477,6 @@ export function VenueMapEditor({
         if (canvasX < ax || canvasX > ax + aw || canvasY < ay || canvasY > ay + ah) return;
       }
 
-      // Center on click, then clamp so the element stays fully inside the floor
       const { x, y } = clampToFloor(
         canvasX - typeDef.defaultWidth / 2,
         canvasY - typeDef.defaultHeight / 2,
@@ -380,7 +500,6 @@ export function VenueMapEditor({
     [activeFloor, activePlaceTypeId, pushFloor, select],
   );
 
-  /** Update element label from PropertiesPanel. */
   const handleChangeLabel = useCallback(
     (id: string, label: string) => {
       if (!activeFloor) return;
@@ -394,7 +513,6 @@ export function VenueMapEditor({
     [activeFloor, pushFloor],
   );
 
-  /** Update element geometry from PropertiesPanel numeric fields. */
   const handleChangeGeometry = useCallback(
     (id: string, x: number, y: number, w: number, h: number, r: number) => {
       if (!activeFloor) return;
@@ -408,7 +526,18 @@ export function VenueMapEditor({
     [activeFloor, pushFloor],
   );
 
-  // ── Selected elements (for PropertiesPanel) ──────────────────────────────
+  // ── Status map ───────────────────────────────────────────────────────────
+  const statusMap = useMemo(() => {
+    const m = new Map<string, string>();
+    (elementStatus ?? []).forEach(s => {
+      if (s.status === 'occupied') m.set(s.elementId, '#fca5a5');
+      else if (s.status === 'reserved') m.set(s.elementId, '#fde68a');
+      else if (s.status === 'disabled') m.set(s.elementId, '#d1d5db');
+    });
+    return m;
+  }, [elementStatus]);
+
+  // ── Selected elements ────────────────────────────────────────────────────
   const selectedElements = activeFloor
     ? activeFloor.elements.filter(el => selectedIds.has(el.id))
     : [];
@@ -450,7 +579,6 @@ export function VenueMapEditor({
   }, [undo, redo, selectedIds, handleDuplicateElements, handleDeleteElements]);
 
   // ── Fixed / read-only derived state ─────────────────────────────────────
-  // fixed=true: viewer-only — no editing, left-click drags the canvas
   const effectiveReadOnly = readOnly || fixed;
   const effectiveTool: ToolMode = fixed ? 'PAN' : tool;
 
@@ -467,8 +595,23 @@ export function VenueMapEditor({
     fontFamily: 'system-ui, sans-serif',
   };
 
+  const activeAreaShape: AreaShape | undefined = activeFloor?.area.shape;
+
   return (
     <div style={containerStyle}>
+      {/* Hidden file input for import */}
+      <input
+        ref={importInputRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={e => {
+          const f = e.target.files?.[0];
+          if (f) handleImportMap(f);
+          e.target.value = '';
+        }}
+      />
+
       {/* Toolbar */}
       {!effectiveReadOnly && (
         <Toolbar
@@ -487,31 +630,24 @@ export function VenueMapEditor({
           domainConfig={domainConfig}
           activePlaceTypeId={activePlaceTypeId}
           onActivePlaceTypeChange={setActivePlaceTypeId}
+          areaShape={activeAreaShape}
+          onToggleAreaShape={handleToggleAreaShape}
+          onExportMap={handleExportMap}
+          onImportMap={() => importInputRef.current?.click()}
         />
       )}
 
       {/* Floor tabs */}
-      {map.floors.length > 1 && (
-        <div className="flex gap-1 px-2 py-1 border-b border-slate-200 bg-slate-50 text-xs">
-          {map.floors
-            .slice()
-            .sort((a, b) => a.order - b.order)
-            .map(f => (
-              <button
-                key={f.id}
-                onClick={() => setActiveFloorId(f.id)}
-                className={[
-                  'px-3 py-1 rounded-t border transition-colors',
-                  f.id === activeFloorId
-                    ? 'bg-white border-slate-300 text-slate-800 font-medium'
-                    : 'border-transparent text-slate-500 hover:text-slate-700',
-                ].join(' ')}
-              >
-                {f.name}
-              </button>
-            ))}
-        </div>
-      )}
+      <FloorTabs
+        floors={map.floors}
+        activeFloorId={activeFloorId}
+        readOnly={effectiveReadOnly}
+        onSelect={setActiveFloorId}
+        onAdd={handleAddFloor}
+        onRename={handleRenameFloor}
+        onDelete={handleDeleteFloor}
+        onReorder={handleReorderFloor}
+      />
 
       {/* Canvas + Properties panel */}
       <div className="flex flex-1 min-h-0">
@@ -527,8 +663,10 @@ export function VenueMapEditor({
               snapEnabled={snapEnabled}
               elementTypeDefs={elementTypeDefs.current}
               selectedIds={selectedIds}
+              statusMap={statusMap}
               onAreaResize={handleAreaResize}
               onAreaMove={handleAreaMove}
+              onAreaResizeCommit={handleAreaResizeCommit}
               onSelectElement={select}
               onSelectSet={selectSet}
               onClearSelection={clearSelection}
@@ -542,6 +680,10 @@ export function VenueMapEditor({
               onPlaceElement={handlePlaceElement}
               onAddWall={handleAddWall}
               onDeleteWall={handleDeleteWall}
+              onViewerElementClick={onElementClick ? (id) => {
+                const el = activeFloor.elements.find(e => e.id === id);
+                if (el) onElementClick(el);
+              } : undefined}
               onZoomChange={setZoom}
               onRegisterZoomBy={fn => { zoomByRef.current = fn; }}
               onRegisterResetView={fn => { resetViewRef.current = fn; }}

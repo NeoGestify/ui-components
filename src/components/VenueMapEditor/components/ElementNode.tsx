@@ -55,6 +55,7 @@ interface ElementNodeProps {
   panZoomRef: { current: PanZoomState };
   snapEnabled: boolean;
   gridSize: number;
+  statusFill?: string;
   onSelect: (multi: boolean) => void;
   onMove: (x: number, y: number) => void;
   onMoveCommit: (x: number, y: number) => void;
@@ -63,6 +64,7 @@ interface ElementNodeProps {
   onRotate: (rotation: number) => void;
   onRotateCommit: (rotation: number) => void;
   onDelete: () => void;
+  onViewerClick?: () => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -77,6 +79,7 @@ export function ElementNode({
   panZoomRef,
   snapEnabled,
   gridSize,
+  statusFill,
   onSelect,
   onMove,
   onMoveCommit,
@@ -85,6 +88,7 @@ export function ElementNode({
   onRotate,
   onRotateCommit,
   onDelete,
+  onViewerClick,
 }: ElementNodeProps) {
   const { x, y, width: w, height: h, rotation } = element;
   const cx = x + w / 2;
@@ -216,14 +220,16 @@ export function ElementNode({
   const handleBodyClick = useCallback(
     (e: ReactMouseEvent) => {
       e.stopPropagation();
+      if (onViewerClick) { onViewerClick(); return; }
       if (tool === 'ERASE') { onDelete(); return; }
       if (tool === 'SELECT') { onSelect(e.ctrlKey || e.metaKey || e.shiftKey); }
     },
-    [tool, onDelete, onSelect],
+    [tool, onDelete, onSelect, onViewerClick],
   );
 
   // ── Derived ─────────────────────────────────────────────────────────────────
-  const bodyCursor = tool === 'ERASE' ? 'crosshair' : tool === 'SELECT' ? 'move' : 'default';
+  const fillColor = statusFill ?? typeDef.color;
+  const bodyCursor = onViewerClick ? 'pointer' : tool === 'ERASE' ? 'crosshair' : tool === 'SELECT' ? 'move' : 'default';
 
   const handles: Array<{ type: HandleType; hx: number; hy: number }> = [
     { type: 'nw', hx: x,      hy: y },
@@ -242,33 +248,33 @@ export function ElementNode({
       {typeDef.shape === 'rect' && (
         <rect
           x={x} y={y} width={w} height={h}
-          fill={typeDef.color}
+          fill={fillColor}
           stroke={isSelected ? '#3b82f6' : typeDef.strokeColor}
           strokeWidth={isSelected ? sw * 1.5 : sw}
           style={{ cursor: bodyCursor }}
-          onMouseDown={tool === 'SELECT' ? handleBodyDown : undefined}
+          onMouseDown={tool === 'SELECT' && !onViewerClick ? handleBodyDown : undefined}
           onClick={handleBodyClick}
         />
       )}
       {typeDef.shape === 'circle' && (
         <ellipse
           cx={cx} cy={cy} rx={w / 2} ry={h / 2}
-          fill={typeDef.color}
+          fill={fillColor}
           stroke={isSelected ? '#3b82f6' : typeDef.strokeColor}
           strokeWidth={isSelected ? sw * 1.5 : sw}
           style={{ cursor: bodyCursor }}
-          onMouseDown={tool === 'SELECT' ? handleBodyDown : undefined}
+          onMouseDown={tool === 'SELECT' && !onViewerClick ? handleBodyDown : undefined}
           onClick={handleBodyClick}
         />
       )}
       {typeDef.shape === 'arrow' && (
         <path
           d={arrowPath(x, y, w, h)}
-          fill={typeDef.color}
+          fill={fillColor}
           stroke={isSelected ? '#3b82f6' : typeDef.strokeColor}
           strokeWidth={isSelected ? sw * 1.5 : sw}
           style={{ cursor: bodyCursor }}
-          onMouseDown={tool === 'SELECT' ? handleBodyDown : undefined}
+          onMouseDown={tool === 'SELECT' && !onViewerClick ? handleBodyDown : undefined}
           onClick={handleBodyClick}
         />
       )}

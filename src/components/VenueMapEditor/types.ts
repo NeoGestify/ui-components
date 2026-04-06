@@ -110,6 +110,8 @@ export interface VenueMapEditorProps {
   readOnly?: boolean;
   /** Viewer-only mode: pan and zoom are allowed but nothing can be edited. */
   fixed?: boolean;
+  elementStatus?: ElementStatus[];
+  onElementClick?: (element: MapElement) => void;
 }
 
 export interface VenueMapViewerProps extends VenueMapEditorProps {

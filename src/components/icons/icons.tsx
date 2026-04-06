@@ -649,3 +649,34 @@ export function IconWall({ className }: Props) {
     </svg>
   );
 }
+
+export function IconDownload({ className }: Props) {
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+      <path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/>
+      <path d="M7.646 11.854a.5.5 0 00.708 0l3-3a.5.5 0 00-.708-.708L8.5 10.293V1.5a.5.5 0 00-1 0v8.793L5.354 8.146a.5.5 0 10-.708.708l3 3z"/>
+    </svg>
+  );
+}
+
+export function IconUpload({ className }: Props) {
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+      <path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/>
+      <path d="M7.646 1.146a.5.5 0 01.708 0l3 3a.5.5 0 01-.708.708L8.5 2.707V11.5a.5.5 0 01-1 0V2.707L5.354 4.854a.5.5 0 11-.708-.708l3-3z"/>
+    </svg>
+  );
+}
+
+export function IconPolygon({ className }: Props) {
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="none" stroke="currentColor" strokeLinejoin="round">
+      <path strokeWidth="1.5" d="M8 2 L14 6 L12 13 L4 13 L2 6 Z"/>
+      <circle cx="8" cy="2" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="14" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="12" cy="13" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="4" cy="13" r="1.5" fill="currentColor" stroke="none"/>
+      <circle cx="2" cy="6" r="1.5" fill="currentColor" stroke="none"/>
+    </svg>
+  );
+}

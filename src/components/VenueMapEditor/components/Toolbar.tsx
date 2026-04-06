@@ -2,8 +2,9 @@ import type { ReactNode } from 'react';
 import {
   IconCursor, IconGrid, IconHand, IconReset, IconZoomIn, IconZoomOut,
   IconUndo, IconRedo, IconPlace, IconErase, IconWall, TrashIcon,
+  IconDownload, IconUpload,
 } from '../../icons';
-import type { ToolMode, DomainConfig, ElementTypeDef } from '../types';
+import type { ToolMode, DomainConfig, ElementTypeDef, AreaShape } from '../types';
 
 // ─── ToolButton ───────────────────────────────────────────────────────────────
 
@@ -55,6 +56,10 @@ interface ToolbarProps {
   domainConfig: DomainConfig;
   activePlaceTypeId: string | null;
   onActivePlaceTypeChange: (id: string) => void;
+  areaShape?: AreaShape;
+  onToggleAreaShape?: () => void;
+  onExportMap?: () => void;
+  onImportMap?: () => void;
 }
 
 // ─── Element type chip ────────────────────────────────────────────────────────
@@ -104,6 +109,10 @@ export function Toolbar({
   domainConfig,
   activePlaceTypeId,
   onActivePlaceTypeChange,
+  areaShape,
+  onToggleAreaShape,
+  onExportMap,
+  onImportMap,
 }: ToolbarProps) {
   return (
     <div className="flex flex-col bg-white border-b border-slate-200 shadow-sm shrink-0">
@@ -162,6 +171,24 @@ export function Toolbar({
         <ToolButton title="Restablecer vista" onClick={onResetView}>
           <IconReset className="w-4 h-4" />
         </ToolButton>
+
+        <Sep />
+
+        <ToolButton title="Exportar JSON" onClick={() => onExportMap?.()}>
+          <IconDownload className="w-4 h-4" />
+        </ToolButton>
+        <ToolButton title="Importar JSON" onClick={() => onImportMap?.()}>
+          <IconUpload className="w-4 h-4" />
+        </ToolButton>
+
+        {areaShape !== undefined && (
+          <>
+            <Sep />
+            <ToolButton title="Cambiar forma del área" onClick={() => onToggleAreaShape?.()}>
+              <span className="text-xs font-medium">{areaShape === 'polygon' ? 'Poly' : 'Rect'}</span>
+            </ToolButton>
+          </>
+        )}
       </div>
 
       {/* ── Element palette (only when PLACE is active) ── */}

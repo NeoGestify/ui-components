@@ -1,5 +1,6 @@
 // Main component
 export { VenueMapEditor } from './VenueMapEditor';
+export { VenueMapViewer } from './VenueMapViewer';
 
 // Types
 export type {

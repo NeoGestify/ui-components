@@ -19,10 +19,20 @@ const DEFAULT_THICKNESS = 8;    // canvas units
 
 function insideFloor(x: number, y: number, floor: Floor): boolean {
   const { area } = floor;
-  if (area.shape !== 'rect') return true;  // polygon: skip check for now
-  const ax = area.x ?? 0, ay = area.y ?? 0;
-  const aw = area.width ?? 0, ah = area.height ?? 0;
-  return x >= ax && x <= ax + aw && y >= ay && y <= ay + ah;
+  if (area.shape === 'rect') {
+    const ax = area.x ?? 0, ay = area.y ?? 0, aw = area.width ?? 0, ah = area.height ?? 0;
+    return x >= ax && x <= ax + aw && y >= ay && y <= ay + ah;
+  }
+  if (area.shape === 'polygon') {
+    const pts = area.points ?? [];
+    let inside = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i], [xj, yj] = pts[j];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+  return true;
 }
 
 // ─── Lasso ────────────────────────────────────────────────────────────────────
@@ -59,8 +69,10 @@ interface EditorCanvasProps {
   snapEnabled: boolean;
   elementTypeDefs: Map<string, ElementTypeDef>;
   selectedIds: ReadonlySet<string>;
+  statusMap?: Map<string, string>;
   onAreaResize: (floor: Floor) => void;
   onAreaMove: (dx: number, dy: number) => void;
+  onAreaResizeCommit?: (floor: Floor) => void;
   onSelectElement: (id: string, multi: boolean) => void;
   onSelectSet: (ids: string[]) => void;
   onClearSelection: () => void;
@@ -75,6 +87,7 @@ interface EditorCanvasProps {
   onAddWall?: (x1: number, y1: number, x2: number, y2: number,
                snapStartId: string | null, snapEndId: string | null) => void;
   onDeleteWall?: (wallId: string) => void;
+  onViewerElementClick?: (id: string) => void;
   onZoomChange?: (zoom: number) => void;
   onRegisterZoomBy?: (fn: (factor: number) => void) => void;
   onRegisterResetView?: (fn: () => void) => void;
@@ -91,8 +104,10 @@ export function EditorCanvas({
   snapEnabled,
   elementTypeDefs,
   selectedIds,
+  statusMap,
   onAreaResize,
   onAreaMove,
+  onAreaResizeCommit,
   onSelectElement,
   onSelectSet,
   onClearSelection,
@@ -106,6 +121,7 @@ export function EditorCanvas({
   onPlaceElement,
   onAddWall,
   onDeleteWall,
+  onViewerElementClick,
   onZoomChange,
   onRegisterZoomBy,
   onRegisterResetView,
@@ -341,6 +357,7 @@ export function EditorCanvas({
           area={floor.area}
           onResize={area => onAreaResize({ ...floor, area })}
           onMove={onAreaMove}
+          onResizeCommit={area => onAreaResizeCommit?.({ ...floor, area })}
           svgRef={svgRef}
           panZoomRef={panZoomRef}
           zoom={zoom}
@@ -372,6 +389,7 @@ export function EditorCanvas({
               panZoomRef={panZoomRef}
               snapEnabled={snapEnabled}
               gridSize={gridSize}
+              statusFill={statusMap?.get(el.id)}
               onSelect={multi => onSelectElement(el.id, multi)}
               onMove={(x, y) => onMoveElement(el.id, x, y)}
               onMoveCommit={(x, y) => onMoveCommit(el.id, x, y)}
@@ -380,6 +398,7 @@ export function EditorCanvas({
               onRotate={r => onRotateElement(el.id, r)}
               onRotateCommit={r => onRotateCommit(el.id, r)}
               onDelete={() => onDeleteElement(el.id)}
+              onViewerClick={onViewerElementClick ? () => onViewerElementClick(el.id) : undefined}
             />
           );
         })}

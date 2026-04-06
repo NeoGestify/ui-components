@@ -22,17 +22,15 @@ const HANDLE_CURSORS: Record<HandleType, string> = {
 };
 
 const MIN_SIZE = 50;
-/** Handle size in screen pixels — divided by zoom for canvas units. */
 const HANDLE_PX = 8;
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface ArtboardProps {
   area: FloorArea;
-  /** Called with the new area when a resize handle is dragged. */
   onResize: (area: FloorArea) => void;
-  /** Called with the incremental (dx, dy) when the artboard body is dragged. */
   onMove?: (dx: number, dy: number) => void;
+  onResizeCommit?: (area: FloorArea) => void;
   svgRef: RefObject<SVGSVGElement | null>;
   panZoomRef: PanZoomRef;
   zoom: number;
@@ -52,7 +50,6 @@ function applyHandleDelta(
   const aw = area.width ?? 400;
   const ah = area.height ?? 300;
 
-  // right / bottom edges that stay fixed for the opposite handles
   const right = ax + aw;
   const bottom = ay + ah;
 
@@ -98,35 +95,231 @@ function applyHandleDelta(
   return { ...area, x: nx, y: ny, width: nw, height: nh };
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── PolygonArtboard ──────────────────────────────────────────────────────────
+
+interface PolygonArtboardProps {
+  area: FloorArea;
+  onResize: (area: FloorArea) => void;
+  onMove?: (dx: number, dy: number) => void;
+  onResizeCommit?: (area: FloorArea) => void;
+  svgRef: RefObject<SVGSVGElement | null>;
+  panZoomRef: PanZoomRef;
+  zoom: number;
+  readOnly?: boolean;
+}
+
+function PolygonArtboard({
+  area,
+  onResize,
+  onMove,
+  onResizeCommit,
+  svgRef,
+  panZoomRef,
+  zoom,
+  readOnly = false,
+}: PolygonArtboardProps) {
+  const pts = area.points ?? [];
+  const areaRef = useRef(area);
+  areaRef.current = area;
+
+  const activeVertex = useRef<number | null>(null);
+  const vertexStart = useRef({ vx: 0, vy: 0, mx: 0, my: 0 });
+
+  const { handleMouseDown: handleVertexDown } = useDrag(svgRef, panZoomRef, {
+    onDragStart: (mx, my) => {
+      const idx = activeVertex.current;
+      if (idx === null) return;
+      const currentPts = areaRef.current.points ?? [];
+      vertexStart.current = { vx: currentPts[idx][0], vy: currentPts[idx][1], mx, my };
+    },
+    onDragMove: (_dx, _dy, canvasX, canvasY) => {
+      const idx = activeVertex.current;
+      if (idx === null) return;
+      const { vx, vy, mx, my } = vertexStart.current;
+      const newX = vx + (canvasX - mx);
+      const newY = vy + (canvasY - my);
+      const currentPts = areaRef.current.points ?? [];
+      const newPts = currentPts.map((p, i): [number, number] =>
+        i === idx ? [newX, newY] : p,
+      );
+      const newArea: FloorArea = { ...areaRef.current, points: newPts };
+      onResize(newArea);
+    },
+    onDragEnd: () => {
+      onResizeCommit?.(areaRef.current);
+      activeVertex.current = null;
+    },
+  });
+
+  const startVertexDrag = useCallback(
+    (e: ReactMouseEvent, idx: number) => {
+      activeVertex.current = idx;
+      handleVertexDown(e);
+    },
+    [handleVertexDown],
+  );
+
+  const { handleMouseDown: handleBodyDown } = useDrag(svgRef, panZoomRef, {
+    onDragMove: (dx, dy) => {
+      onMove?.(dx, dy);
+    },
+  });
+
+  const handleDeleteVertex = useCallback(
+    (e: ReactMouseEvent, idx: number) => {
+      e.stopPropagation();
+      const currentPts = areaRef.current.points ?? [];
+      if (currentPts.length <= 3) return;
+      const newPts = currentPts.filter((_, i) => i !== idx);
+      const newArea: FloorArea = { ...areaRef.current, points: newPts };
+      onResize(newArea);
+      onResizeCommit?.(newArea);
+    },
+    [onResize, onResizeCommit],
+  );
+
+  const handleAddVertex = useCallback(
+    (e: ReactMouseEvent, insertAfterIdx: number) => {
+      e.stopPropagation();
+      const currentPts = areaRef.current.points ?? [];
+      const a = currentPts[insertAfterIdx];
+      const b = currentPts[(insertAfterIdx + 1) % currentPts.length];
+      const mid: [number, number] = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      const newPts = [
+        ...currentPts.slice(0, insertAfterIdx + 1),
+        mid,
+        ...currentPts.slice(insertAfterIdx + 1),
+      ];
+      const newArea: FloorArea = { ...areaRef.current, points: newPts };
+      onResize(newArea);
+      onResizeCommit?.(newArea);
+    },
+    [onResize, onResizeCommit],
+  );
+
+  if (pts.length < 3) return null;
+
+  const pointsStr = pts.map(([x, y]) => `${x},${y}`).join(' ');
+  const hs = HANDLE_PX / zoom;
+  const sw = 1.5 / zoom;
+  const dash = `${6 / zoom},${3 / zoom}`;
+
+  return (
+    <g>
+      <defs>
+        <filter id="vme-artboard-shadow" x="-4%" y="-4%" width="108%" height="108%">
+          <feDropShadow dx={0} dy={3 / zoom} stdDeviation={6 / zoom} floodOpacity={0.12} />
+        </filter>
+      </defs>
+
+      {/* Shadow polygon */}
+      <polygon
+        points={pointsStr}
+        fill="#fafaf9"
+        stroke="none"
+        filter="url(#vme-artboard-shadow)"
+      />
+
+      {/* Body drag target (dashed border) */}
+      <polygon
+        points={pointsStr}
+        fill="transparent"
+        stroke="#94a3b8"
+        strokeWidth={sw}
+        strokeDasharray={dash}
+        style={{ cursor: readOnly ? 'default' : 'move' }}
+        onMouseDown={readOnly ? undefined : handleBodyDown}
+      />
+
+      {!readOnly && (
+        <>
+          {/* Edge midpoint diamond handles — click to add vertex */}
+          {pts.map(([ax, ay], i) => {
+            const [bx, by] = pts[(i + 1) % pts.length];
+            const mx = (ax + bx) / 2;
+            const my = (ay + by) / 2;
+            return (
+              <rect
+                key={`mid-${i}`}
+                x={mx - hs * 0.75}
+                y={my - hs * 0.75}
+                width={hs * 1.5}
+                height={hs * 1.5}
+                fill="white"
+                stroke="#94a3b8"
+                strokeWidth={sw}
+                style={{ cursor: 'copy', transform: `rotate(45deg)`, transformOrigin: `${mx}px ${my}px` }}
+                onClick={e => handleAddVertex(e, i)}
+              />
+            );
+          })}
+
+          {/* Vertex square handles */}
+          {pts.map(([vx, vy], i) => (
+            <rect
+              key={`v-${i}`}
+              x={vx - hs}
+              y={vy - hs}
+              width={hs * 2}
+              height={hs * 2}
+              rx={1 / zoom}
+              fill="white"
+              stroke="#3b82f6"
+              strokeWidth={sw}
+              style={{ cursor: 'move' }}
+              onMouseDown={e => startVertexDrag(e, i)}
+              onDoubleClick={e => handleDeleteVertex(e, i)}
+            />
+          ))}
+        </>
+      )}
+    </g>
+  );
+}
+
+// ─── Artboard ─────────────────────────────────────────────────────────────────
 
 export function Artboard({
   area,
   onResize,
   onMove,
+  onResizeCommit,
   svgRef,
   panZoomRef,
   zoom,
   readOnly = false,
 }: ArtboardProps) {
+  if (area.shape === 'polygon') {
+    return (
+      <PolygonArtboard
+        area={area}
+        onResize={onResize}
+        onMove={onMove}
+        onResizeCommit={onResizeCommit}
+        svgRef={svgRef}
+        panZoomRef={panZoomRef}
+        zoom={zoom}
+        readOnly={readOnly}
+      />
+    );
+  }
+
   const ax = area.x ?? 0;
   const ay = area.y ?? 0;
   const aw = area.width ?? 400;
   const ah = area.height ?? 300;
 
-  /** Which handle the current drag belongs to. */
   const activeHandle = useRef<HandleType | null>(null);
-  /** Stable ref so window listeners always see the latest area. */
   const areaRef = useRef(area);
   areaRef.current = area;
 
-  // ── Handle drag ─────────────────────────────────────────────────────────────
   const { handleMouseDown: handleHandleDown } = useDrag(svgRef, panZoomRef, {
     onDragMove: (dx, dy) => {
       if (!activeHandle.current) return;
       onResize(applyHandleDelta(areaRef.current, activeHandle.current, dx, dy));
     },
     onDragEnd: () => {
+      onResizeCommit?.(areaRef.current);
       activeHandle.current = null;
     },
   });
@@ -139,19 +332,16 @@ export function Artboard({
     [handleHandleDown],
   );
 
-  // ── Body drag (move the whole artboard + its elements) ──────────────────────
   const { handleMouseDown: handleBodyDown } = useDrag(svgRef, panZoomRef, {
     onDragMove: (dx, dy) => {
       onMove?.(dx, dy);
     },
   });
 
-  // ── Derived sizing ──────────────────────────────────────────────────────────
-  const hs = HANDLE_PX / zoom;   // handle half-size in canvas units
-  const sw = 1.5 / zoom;         // stroke width in canvas units
+  const hs = HANDLE_PX / zoom;
+  const sw = 1.5 / zoom;
   const dash = `${6 / zoom},${3 / zoom}`;
 
-  // ── Handle positions ────────────────────────────────────────────────────────
   const handles: Array<{ type: HandleType; cx: number; cy: number }> = [
     { type: 'nw', cx: ax,        cy: ay },
     { type: 'n',  cx: ax + aw/2, cy: ay },
@@ -165,7 +355,6 @@ export function Artboard({
 
   return (
     <g>
-      {/* Drop shadow filter (size-independent) */}
       <defs>
         <filter id="vme-artboard-shadow" x="-4%" y="-4%" width="108%" height="108%">
           <feDropShadow
@@ -177,7 +366,6 @@ export function Artboard({
         </filter>
       </defs>
 
-      {/* Artboard background */}
       <rect
         x={ax}
         y={ay}
@@ -188,7 +376,6 @@ export function Artboard({
         filter="url(#vme-artboard-shadow)"
       />
 
-      {/* Artboard border (dashed) */}
       <rect
         x={ax}
         y={ay}
@@ -202,7 +389,6 @@ export function Artboard({
         onMouseDown={readOnly ? undefined : handleBodyDown}
       />
 
-      {/* Resize handles — only in edit mode */}
       {!readOnly &&
         handles.map(({ type, cx, cy }) => (
           <rect
