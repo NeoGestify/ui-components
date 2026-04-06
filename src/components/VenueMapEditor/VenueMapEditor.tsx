@@ -13,8 +13,29 @@ import { PropertiesPanel } from './components/PropertiesPanel';
 import { useHistory } from './hooks/useHistory';
 import { useSelection } from './hooks/useSelection';
 import { genId } from './utils/idGen';
+import type { FloorArea } from './types';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/**
+ * Clamp an element's top-left corner so it stays fully inside the floor area.
+ * If the element is wider/taller than the floor, center it on that axis instead.
+ */
+function clampToFloor(
+  x: number, y: number,
+  w: number, h: number,
+  area: FloorArea,
+): { x: number; y: number } {
+  if (area.shape !== 'rect') return { x, y };
+  const ax = area.x ?? 0;
+  const ay = area.y ?? 0;
+  const aw = area.width ?? 0;
+  const ah = area.height ?? 0;
+  return {
+    x: aw >= w ? Math.max(ax, Math.min(ax + aw - w, x)) : ax + (aw - w) / 2,
+    y: ah >= h ? Math.max(ay, Math.min(ay + ah - h, y)) : ay + (ah - h) / 2,
+  };
+}
 
 function createDefaultMap(): VenueMap {
   return {
@@ -140,29 +161,31 @@ export function VenueMapEditor({
 
   // ── Element operations ───────────────────────────────────────────────────
 
-  /** Live move (no history entry). */
+  /** Live move (no history entry) — clamped to floor bounds. */
   const handleMoveElement = useCallback(
     (id: string, x: number, y: number) => {
       if (!activeFloor) return;
+      const el = activeFloor.elements.find(e => e.id === id);
+      if (!el) return;
+      const { x: cx, y: cy } = clampToFloor(x, y, el.width, el.height, activeFloor.area);
       replaceFloor({
         ...activeFloor,
-        elements: activeFloor.elements.map(el =>
-          el.id === id ? { ...el, x, y } : el,
-        ),
+        elements: activeFloor.elements.map(e => e.id === id ? { ...e, x: cx, y: cy } : e),
       });
     },
     [activeFloor, replaceFloor],
   );
 
-  /** Commit move to history. */
+  /** Commit move to history — clamped to floor bounds. */
   const handleMoveCommit = useCallback(
     (id: string, x: number, y: number) => {
       if (!activeFloor) return;
+      const el = activeFloor.elements.find(e => e.id === id);
+      if (!el) return;
+      const { x: cx, y: cy } = clampToFloor(x, y, el.width, el.height, activeFloor.area);
       pushFloor({
         ...activeFloor,
-        elements: activeFloor.elements.map(el =>
-          el.id === id ? { ...el, x, y } : el,
-        ),
+        elements: activeFloor.elements.map(e => e.id === id ? { ...e, x: cx, y: cy } : e),
       });
     },
     [activeFloor, pushFloor],
@@ -273,7 +296,7 @@ export function VenueMapEditor({
       const typeDef = elementTypeDefs.current.get(activePlaceTypeId);
       if (!typeDef) return;
 
-      // Reject placement outside the floor area
+      // Reject clicks that land outside the floor area entirely
       const { area } = activeFloor;
       if (area.shape === 'rect') {
         const ax = area.x ?? 0, ay = area.y ?? 0;
@@ -281,11 +304,20 @@ export function VenueMapEditor({
         if (canvasX < ax || canvasX > ax + aw || canvasY < ay || canvasY > ay + ah) return;
       }
 
+      // Center on click, then clamp so the element stays fully inside the floor
+      const { x, y } = clampToFloor(
+        canvasX - typeDef.defaultWidth / 2,
+        canvasY - typeDef.defaultHeight / 2,
+        typeDef.defaultWidth,
+        typeDef.defaultHeight,
+        area,
+      );
+
       const newEl: MapElement = {
         id: genId(),
         type: activePlaceTypeId,
-        x: canvasX - typeDef.defaultWidth / 2,
-        y: canvasY - typeDef.defaultHeight / 2,
+        x,
+        y,
         width: typeDef.defaultWidth,
         height: typeDef.defaultHeight,
         rotation: 0,
