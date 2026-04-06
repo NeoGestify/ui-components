@@ -1,4 +1,8 @@
 import { useState, useRef } from 'react';
+import { VenueMapEditor } from '../../src/components/VenueMapEditor';
+import { parkingConfig } from '../../src/components/VenueMapEditor/config/parkingConfig';
+import { restaurantConfig } from '../../src/components/VenueMapEditor/config/restaurantConfig';
+import type { VenueMap } from '../../src/components/VenueMapEditor';
 import Button from '../../src/components/html/Button';
 import Input from '../../src/components/html/Input';
 import Form from '../../src/components/html/Form';
@@ -28,6 +32,8 @@ import {
 
 function App() {
   const [showModal, setShowModal] = useState(false);
+  const [activeDemo, setActiveDemo] = useState<'parking' | 'restaurant'>('parking');
+  const [lastMap, setLastMap] = useState<VenueMap | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [selectValue, setSelectValue] = useState('');
   const modalRef = useRef<ModalRef>(null);
@@ -282,6 +288,58 @@ function App() {
               </p>
             </div>
           </div>
+        </section>
+
+        {/* VenueMapEditor Section */}
+        <section className="mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            VenueMapEditor — Fase 1
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+            Canvas SVG infinito · pan con click-medio · zoom con rueda · artboard redimensionable
+          </p>
+
+          {/* Domain switcher */}
+          <div className="flex gap-2 mb-4">
+            <button
+              onClick={() => setActiveDemo('parking')}
+              className={`px-3 py-1 rounded text-sm border transition-colors ${
+                activeDemo === 'parking'
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Parqueadero
+            </button>
+            <button
+              onClick={() => setActiveDemo('restaurant')}
+              className={`px-3 py-1 rounded text-sm border transition-colors ${
+                activeDemo === 'restaurant'
+                  ? 'bg-blue-600 text-white border-blue-600'
+                  : 'border-gray-300 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              Restaurante
+            </button>
+          </div>
+
+          <VenueMapEditor
+            key={activeDemo}
+            domainConfig={activeDemo === 'parking' ? parkingConfig : restaurantConfig}
+            height="520px"
+            onChange={setLastMap}
+          />
+
+          {lastMap && (
+            <details className="mt-4">
+              <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
+                Ver JSON del mapa ({lastMap.floors[0]?.area.width ?? 0} × {lastMap.floors[0]?.area.height ?? 0} px)
+              </summary>
+              <pre className="mt-2 p-3 bg-gray-100 dark:bg-gray-900 rounded text-xs overflow-auto max-h-48">
+                {JSON.stringify(lastMap, null, 2)}
+              </pre>
+            </details>
+          )}
         </section>
 
         {/* Alerts Section */}
