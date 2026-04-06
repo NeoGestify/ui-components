@@ -140,7 +140,7 @@ export function VenueMapEditor({
     [replaceFloor],
   );
 
-  // ── Area move (body drag — area + all elements shift by the same delta) ─
+  // ── Area move (body drag — area + walls + elements shift by the same delta)
   const handleAreaMove = useCallback(
     (dx: number, dy: number) => {
       if (!activeFloor) return;
@@ -151,11 +151,8 @@ export function VenueMapEditor({
           x: (activeFloor.area.x ?? 0) + dx,
           y: (activeFloor.area.y ?? 0) + dy,
         },
-        elements: activeFloor.elements.map(el => ({
-          ...el,
-          x: el.x + dx,
-          y: el.y + dy,
-        })),
+        wallNodes: activeFloor.wallNodes.map(n => ({ ...n, x: n.x + dx, y: n.y + dy })),
+        elements: activeFloor.elements.map(el => ({ ...el, x: el.x + dx, y: el.y + dy })),
       });
     },
     [activeFloor, replaceFloor],

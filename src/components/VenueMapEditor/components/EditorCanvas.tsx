@@ -15,6 +15,16 @@ import { ElementNode } from './ElementNode';
 const SNAP_PX           = 10;   // screen pixels for wall-node snap
 const DEFAULT_THICKNESS = 8;    // canvas units
 
+// ─── Floor bounds ─────────────────────────────────────────────────────────────
+
+function insideFloor(x: number, y: number, floor: Floor): boolean {
+  const { area } = floor;
+  if (area.shape !== 'rect') return true;  // polygon: skip check for now
+  const ax = area.x ?? 0, ay = area.y ?? 0;
+  const aw = area.width ?? 0, ah = area.height ?? 0;
+  return x >= ax && x <= ax + aw && y >= ay && y <= ay + ah;
+}
+
 // ─── Lasso ────────────────────────────────────────────────────────────────────
 
 interface LassoRect { x: number; y: number; w: number; h: number }
@@ -177,7 +187,8 @@ export function EditorCanvas({
     // ── WALL mode ──
     if (tool === 'WALL') {
       if (!wallDraw) {
-        // First click: set start point
+        // First click: reject if outside floor
+        if (!insideFloor(cx, cy, floor)) return;
         const snapNode = findSnapNode(cx, cy, null);
         const sx = snapNode ? snapNode.x : cx;
         const sy = snapNode ? snapNode.y : cy;
@@ -189,9 +200,22 @@ export function EditorCanvas({
         });
       } else {
         // Second click: complete the wall
+        // Snapped node is always a valid existing point; free point is clamped to floor
         const snapNode = findSnapNode(cx, cy, wallDraw.snapStartNode?.id ?? null);
-        const ex = snapNode ? snapNode.x : cx;
-        const ey = snapNode ? snapNode.y : cy;
+        let ex: number, ey: number;
+        if (snapNode) {
+          ex = snapNode.x; ey = snapNode.y;
+        } else {
+          const { area } = floor;
+          if (area.shape === 'rect') {
+            const ax = area.x ?? 0, ay = area.y ?? 0;
+            const aw = area.width ?? 0, ah = area.height ?? 0;
+            ex = Math.max(ax, Math.min(ax + aw, cx));
+            ey = Math.max(ay, Math.min(ay + ah, cy));
+          } else {
+            ex = cx; ey = cy;
+          }
+        }
 
         // Ignore zero-length walls
         const dist = Math.hypot(ex - wallDraw.startX, ey - wallDraw.startY);
