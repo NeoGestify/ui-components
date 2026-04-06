@@ -21,20 +21,55 @@ import { genId } from './utils/idGen';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function pointInPolygon(px: number, py: number, pts: [number, number][]): boolean {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i], [xj, yj] = pts[j];
+    if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+/** Returns the nearest point on the polygon perimeter to (px, py). */
+function clampPointToPolygon(px: number, py: number, pts: [number, number][]): { x: number; y: number } {
+  let bestDist = Infinity, bx = pts[0][0], by = pts[0][1];
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [ax, ay] = pts[j], [bex, bey] = pts[i];
+    const dx = bex - ax, dy = bey - ay;
+    const len2 = dx * dx + dy * dy;
+    const t = len2 > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2)) : 0;
+    const nx = ax + t * dx, ny = ay + t * dy;
+    const dist = (px - nx) ** 2 + (py - ny) ** 2;
+    if (dist < bestDist) { bestDist = dist; bx = nx; by = ny; }
+  }
+  return { x: bx, y: by };
+}
+
 function clampToFloor(
   x: number, y: number,
   w: number, h: number,
   area: FloorArea,
 ): { x: number; y: number } {
-  if (area.shape !== 'rect') return { x, y };
-  const ax = area.x ?? 0;
-  const ay = area.y ?? 0;
-  const aw = area.width ?? 0;
-  const ah = area.height ?? 0;
-  return {
-    x: aw >= w ? Math.max(ax, Math.min(ax + aw - w, x)) : ax + (aw - w) / 2,
-    y: ah >= h ? Math.max(ay, Math.min(ay + ah - h, y)) : ay + (ah - h) / 2,
-  };
+  if (area.shape === 'rect') {
+    const ax = area.x ?? 0;
+    const ay = area.y ?? 0;
+    const aw = area.width ?? 0;
+    const ah = area.height ?? 0;
+    return {
+      x: aw >= w ? Math.max(ax, Math.min(ax + aw - w, x)) : ax + (aw - w) / 2,
+      y: ah >= h ? Math.max(ay, Math.min(ay + ah - h, y)) : ay + (ah - h) / 2,
+    };
+  }
+  if (area.shape === 'polygon') {
+    const pts = area.points ?? [];
+    if (pts.length < 3) return { x, y };
+    // Clamp the element center to inside (or onto the boundary of) the polygon.
+    const cx = x + w / 2, cy = y + h / 2;
+    if (pointInPolygon(cx, cy, pts)) return { x, y };
+    const clamped = clampPointToPolygon(cx, cy, pts);
+    return { x: clamped.x - w / 2, y: clamped.y - h / 2 };
+  }
+  return { x, y };
 }
 
 function createDefaultMap(): VenueMap {
@@ -475,6 +510,9 @@ export function VenueMapEditor({
         const ax = area.x ?? 0, ay = area.y ?? 0;
         const aw = area.width ?? 0, ah = area.height ?? 0;
         if (canvasX < ax || canvasX > ax + aw || canvasY < ay || canvasY > ay + ah) return;
+      } else if (area.shape === 'polygon') {
+        const pts = area.points ?? [];
+        if (pts.length >= 3 && !pointInPolygon(canvasX, canvasY, pts)) return;
       }
 
       const { x, y } = clampToFloor(

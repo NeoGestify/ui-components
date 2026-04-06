@@ -228,6 +228,24 @@ export function EditorCanvas({
             const aw = area.width ?? 0, ah = area.height ?? 0;
             ex = Math.max(ax, Math.min(ax + aw, cx));
             ey = Math.max(ay, Math.min(ay + ah, cy));
+          } else if (area.shape === 'polygon') {
+            const pts = area.points ?? [];
+            if (insideFloor(cx, cy, floor)) {
+              ex = cx; ey = cy;
+            } else {
+              // Clamp to nearest point on polygon perimeter
+              let bestDist = Infinity;
+              ex = cx; ey = cy;
+              for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+                const [ax2, ay2] = pts[j], [bx2, by2] = pts[i];
+                const dx = bx2 - ax2, dy = by2 - ay2;
+                const len2 = dx * dx + dy * dy;
+                const t = len2 > 0 ? Math.max(0, Math.min(1, ((cx - ax2) * dx + (cy - ay2) * dy) / len2)) : 0;
+                const nx = ax2 + t * dx, ny = ay2 + t * dy;
+                const dist = (cx - nx) ** 2 + (cy - ny) ** 2;
+                if (dist < bestDist) { bestDist = dist; ex = nx; ey = ny; }
+              }
+            }
           } else {
             ex = cx; ey = cy;
           }
