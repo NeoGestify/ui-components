@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
 import {
   IconCursor, IconGrid, IconHand, IconReset, IconZoomIn, IconZoomOut,
-  IconUndo, IconRedo, IconPlace, IconErase, IconWall, TrashIcon,
-  IconDownload, IconUpload,
+  IconUndo, IconRedo, IconPlace, IconErase, IconWall,
+  IconDownload, IconUpload, IconLayers,
 } from '../../icons';
-import type { ToolMode, DomainConfig, ElementTypeDef, AreaShape } from '../types';
+import type { ToolMode, ElementTypeDef, AreaShape } from '../types';
 
 // ─── ToolButton ───────────────────────────────────────────────────────────────
 
@@ -40,6 +40,12 @@ function Sep() {
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
+export interface PaletteGroup {
+  id: string;
+  name: string;
+  types: ElementTypeDef[];
+}
+
 interface ToolbarProps {
   tool: ToolMode;
   onToolChange: (tool: ToolMode) => void;
@@ -53,16 +59,18 @@ interface ToolbarProps {
   canRedo: boolean;
   onUndo: () => void;
   onRedo: () => void;
-  domainConfig: DomainConfig;
+  /** All element groups: base config group + any imported library groups. */
+  paletteGroups: PaletteGroup[];
   activePlaceTypeId: string | null;
   onActivePlaceTypeChange: (id: string) => void;
   areaShape?: AreaShape;
   onToggleAreaShape?: () => void;
   onExportMap?: () => void;
   onImportMap?: () => void;
+  onLoadLibrary?: () => void;
 }
 
-// ─── Element type chip ────────────────────────────────────────────────────────
+// ─── TypeChip ─────────────────────────────────────────────────────────────────
 
 interface TypeChipProps {
   typeDef: ElementTypeDef;
@@ -106,13 +114,14 @@ export function Toolbar({
   canRedo,
   onUndo,
   onRedo,
-  domainConfig,
+  paletteGroups,
   activePlaceTypeId,
   onActivePlaceTypeChange,
   areaShape,
   onToggleAreaShape,
   onExportMap,
   onImportMap,
+  onLoadLibrary,
 }: ToolbarProps) {
   return (
     <div className="flex flex-col bg-white border-b border-slate-200 shadow-sm shrink-0">
@@ -174,17 +183,23 @@ export function Toolbar({
 
         <Sep />
 
-        <ToolButton title="Exportar JSON" onClick={() => onExportMap?.()}>
+        {/* Map export / import */}
+        <ToolButton title="Exportar mapa JSON" onClick={() => onExportMap?.()}>
           <IconDownload className="w-4 h-4" />
         </ToolButton>
-        <ToolButton title="Importar JSON" onClick={() => onImportMap?.()}>
+        <ToolButton title="Importar mapa JSON" onClick={() => onImportMap?.()}>
           <IconUpload className="w-4 h-4" />
+        </ToolButton>
+
+        {/* Element library import */}
+        <ToolButton title="Cargar librería de elementos (.json)" onClick={() => onLoadLibrary?.()}>
+          <IconLayers className="w-4 h-4" />
         </ToolButton>
 
         {areaShape !== undefined && (
           <>
             <Sep />
-            <ToolButton title="Cambiar forma del área" onClick={() => onToggleAreaShape?.()}>
+            <ToolButton title={areaShape === 'polygon' ? 'Cambiar a rectángulo' : 'Cambiar a polígono'} onClick={() => onToggleAreaShape?.()}>
               <span className="text-xs font-medium">{areaShape === 'polygon' ? 'Poly' : 'Rect'}</span>
             </ToolButton>
           </>
@@ -193,15 +208,29 @@ export function Toolbar({
 
       {/* ── Element palette (only when PLACE is active) ── */}
       {tool === 'PLACE' && (
-        <div className="flex items-center gap-1.5 px-3 py-1.5 border-t border-slate-100 bg-slate-50 overflow-x-auto">
-          <TrashIcon className="w-3.5 h-3.5 text-slate-300 shrink-0" />
-          {domainConfig.elementTypes.map(typeDef => (
-            <TypeChip
-              key={typeDef.id}
-              typeDef={typeDef}
-              active={activePlaceTypeId === typeDef.id}
-              onClick={() => onActivePlaceTypeChange(typeDef.id)}
-            />
+        <div className="flex items-stretch gap-0 border-t border-slate-100 bg-slate-50 overflow-x-auto">
+          {paletteGroups.map((group, gi) => (
+            <div key={group.id} className="flex items-center shrink-0">
+              {/* Group divider (not before the first group) */}
+              {gi > 0 && (
+                <div className="w-px self-stretch bg-slate-200 mx-1" />
+              )}
+              {/* Group label */}
+              <span className="text-[10px] text-slate-400 font-medium px-1.5 whitespace-nowrap select-none">
+                {group.name}
+              </span>
+              {/* Chips */}
+              <div className="flex items-center gap-1 px-1 py-1.5">
+                {group.types.map(typeDef => (
+                  <TypeChip
+                    key={typeDef.id}
+                    typeDef={typeDef}
+                    active={activePlaceTypeId === typeDef.id}
+                    onClick={() => onActivePlaceTypeChange(typeDef.id)}
+                  />
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       )}

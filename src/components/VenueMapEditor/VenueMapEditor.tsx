@@ -10,8 +10,10 @@ import type {
   ToolMode,
   FloorArea,
   AreaShape,
+  ElementLibrary,
 } from './types';
 import { Toolbar } from './components/Toolbar';
+import type { PaletteGroup } from './components/Toolbar';
 import { EditorCanvas } from './components/EditorCanvas';
 import { PropertiesPanel } from './components/PropertiesPanel';
 import { FloorTabs } from './components/FloorTabs';
@@ -167,11 +169,36 @@ export function VenueMapEditor({
   const zoomByRef = useRef<(factor: number) => void>(() => undefined);
   const resetViewRef = useRef<() => void>(() => undefined);
   const importInputRef = useRef<HTMLInputElement>(null);
+  const libraryInputRef = useRef<HTMLInputElement>(null);
 
-  const elementTypeDefs = useRef(new Map(domainConfig.elementTypes.map(t => [t.id, t])));
+  // ── elementTypeDefs: base config + library types in the map ─────────────
+  const buildTypeDefs = useCallback(() => {
+    const m = new Map(domainConfig.elementTypes.map(t => [t.id, t]));
+    const libs = map.libraries ?? {};
+    for (const group of Object.values(libs)) {
+      for (const t of group.objects) {
+        if (!m.has(t.id)) m.set(t.id, t); // base config wins on ID collision
+      }
+    }
+    return m;
+  }, [domainConfig, map.libraries]);
+
+  const elementTypeDefs = useRef(buildTypeDefs());
   useEffect(() => {
-    elementTypeDefs.current = new Map(domainConfig.elementTypes.map(t => [t.id, t]));
-  }, [domainConfig]);
+    elementTypeDefs.current = buildTypeDefs();
+  }, [buildTypeDefs]);
+
+  // ── Palette groups: base group + imported library groups ─────────────────
+  const paletteGroups = useMemo<PaletteGroup[]>(() => {
+    const groups: PaletteGroup[] = [
+      { id: domainConfig.id, name: domainConfig.name, types: domainConfig.elementTypes },
+    ];
+    const libs = map.libraries ?? {};
+    for (const [gid, group] of Object.entries(libs)) {
+      groups.push({ id: gid, name: group.name, types: group.objects });
+    }
+    return groups;
+  }, [domainConfig, map.libraries]);
 
   const prevInitial = useRef(initialMap);
   useEffect(() => {
@@ -324,6 +351,24 @@ export function VenueMapEditor({
       reader.readAsText(file);
     },
     [push],
+  );
+
+  const handleLoadLibrary = useCallback(
+    (file: File) => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        try {
+          const parsed = JSON.parse(e.target?.result as string) as ElementLibrary;
+          // Merge into map.libraries (imported groups extend, not replace, existing ones)
+          const merged: ElementLibrary = { ...(map.libraries ?? {}), ...parsed };
+          push({ ...map, libraries: merged });
+        } catch {
+          // ignore parse errors
+        }
+      };
+      reader.readAsText(file);
+    },
+    [map, push],
   );
 
   // ── Wall operations ──────────────────────────────────────────────────────
@@ -637,7 +682,7 @@ export function VenueMapEditor({
 
   return (
     <div style={containerStyle}>
-      {/* Hidden file input for import */}
+      {/* Hidden file inputs */}
       <input
         ref={importInputRef}
         type="file"
@@ -646,6 +691,17 @@ export function VenueMapEditor({
         onChange={e => {
           const f = e.target.files?.[0];
           if (f) handleImportMap(f);
+          e.target.value = '';
+        }}
+      />
+      <input
+        ref={libraryInputRef}
+        type="file"
+        accept=".json"
+        className="hidden"
+        onChange={e => {
+          const f = e.target.files?.[0];
+          if (f) handleLoadLibrary(f);
           e.target.value = '';
         }}
       />
@@ -665,13 +721,14 @@ export function VenueMapEditor({
           canRedo={canRedo}
           onUndo={undo}
           onRedo={redo}
-          domainConfig={domainConfig}
+          paletteGroups={paletteGroups}
           activePlaceTypeId={activePlaceTypeId}
           onActivePlaceTypeChange={setActivePlaceTypeId}
           areaShape={activeAreaShape}
           onToggleAreaShape={handleToggleAreaShape}
           onExportMap={handleExportMap}
           onImportMap={() => importInputRef.current?.click()}
+          onLoadLibrary={() => libraryInputRef.current?.click()}
         />
       )}
 

@@ -65,6 +65,8 @@ export interface VenueMap {
   id: string;
   name: string;
   floors: Floor[];
+  /** Custom element libraries imported by the user; persisted with the map. */
+  libraries?: ElementLibrary;
 }
 
 // ─── Domain config ────────────────────────────────────────────────────────────
@@ -87,6 +89,16 @@ export interface DomainConfig {
   name: string;
   elementTypes: ElementTypeDef[];
 }
+
+// ─── Custom element libraries ─────────────────────────────────────────────────
+
+export interface ElementGroup {
+  name: string;
+  objects: ElementTypeDef[];
+}
+
+/** A library JSON file: top-level keys are group IDs. */
+export type ElementLibrary = Record<string, ElementGroup>;
 
 // ─── Viewer status ────────────────────────────────────────────────────────────
 

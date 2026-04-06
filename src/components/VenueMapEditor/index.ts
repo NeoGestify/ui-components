@@ -16,10 +16,14 @@ export type {
   VenueMap,
   ElementTypeDef,
   DomainConfig,
+  ElementGroup,
+  ElementLibrary,
   ElementStatus,
   VenueMapEditorProps,
   VenueMapViewerProps,
 } from './types';
+
+export type { PaletteGroup } from './components/Toolbar';
 
 // Domain configs
 export { parkingConfig } from './config/parkingConfig';
