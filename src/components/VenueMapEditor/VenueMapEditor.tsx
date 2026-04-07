@@ -13,6 +13,7 @@ import type {
   ElementLibrary,
   DomainConfig,
 } from './types';
+import { useLibraryStorage } from './hooks/useLibraryStorage';
 import { Toolbar } from './components/Toolbar';
 import type { PaletteGroup } from './components/Toolbar';
 import { EditorCanvas } from './components/EditorCanvas';
@@ -98,7 +99,7 @@ function createDefaultMap(): VenueMap {
   };
 }
 
-const EMPTY_DOMAIN_CONFIG: DomainConfig = { id: '__empty__', name: '', elementTypes: [] };
+const DEFAULT_LIBRARY_KEY = 'venueMapEditor:libraries';
 
 function updateFloor(map: VenueMap, updatedFloor: Floor): VenueMap {
   return {
@@ -144,7 +145,9 @@ function polygonToRect(area: FloorArea): FloorArea {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function VenueMapEditor({
-  domainConfig = EMPTY_DOMAIN_CONFIG,
+  domainConfigs,
+  domainConfig,
+  libraryStorageKey = DEFAULT_LIBRARY_KEY,
   initialMap,
   onChange,
   width = '100%',
@@ -158,7 +161,17 @@ export function VenueMapEditor({
   onElementClick,
   onElementTypeClick,
 }: VenueMapEditorProps) {
+  // Normalise: domainConfigs takes precedence; fall back to legacy domainConfig
+  const effectiveConfigs = useMemo<DomainConfig[]>(() => {
+    if (domainConfigs && domainConfigs.length > 0) return domainConfigs;
+    if (domainConfig) return [domainConfig];
+    return [];
+  }, [domainConfigs, domainConfig]);
   const initialMapRef = useRef<VenueMap>(initialMap ?? createDefaultMap());
+
+  // ── Persisted libraries — loaded synchronously from localStorage BEFORE the
+  //    map renders so all element type definitions are available immediately.
+  const [persistedLibs, setPersistedLibs] = useLibraryStorage(libraryStorageKey);
 
   const { map, canUndo, canRedo, push, replace, undo, redo } = useHistory(
     initialMapRef.current,
@@ -178,36 +191,50 @@ export function VenueMapEditor({
   const importInputRef = useRef<HTMLInputElement>(null);
   const libraryInputRef = useRef<HTMLInputElement>(null);
 
-  // ── elementTypeDefs: base config + library types in the map ─────────────
+  // ── Effective library: persistedLibs (localStorage) merged with map.libraries
+  //    Persisted libs take priority so users can override map-embedded types.
+  const effectiveLibs = useMemo<ElementLibrary>(() => ({
+    ...(map.libraries ?? {}),
+    ...persistedLibs,
+  }), [map.libraries, persistedLibs]);
+
+  // ── elementTypeDefs: all domain configs + all libraries ───────────────────
+  //    Priority: domainConfigs first (base wins), then library types.
   const buildTypeDefs = useCallback(() => {
-    const m = new Map(domainConfig.elementTypes.map(t => [t.id, t]));
-    const libs = map.libraries ?? {};
-    for (const group of Object.values(libs)) {
+    const m = new Map<string, import('./types').ElementTypeDef>();
+    for (const cfg of effectiveConfigs) {
+      for (const t of cfg.elementTypes) {
+        if (!m.has(t.id)) m.set(t.id, t);
+      }
+    }
+    for (const group of Object.values(effectiveLibs)) {
       for (const t of group.objects) {
-        if (!m.has(t.id)) m.set(t.id, t); // base config wins on ID collision
+        if (!m.has(t.id)) m.set(t.id, t);
       }
     }
     return m;
-  }, [domainConfig, map.libraries]);
+  }, [effectiveConfigs, effectiveLibs]);
 
   const elementTypeDefs = useRef(buildTypeDefs());
   useEffect(() => {
     elementTypeDefs.current = buildTypeDefs();
   }, [buildTypeDefs]);
 
-  // ── Palette groups: base group + imported library groups ─────────────────
+  // ── Palette groups: all domain configs + all library groups ───────────────
   const paletteGroups = useMemo<PaletteGroup[]>(() => {
     const groups: PaletteGroup[] = [];
-    // Only include the built-in group when it has at least one type
-    if (domainConfig.elementTypes.length > 0) {
-      groups.push({ id: domainConfig.id, name: domainConfig.name, types: domainConfig.elementTypes, isBase: true });
+    // One group per DomainConfig that has at least one type
+    for (const cfg of effectiveConfigs) {
+      if (cfg.elementTypes.length > 0) {
+        groups.push({ id: cfg.id, name: cfg.name, types: cfg.elementTypes, isBase: true });
+      }
     }
-    const libs = map.libraries ?? {};
-    for (const [gid, group] of Object.entries(libs)) {
+    // One group per library group (persistedLibs take precedence, already merged)
+    for (const [gid, group] of Object.entries(effectiveLibs)) {
       groups.push({ id: gid, name: group.name, types: group.objects, isBase: false });
     }
     return groups;
-  }, [domainConfig, map.libraries]);
+  }, [effectiveConfigs, effectiveLibs]);
 
   // Auto-select first available element type when nothing is selected
   useEffect(() => {
@@ -383,7 +410,9 @@ export function VenueMapEditor({
       reader.onload = e => {
         try {
           const parsed = JSON.parse(e.target?.result as string) as ElementLibrary;
-          // Merge into map.libraries (imported groups extend, not replace, existing ones)
+          // 1. Persist to localStorage (survives page reload)
+          setPersistedLibs({ ...persistedLibs, ...parsed });
+          // 2. Also embed in map.libraries for portability (exported map is self-contained)
           const merged: ElementLibrary = { ...(map.libraries ?? {}), ...parsed };
           push({ ...map, libraries: merged });
         } catch {
@@ -392,16 +421,21 @@ export function VenueMapEditor({
       };
       reader.readAsText(file);
     },
-    [map, push],
+    [map, push, persistedLibs, setPersistedLibs],
   );
 
   const handleRemoveLibraryGroup = useCallback(
     (groupId: string) => {
+      // Remove from localStorage
+      const newPersistedLibs = { ...persistedLibs };
+      delete newPersistedLibs[groupId];
+      setPersistedLibs(newPersistedLibs);
+      // Remove from map.libraries too
       const libs = { ...(map.libraries ?? {}) };
       delete libs[groupId];
       push({ ...map, libraries: Object.keys(libs).length > 0 ? libs : undefined });
     },
-    [map, push],
+    [map, push, persistedLibs, setPersistedLibs],
   );
 
   // ── Wall operations ──────────────────────────────────────────────────────

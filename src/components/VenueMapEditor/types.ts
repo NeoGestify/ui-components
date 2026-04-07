@@ -134,10 +134,35 @@ export interface ElementStatus {
 
 export interface VenueMapEditorProps {
   /**
-   * Optional built-in element type catalog.
-   * If omitted the palette is empty until the user imports a library JSON.
+   * One or more built-in element type catalogs shown as separate palette groups.
+   * Each `DomainConfig` becomes its own named section in the element palette.
+   * Takes precedence over the legacy `domainConfig` singular prop.
+   *
+   * @example
+   * ```tsx
+   * <VenueMapEditor
+   *   domainConfigs={[furnitureConfig, lightingConfig, audioConfig]}
+   * />
+   * ```
+   */
+  domainConfigs?: DomainConfig[];
+  /**
+   * @deprecated Use `domainConfigs` (array) instead.
+   * Single built-in element type catalog. Ignored when `domainConfigs` is provided.
    */
   domainConfig?: DomainConfig;
+  /**
+   * localStorage key used to persist user-imported libraries across sessions.
+   * Libraries are loaded **synchronously** on mount so all type definitions are
+   * available before the map renders — preventing "unknown element type" errors.
+   *
+   * Set to `''` to disable persistence (libraries are lost on page reload).
+   * Defaults to `'venueMapEditor:libraries'`.
+   *
+   * Multiple editor instances on the same page should use different keys if
+   * they manage independent library sets.
+   */
+  libraryStorageKey?: string;
   /**
    * Map to render. When this prop changes (by reference) from outside the
    * component, the editor resets its history to the new map — allowing the
