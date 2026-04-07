@@ -136,6 +136,23 @@ export interface VenueMapEditorProps {
   fixed?: boolean;
   elementStatus?: ElementStatus[];
   onElementClick?: (element: MapElement) => void;
+  /**
+   * Per-type click handlers active in viewer/fixed mode.
+   * Keys are element type IDs (e.g. `'TABLE_ROUND'`).
+   * When an element is clicked, its type-specific handler fires first;
+   * if none is registered, `onElementClick` is used as fallback.
+   *
+   * @example
+   * ```tsx
+   * <VenueMapViewer
+   *   onElementTypeClick={{
+   *     TABLE_ROUND: (el) => openReservation(el.id),
+   *     CHAIR:       (el) => showInfo(el),
+   *   }}
+   * />
+   * ```
+   */
+  onElementTypeClick?: Record<string, (element: MapElement) => void>;
 }
 
 export type VenueMapViewerProps = VenueMapEditorProps;

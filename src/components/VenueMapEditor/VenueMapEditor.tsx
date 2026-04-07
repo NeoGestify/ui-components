@@ -151,6 +151,7 @@ export function VenueMapEditor({
   fixed = false,
   elementStatus,
   onElementClick,
+  onElementTypeClick,
 }: VenueMapEditorProps) {
   const initialMapRef = useRef<VenueMap>(initialMap ?? createDefaultMap());
 
@@ -636,6 +637,23 @@ export function VenueMapEditor({
     [activeFloor, pushFloor],
   );
 
+  // ── Viewer element click (type-specific handler → generic fallback) ─────
+  const handleViewerElementClick = useCallback(
+    (id: string) => {
+      const el = activeFloor?.elements.find(e => e.id === id);
+      if (!el) return;
+      const typeHandler = onElementTypeClick?.[el.type];
+      if (typeHandler) {
+        typeHandler(el);
+      } else {
+        onElementClick?.(el);
+      }
+    },
+    [activeFloor, onElementClick, onElementTypeClick],
+  );
+
+  const hasViewerHandlers = !!(onElementClick || onElementTypeClick);
+
   // ── Status map ───────────────────────────────────────────────────────────
   const statusMap = useMemo(() => {
     const m = new Map<string, string>();
@@ -803,10 +821,7 @@ export function VenueMapEditor({
               onPlaceElement={handlePlaceElement}
               onAddWall={handleAddWall}
               onDeleteWall={handleDeleteWall}
-              onViewerElementClick={onElementClick ? (id) => {
-                const el = activeFloor.elements.find(e => e.id === id);
-                if (el) onElementClick(el);
-              } : undefined}
+              onViewerElementClick={hasViewerHandlers ? handleViewerElementClick : undefined}
               onZoomChange={setZoom}
               onRegisterZoomBy={fn => { zoomByRef.current = fn; }}
               onRegisterResetView={fn => { resetViewRef.current = fn; }}
