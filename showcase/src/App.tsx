@@ -1,12 +1,12 @@
-import { AddIcon, AlertaAdvertencia, AlertaConfirmacion, AlertaError, AlertaExito, AlertaToast, Button, CheckIcon, CloseIcon, DeleteIcon, EditIcon, Form, HomeIcon, Input, Modal, ModalRef, parkingConfig, restaurantConfig, SaveIcon, SearchIcon, Select, SpinnerIcon, Table, ThemeToggle, useTheme, VenueMap, VenueMapEditor } from 'neogestify-ui-components';
+import { AddIcon, AlertaAdvertencia, AlertaConfirmacion, AlertaError, AlertaExito, AlertaToast, Button, CheckIcon, CloseIcon, DeleteIcon, EditIcon, Form, HomeIcon, Input, Modal, ModalRef, SaveIcon, SearchIcon, Select, SpinnerIcon, Table, ThemeToggle, useTheme, VenueMap, VenueMapEditor } from 'neogestify-ui-components';
 import { useState, useRef } from 'react';
 
 function App() {
   const [showModal, setShowModal] = useState(false);
-  const [activeDemo, setActiveDemo] = useState<'parking' | 'restaurant'>('parking');
   const [lastMap, setLastMap] = useState<VenueMap | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [selectValue, setSelectValue] = useState('');
+  const [readOnly, setReadOnly] = useState(false);
   const modalRef = useRef<ModalRef>(null);
   const { theme, setTheme } = useTheme();
 
@@ -272,32 +272,18 @@ function App() {
 
           {/* Domain switcher */}
           <div className="flex gap-2 mb-4">
-            <button
-              onClick={() => setActiveDemo('parking')}
-              className={`px-3 py-1 rounded text-sm border transition-colors ${
-                activeDemo === 'parking'
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-              }`}
+            <Button
+              variant='toggle'
+              isActive={readOnly}
+              onClick={() => setReadOnly(!readOnly)}
             >
-              Parqueadero
-            </button>
-            <button
-              onClick={() => setActiveDemo('restaurant')}
-              className={`px-3 py-1 rounded text-sm border transition-colors ${
-                activeDemo === 'restaurant'
-                  ? 'bg-blue-600 text-white border-blue-600'
-                  : 'border-gray-300 text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              Restaurante
-            </button>
+              Read Only
+            </Button>
           </div>
 
           <VenueMapEditor
-            key={activeDemo}
-            domainConfig={activeDemo === 'parking' ? parkingConfig : restaurantConfig}
             height="520px"
+            readOnly={readOnly}
             onChange={setLastMap}
           />
 

@@ -1,7 +1,7 @@
 {
   "name": "neogestify-ui-components",
-  "version": "1.2.21",
-  "description": "Biblioteca de componentes UI reutilizables con React, Tailwind y SweetAlert",
+  "version": "2.0.0",
+  "description": "Biblioteca de componentes UI reutilizables con React, Tailwind y SweetAlert, con VenueMapEditor o editor de mapas basico",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -31,6 +31,11 @@
       "types": "./dist/context/theme/index.d.ts",
       "import": "./dist/context/theme/index.mjs",
       "require": "./dist/context/theme/index.js"
+    },
+    "./venue-map": {
+      "types": "./dist/components/venue-map/index.d.ts",
+      "import": "./dist/components/venue-map/index.mjs",
+      "require": "./dist/components/venue-map/index.js"
     }
   },
   "files": [
