@@ -544,6 +544,40 @@ Los elementos que aparecen en la paleta también se pueden definir en archivos J
 }
 ```
 
+#### Formas personalizadas SVG (`shape: "path"`)
+
+Ahora puedes definir cualquier figura SVG usando un path:
+
+```json
+{
+  "mi_libreria": {
+    "name": "Mi librería",
+    "objects": [
+      {
+        "id": "STAR",
+        "label": "Estrella",
+        "shape": "path",
+        "svgPath": "M50 5 L61 35 L95 35 L68 57 L79 91 L50 70 L21 91 L32 57 L5 35 L39 35 Z",
+        "viewBox": "0 0 100 100",
+        "defaultWidth": 60,
+        "defaultHeight": 60,
+        "color": "#facc15",
+        "strokeColor": "#ca8a04"
+      }
+    ]
+  }
+}
+```
+
+**Propiedades para `shape: "path"`:**
+
+| Campo | Tipo | Default | Descripción |
+|-------|------|---------|-------------|
+| `svgPath` | `string` | **requerido** | El atributo `d` del elemento `<path>` SVG |
+| `viewBox` | `string` | `"0 0 100 100"` | Espacio de coordenadas del path (formato: `"minX minY width height"`) |
+
+> **Nota:** El path se escala automáticamente para llenar el bounding box `width × height` del elemento. El `strokeWidth` se compensa por el factor de escala para que sea visualmente consistente con los otros shapes.
+
 #### Propiedades de cada objeto
 
 | Campo | Tipo | Requerido | Descripción |
