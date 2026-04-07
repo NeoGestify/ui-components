@@ -97,6 +97,13 @@ export interface ElementTypeDef {
    * Defaults to `"0 0 100 100"` when omitted.
    */
   viewBox?: string;
+  /**
+   * SVG fill rule for `shape === 'path'`.
+   * Use `'evenodd'` when the path contains sub-paths that should appear as holes
+   * (e.g. a gear with a circular cutout, a donut, a letter with counter-forms).
+   * Defaults to `'nonzero'`.
+   */
+  fillRule?: 'nonzero' | 'evenodd';
 }
 
 export interface DomainConfig {

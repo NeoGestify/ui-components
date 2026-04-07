@@ -298,6 +298,7 @@ export function ElementNode({
           <path
             d={typeDef.svgPath}
             fill={fillColor}
+            fillRule={typeDef.fillRule ?? 'nonzero'}
             stroke={isSelected ? '#3b82f6' : typeDef.strokeColor}
             strokeWidth={isSelected ? customPath.strokeWidth * 1.5 : customPath.strokeWidth}
             style={{ cursor: bodyCursor }}
