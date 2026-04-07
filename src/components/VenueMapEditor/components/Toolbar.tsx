@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import {
   IconCursor, IconGrid, IconHand, IconReset, IconZoomIn, IconZoomOut,
@@ -127,6 +128,21 @@ export function Toolbar({
   onLoadLibrary,
   onRemoveLibraryGroup,
 }: ToolbarProps) {
+  // Active palette tab — track by group ID
+  const [activeGroupId, setActiveGroupId] = useState<string | null>(
+    () => paletteGroups[0]?.id ?? null,
+  );
+
+  // When groups change (library imported / removed), make sure active tab is still valid
+  useEffect(() => {
+    if (paletteGroups.length === 0) { setActiveGroupId(null); return; }
+    if (!paletteGroups.find(g => g.id === activeGroupId)) {
+      setActiveGroupId(paletteGroups[0].id);
+    }
+  }, [paletteGroups, activeGroupId]);
+
+  const activeGroup = paletteGroups.find(g => g.id === activeGroupId) ?? null;
+
   return (
     <div className="flex flex-col bg-white border-b border-slate-200 shadow-sm shrink-0">
       {/* ── Main row ── */}
@@ -210,43 +226,51 @@ export function Toolbar({
         )}
       </div>
 
-      {/* ── Element palette (only when PLACE is active) ── */}
-      {tool === 'PLACE' && (
-        <div className="flex items-stretch gap-0 border-t border-slate-100 bg-slate-50 overflow-x-auto">
-          {paletteGroups.map((group, gi) => (
-            <div key={group.id} className="flex items-center shrink-0">
-              {/* Group divider (not before the first group) */}
-              {gi > 0 && (
-                <div className="w-px self-stretch bg-slate-200 mx-1" />
-              )}
-              {/* Group label + optional remove button */}
-              <div className="flex items-center gap-0.5 px-1.5 shrink-0">
-                <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap select-none">
-                  {group.name}
-                </span>
-                {!group.isBase && onRemoveLibraryGroup && (
-                  <button
-                    title={`Eliminar grupo "${group.name}"`}
-                    onClick={() => onRemoveLibraryGroup(group.id)}
-                    className="text-slate-300 hover:text-red-400 leading-none text-xs ml-0.5 transition-colors"
-                  >
-                    ×
-                  </button>
-                )}
+      {/* ── Element palette (only when PLACE is active and there are groups) ── */}
+      {tool === 'PLACE' && paletteGroups.length > 0 && (
+        <div className="flex flex-col border-t border-slate-100">
+          {/* Tab bar — one tab per group */}
+          <div className="flex items-end gap-0 overflow-x-auto bg-slate-50 border-b border-slate-200 px-2 pt-1">
+            {paletteGroups.map(group => (
+              <div key={group.id} className="flex items-center shrink-0">
+                <button
+                  onClick={() => setActiveGroupId(group.id)}
+                  className={[
+                    'flex items-center gap-1 px-3 py-1 text-xs font-medium rounded-t border-x border-t transition-colors whitespace-nowrap',
+                    group.id === activeGroupId
+                      ? 'bg-white border-slate-200 text-slate-800 -mb-px pb-[5px]'
+                      : 'bg-slate-50 border-transparent text-slate-400 hover:text-slate-600 hover:bg-slate-100',
+                  ].join(' ')}
+                >
+                  {group.name || 'Sin nombre'}
+                  {!group.isBase && onRemoveLibraryGroup && (
+                    <span
+                      role="button"
+                      title={`Eliminar "${group.name}"`}
+                      onClick={e => { e.stopPropagation(); onRemoveLibraryGroup(group.id); }}
+                      className="ml-0.5 text-slate-300 hover:text-red-400 transition-colors leading-none"
+                    >
+                      ×
+                    </span>
+                  )}
+                </button>
               </div>
-              {/* Chips */}
-              <div className="flex items-center gap-1 px-1 py-1.5">
-                {group.types.map(typeDef => (
-                  <TypeChip
-                    key={typeDef.id}
-                    typeDef={typeDef}
-                    active={activePlaceTypeId === typeDef.id}
-                    onClick={() => onActivePlaceTypeChange(typeDef.id)}
-                  />
-                ))}
-              </div>
+            ))}
+          </div>
+
+          {/* Active group chips */}
+          {activeGroup && (
+            <div className="flex items-center gap-1 flex-wrap px-2 py-1.5 bg-white min-h-[36px]">
+              {activeGroup.types.map(typeDef => (
+                <TypeChip
+                  key={typeDef.id}
+                  typeDef={typeDef}
+                  active={activePlaceTypeId === typeDef.id}
+                  onClick={() => onActivePlaceTypeChange(typeDef.id)}
+                />
+              ))}
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>
