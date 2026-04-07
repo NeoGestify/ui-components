@@ -25,10 +25,6 @@ export type {
 
 export type { PaletteGroup } from './components/Toolbar';
 
-// Domain configs
-export { parkingConfig } from './config/parkingConfig';
-export { restaurantConfig } from './config/restaurantConfig';
-
 // Hooks (for advanced consumers)
 export { usePanZoom } from './hooks/usePanZoom';
 export type { PanZoomState } from './hooks/usePanZoom';

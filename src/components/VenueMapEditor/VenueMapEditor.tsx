@@ -11,6 +11,7 @@ import type {
   FloorArea,
   AreaShape,
   ElementLibrary,
+  DomainConfig,
 } from './types';
 import { Toolbar } from './components/Toolbar';
 import type { PaletteGroup } from './components/Toolbar';
@@ -92,6 +93,8 @@ function createDefaultMap(): VenueMap {
   };
 }
 
+const EMPTY_DOMAIN_CONFIG: DomainConfig = { id: '__empty__', name: '', elementTypes: [] };
+
 function updateFloor(map: VenueMap, updatedFloor: Floor): VenueMap {
   return {
     ...map,
@@ -136,7 +139,7 @@ function polygonToRect(area: FloorArea): FloorArea {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function VenueMapEditor({
-  domainConfig,
+  domainConfig = EMPTY_DOMAIN_CONFIG,
   initialMap,
   onChange,
   width = '100%',
@@ -162,9 +165,7 @@ export function VenueMapEditor({
   const [tool, setTool] = useState<ToolMode>('SELECT');
   const [showGrid, setShowGrid] = useState(showGridProp);
   const [zoom, setZoom] = useState(1);
-  const [activePlaceTypeId, setActivePlaceTypeId] = useState<string | null>(
-    () => domainConfig.elementTypes[0]?.id ?? null,
-  );
+  const [activePlaceTypeId, setActivePlaceTypeId] = useState<string | null>(null);
 
   const zoomByRef = useRef<(factor: number) => void>(() => undefined);
   const resetViewRef = useRef<() => void>(() => undefined);
@@ -190,9 +191,11 @@ export function VenueMapEditor({
 
   // ── Palette groups: base group + imported library groups ─────────────────
   const paletteGroups = useMemo<PaletteGroup[]>(() => {
-    const groups: PaletteGroup[] = [
-      { id: domainConfig.id, name: domainConfig.name, types: domainConfig.elementTypes, isBase: true },
-    ];
+    const groups: PaletteGroup[] = [];
+    // Only include the built-in group when it has at least one type
+    if (domainConfig.elementTypes.length > 0) {
+      groups.push({ id: domainConfig.id, name: domainConfig.name, types: domainConfig.elementTypes, isBase: true });
+    }
     const libs = map.libraries ?? {};
     for (const [gid, group] of Object.entries(libs)) {
       groups.push({ id: gid, name: group.name, types: group.objects, isBase: false });
@@ -200,18 +203,33 @@ export function VenueMapEditor({
     return groups;
   }, [domainConfig, map.libraries]);
 
-  const prevInitial = useRef(initialMap);
+  // Auto-select first available element type when nothing is selected
   useEffect(() => {
-    if (initialMap && initialMap !== prevInitial.current) {
-      prevInitial.current = initialMap;
-      push(initialMap);
-      setActiveFloorId(initialMap.floors[0]?.id ?? '');
-    }
-  }, [initialMap, push]);
+    if (activePlaceTypeId) return;
+    const firstType = paletteGroups[0]?.types[0];
+    if (firstType) setActivePlaceTypeId(firstType.id);
+  }, [paletteGroups, activePlaceTypeId]);
+
+  // ── Controlled map sync (feedback-loop-safe) ─────────────────────────────
+  // Track the last map we emitted so we can distinguish "external" prop changes
+  // from echoes of our own onChange calls. Without this, storing onChange output
+  // in parent state and passing it back as initialMap would cause an infinite loop.
+  const lastEmittedMap = useRef<VenueMap | undefined>(undefined);
+  const prevInitial = useRef(initialMap);
 
   useEffect(() => {
+    lastEmittedMap.current = map;
     onChange?.(map);
   }, [map, onChange]);
+
+  useEffect(() => {
+    if (!initialMap) return;
+    if (initialMap === prevInitial.current) return;  // same reference, nothing to do
+    prevInitial.current = initialMap;
+    if (initialMap === lastEmittedMap.current) return; // echo of our own onChange, skip
+    push(initialMap);
+    setActiveFloorId(initialMap.floors[0]?.id ?? '');
+  }, [initialMap, push]);
 
   const activeFloor = map.floors.find(f => f.id === activeFloorId) ?? map.floors[0];
 

@@ -111,8 +111,20 @@ export interface ElementStatus {
 // ─── Editor props ─────────────────────────────────────────────────────────────
 
 export interface VenueMapEditorProps {
-  domainConfig: DomainConfig;
+  /**
+   * Optional built-in element type catalog.
+   * If omitted the palette is empty until the user imports a library JSON.
+   */
+  domainConfig?: DomainConfig;
+  /**
+   * Map to render. When this prop changes (by reference) from outside the
+   * component, the editor resets its history to the new map — allowing the
+   * parent to hydrate the editor from an API or local storage without causing
+   * a render loop (changes made inside the editor that are echoed back via
+   * `onChange` are detected and ignored).
+   */
   initialMap?: VenueMap;
+  /** Called every time the internal map state changes. */
   onChange?: (map: VenueMap) => void;
   width?: string | number;
   height?: string | number;
@@ -126,7 +138,4 @@ export interface VenueMapEditorProps {
   onElementClick?: (element: MapElement) => void;
 }
 
-export interface VenueMapViewerProps extends VenueMapEditorProps {
-  elementStatus?: ElementStatus[];
-  onElementClick?: (element: MapElement) => void;
-}
+export type VenueMapViewerProps = VenueMapEditorProps;
