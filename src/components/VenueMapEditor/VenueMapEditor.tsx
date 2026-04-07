@@ -191,11 +191,11 @@ export function VenueMapEditor({
   // ── Palette groups: base group + imported library groups ─────────────────
   const paletteGroups = useMemo<PaletteGroup[]>(() => {
     const groups: PaletteGroup[] = [
-      { id: domainConfig.id, name: domainConfig.name, types: domainConfig.elementTypes },
+      { id: domainConfig.id, name: domainConfig.name, types: domainConfig.elementTypes, isBase: true },
     ];
     const libs = map.libraries ?? {};
     for (const [gid, group] of Object.entries(libs)) {
-      groups.push({ id: gid, name: group.name, types: group.objects });
+      groups.push({ id: gid, name: group.name, types: group.objects, isBase: false });
     }
     return groups;
   }, [domainConfig, map.libraries]);
@@ -367,6 +367,15 @@ export function VenueMapEditor({
         }
       };
       reader.readAsText(file);
+    },
+    [map, push],
+  );
+
+  const handleRemoveLibraryGroup = useCallback(
+    (groupId: string) => {
+      const libs = { ...(map.libraries ?? {}) };
+      delete libs[groupId];
+      push({ ...map, libraries: Object.keys(libs).length > 0 ? libs : undefined });
     },
     [map, push],
   );
@@ -729,6 +738,7 @@ export function VenueMapEditor({
           onExportMap={handleExportMap}
           onImportMap={() => importInputRef.current?.click()}
           onLoadLibrary={() => libraryInputRef.current?.click()}
+          onRemoveLibraryGroup={handleRemoveLibraryGroup}
         />
       )}
 

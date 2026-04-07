@@ -277,9 +277,10 @@ function PolygonArtboard({
   );
 }
 
-// ─── Artboard ─────────────────────────────────────────────────────────────────
+// ─── RectArtboard ─────────────────────────────────────────────────────────────
+// Extracted so all hooks are at the top level of a single component (Rules of Hooks).
 
-export function Artboard({
+function RectArtboard({
   area,
   onResize,
   onMove,
@@ -289,26 +290,6 @@ export function Artboard({
   zoom,
   readOnly = false,
 }: ArtboardProps) {
-  if (area.shape === 'polygon') {
-    return (
-      <PolygonArtboard
-        area={area}
-        onResize={onResize}
-        onMove={onMove}
-        onResizeCommit={onResizeCommit}
-        svgRef={svgRef}
-        panZoomRef={panZoomRef}
-        zoom={zoom}
-        readOnly={readOnly}
-      />
-    );
-  }
-
-  const ax = area.x ?? 0;
-  const ay = area.y ?? 0;
-  const aw = area.width ?? 400;
-  const ah = area.height ?? 300;
-
   const activeHandle = useRef<HandleType | null>(null);
   const areaRef = useRef(area);
   areaRef.current = area;
@@ -337,6 +318,11 @@ export function Artboard({
       onMove?.(dx, dy);
     },
   });
+
+  const ax = area.x ?? 0;
+  const ay = area.y ?? 0;
+  const aw = area.width ?? 400;
+  const ah = area.height ?? 300;
 
   const hs = HANDLE_PX / zoom;
   const sw = 1.5 / zoom;
@@ -407,4 +393,13 @@ export function Artboard({
         ))}
     </g>
   );
+}
+
+// ─── Artboard (router) ────────────────────────────────────────────────────────
+
+export function Artboard(props: ArtboardProps) {
+  if (props.area.shape === 'polygon') {
+    return <PolygonArtboard {...props} />;
+  }
+  return <RectArtboard {...props} />;
 }

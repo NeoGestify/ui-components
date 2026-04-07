@@ -43,6 +43,8 @@ function Sep() {
 export interface PaletteGroup {
   id: string;
   name: string;
+  /** True for the built-in domain config group; false for imported library groups. */
+  isBase?: boolean;
   types: ElementTypeDef[];
 }
 
@@ -68,6 +70,7 @@ interface ToolbarProps {
   onExportMap?: () => void;
   onImportMap?: () => void;
   onLoadLibrary?: () => void;
+  onRemoveLibraryGroup?: (groupId: string) => void;
 }
 
 // ─── TypeChip ─────────────────────────────────────────────────────────────────
@@ -122,6 +125,7 @@ export function Toolbar({
   onExportMap,
   onImportMap,
   onLoadLibrary,
+  onRemoveLibraryGroup,
 }: ToolbarProps) {
   return (
     <div className="flex flex-col bg-white border-b border-slate-200 shadow-sm shrink-0">
@@ -215,10 +219,21 @@ export function Toolbar({
               {gi > 0 && (
                 <div className="w-px self-stretch bg-slate-200 mx-1" />
               )}
-              {/* Group label */}
-              <span className="text-[10px] text-slate-400 font-medium px-1.5 whitespace-nowrap select-none">
-                {group.name}
-              </span>
+              {/* Group label + optional remove button */}
+              <div className="flex items-center gap-0.5 px-1.5 shrink-0">
+                <span className="text-[10px] text-slate-400 font-medium whitespace-nowrap select-none">
+                  {group.name}
+                </span>
+                {!group.isBase && onRemoveLibraryGroup && (
+                  <button
+                    title={`Eliminar grupo "${group.name}"`}
+                    onClick={() => onRemoveLibraryGroup(group.id)}
+                    className="text-slate-300 hover:text-red-400 leading-none text-xs ml-0.5 transition-colors"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
               {/* Chips */}
               <div className="flex items-center gap-1 px-1 py-1.5">
                 {group.types.map(typeDef => (
