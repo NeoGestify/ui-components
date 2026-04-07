@@ -53,21 +53,26 @@ function clampToFloor(
   w: number, h: number,
   area: FloorArea,
 ): { x: number; y: number } {
+  // Use a square hitbox of side = min(w, h) centered on the element.
+  // Custom shapes (e.g. SVG paths) rarely fill their full bounding box,
+  // so this avoids over-constraining them to the floor bounds.
+  const s = Math.min(w, h);
+  const hs = s / 2;
+  const cx = x + w / 2;
+  const cy = y + h / 2;
+
   if (area.shape === 'rect') {
     const ax = area.x ?? 0;
     const ay = area.y ?? 0;
     const aw = area.width ?? 0;
     const ah = area.height ?? 0;
-    return {
-      x: aw >= w ? Math.max(ax, Math.min(ax + aw - w, x)) : ax + (aw - w) / 2,
-      y: ah >= h ? Math.max(ay, Math.min(ay + ah - h, y)) : ay + (ah - h) / 2,
-    };
+    const ncx = aw >= s ? Math.max(ax + hs, Math.min(ax + aw - hs, cx)) : ax + aw / 2;
+    const ncy = ah >= s ? Math.max(ay + hs, Math.min(ay + ah - hs, cy)) : ay + ah / 2;
+    return { x: ncx - w / 2, y: ncy - h / 2 };
   }
   if (area.shape === 'polygon') {
     const pts = area.points ?? [];
     if (pts.length < 3) return { x, y };
-    // Clamp the element center to inside (or onto the boundary of) the polygon.
-    const cx = x + w / 2, cy = y + h / 2;
     if (pointInPolygon(cx, cy, pts)) return { x, y };
     const clamped = clampPointToPolygon(cx, cy, pts);
     return { x: clamped.x - w / 2, y: clamped.y - h / 2 };

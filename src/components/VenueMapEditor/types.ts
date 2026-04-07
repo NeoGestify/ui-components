@@ -2,7 +2,7 @@
 
 export type WallMaterial = 'concrete' | 'brick' | 'glass' | 'drywall' | 'wood';
 export type AreaShape = 'rect' | 'polygon';
-export type ElementShape = 'rect' | 'circle' | 'arrow';
+export type ElementShape = 'rect' | 'circle' | 'arrow' | 'path';
 export type ToolMode = 'SELECT' | 'WALL' | 'PLACE' | 'PAN' | 'ERASE';
 
 // ─── Wall graph ───────────────────────────────────────────────────────────────
@@ -82,6 +82,21 @@ export interface ElementTypeDef {
   strokeColor: string;
   /** Emoji or icon name */
   icon?: string;
+  /**
+   * Raw SVG path `d` attribute for `shape === 'path'`.
+   * Define the path in the coordinate space of `viewBox` (default `"0 0 100 100"`).
+   * It will be automatically scaled to fit the element's `width × height` bounding box.
+   *
+   * @example
+   * // A 5-pointed star in a 100×100 viewBox
+   * svgPath: "M50 5 L61 35 L95 35 L68 57 L79 91 L50 70 L21 91 L32 57 L5 35 L39 35 Z"
+   */
+  svgPath?: string;
+  /**
+   * ViewBox for `svgPath`. Format: `"minX minY width height"`.
+   * Defaults to `"0 0 100 100"` when omitted.
+   */
+  viewBox?: string;
 }
 
 export interface DomainConfig {

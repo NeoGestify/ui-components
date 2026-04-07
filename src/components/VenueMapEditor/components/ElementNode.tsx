@@ -231,6 +231,21 @@ export function ElementNode({
   const fillColor = statusFill ?? typeDef.color;
   const bodyCursor = onViewerClick ? 'pointer' : tool === 'ERASE' ? 'crosshair' : tool === 'SELECT' ? 'move' : 'default';
 
+  // ── Custom SVG path geometry ─────────────────────────────────────────────────
+  // Parse the viewBox to get the coordinate space the path was designed in.
+  const customPath = typeDef.shape === 'path' && typeDef.svgPath
+    ? (() => {
+        const parts = (typeDef.viewBox ?? '0 0 100 100').split(/[\s,]+/).map(Number);
+        const vw = parts[2] ?? 100;
+        const vh = parts[3] ?? 100;
+        const scaleX = vw > 0 ? w / vw : 1;
+        const scaleY = vh > 0 ? h / vh : 1;
+        // Compensate stroke so it renders as ~sw in canvas units regardless of shape scale
+        const avgScale = Math.sqrt(Math.abs(scaleX * scaleY)) || 1;
+        return { scaleX, scaleY, strokeWidth: sw / avgScale };
+      })()
+    : null;
+
   const handles: Array<{ type: HandleType; hx: number; hy: number }> = [
     { type: 'nw', hx: x,      hy: y },
     { type: 'n',  hx: x+w/2,  hy: y },
@@ -277,6 +292,19 @@ export function ElementNode({
           onMouseDown={tool === 'SELECT' && !onViewerClick ? handleBodyDown : undefined}
           onClick={handleBodyClick}
         />
+      )}
+      {typeDef.shape === 'path' && customPath && typeDef.svgPath && (
+        <g transform={`translate(${x}, ${y}) scale(${customPath.scaleX}, ${customPath.scaleY})`}>
+          <path
+            d={typeDef.svgPath}
+            fill={fillColor}
+            stroke={isSelected ? '#3b82f6' : typeDef.strokeColor}
+            strokeWidth={isSelected ? customPath.strokeWidth * 1.5 : customPath.strokeWidth}
+            style={{ cursor: bodyCursor }}
+            onMouseDown={tool === 'SELECT' && !onViewerClick ? handleBodyDown : undefined}
+            onClick={handleBodyClick}
+          />
+        </g>
       )}
 
       {/* ── Label ── */}
