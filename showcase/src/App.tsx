@@ -1,35 +1,12 @@
+import { AddIcon, AlertaAdvertencia, AlertaConfirmacion, AlertaError, AlertaExito, AlertaToast, Button, CheckIcon, CloseIcon, DeleteIcon, EditIcon, Form, HomeIcon, Input, Modal, ModalRef, SaveIcon, SearchIcon, Select, SpinnerIcon, Table, ThemeToggle, useTheme, VenueMap, VenueMapEditor } from 'neogestify-ui-components';
 import { useState, useRef } from 'react';
-import Button from '../../src/components/html/Button';
-import Input from '../../src/components/html/Input';
-import Form from '../../src/components/html/Form';
-import Select from '../../src/components/html/Select';
-import Table from '../../src/components/html/Table';
-import Modal, { ModalRef } from '../../src/components/html/Modal';
-import ThemeToggle from '../../src/context/theme/ThemeToggle';
-import { useTheme } from '../../src/context/theme/useTheme';
-import {
-  HomeIcon,
-  SaveIcon,
-  DeleteIcon,
-  EditIcon,
-  SearchIcon,
-  CheckIcon,
-  CloseIcon,
-  AddIcon,
-  SpinnerIcon
-} from '../../src/components/icons/icons';
-import {
-  AlertaExito,
-  AlertaError,
-  AlertaAdvertencia,
-  AlertaConfirmacion,
-  AlertaToast
-} from '../../src/components/alerts/alerta';
 
 function App() {
   const [showModal, setShowModal] = useState(false);
+  const [lastMap, setLastMap] = useState<VenueMap | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [selectValue, setSelectValue] = useState('');
+  const [readOnly, setReadOnly] = useState(false);
   const modalRef = useRef<ModalRef>(null);
   const { theme, setTheme } = useTheme();
 
@@ -282,6 +259,44 @@ function App() {
               </p>
             </div>
           </div>
+        </section>
+
+        {/* VenueMapEditor Section */}
+        <section className="mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            VenueMapEditor — Fase 1
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+            Canvas SVG infinito · pan con click-medio · zoom con rueda · artboard redimensionable
+          </p>
+
+          {/* Domain switcher */}
+          <div className="flex gap-2 mb-4">
+            <Button
+              variant='toggle'
+              isActive={readOnly}
+              onClick={() => setReadOnly(!readOnly)}
+            >
+              Read Only
+            </Button>
+          </div>
+
+          <VenueMapEditor
+            height="520px"
+            readOnly={readOnly}
+            onChange={setLastMap}
+          />
+
+          {lastMap && (
+            <details className="mt-4">
+              <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
+                Ver JSON del mapa ({lastMap.floors[0]?.area.width ?? 0} × {lastMap.floors[0]?.area.height ?? 0} px)
+              </summary>
+              <pre className="mt-2 p-3 dark:bg-gray-100 bg-gray-900 rounded text-xs overflow-auto max-h-48">
+                {JSON.stringify(lastMap, null, 2)}
+              </pre>
+            </details>
+          )}
         </section>
 
         {/* Alerts Section */}
