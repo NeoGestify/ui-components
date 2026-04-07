@@ -101,6 +101,29 @@ function createDefaultMap(): VenueMap {
 
 const DEFAULT_LIBRARY_KEY = 'venueMapEditor:libraries';
 
+/**
+ * Deep-merges `incoming` into `existing`:
+ * - New groups are added as-is.
+ * - Existing groups get their `objects` extended with only the elements
+ *   whose `id` is not already present (existing elements are never overwritten).
+ */
+function mergeLibraries(existing: ElementLibrary, incoming: ElementLibrary): ElementLibrary {
+  const result: ElementLibrary = { ...existing };
+  for (const [groupId, incomingGroup] of Object.entries(incoming)) {
+    if (result[groupId]) {
+      const existingIds = new Set(result[groupId].objects.map(o => o.id));
+      const newObjects = incomingGroup.objects.filter(o => !existingIds.has(o.id));
+      result[groupId] = {
+        ...result[groupId],
+        objects: [...result[groupId].objects, ...newObjects],
+      };
+    } else {
+      result[groupId] = incomingGroup;
+    }
+  }
+  return result;
+}
+
 function updateFloor(map: VenueMap, updatedFloor: Floor): VenueMap {
   return {
     ...map,
@@ -410,11 +433,13 @@ export function VenueMapEditor({
       reader.onload = e => {
         try {
           const parsed = JSON.parse(e.target?.result as string) as ElementLibrary;
-          // 1. Persist to localStorage (survives page reload)
-          setPersistedLibs({ ...persistedLibs, ...parsed });
-          // 2. Also embed in map.libraries for portability (exported map is self-contained)
-          const merged: ElementLibrary = { ...(map.libraries ?? {}), ...parsed };
-          push({ ...map, libraries: merged });
+          // 1. Persist to localStorage — new groups added, existing groups get
+          //    only the new element IDs appended (no overwrites).
+          const mergedPersisted = mergeLibraries(persistedLibs, parsed);
+          setPersistedLibs(mergedPersisted);
+          // 2. Same deep-merge into map.libraries for portability.
+          const mergedMap = mergeLibraries(map.libraries ?? {}, parsed);
+          push({ ...map, libraries: mergedMap });
         } catch {
           // ignore parse errors
         }
