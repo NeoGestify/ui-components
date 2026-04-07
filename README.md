@@ -380,7 +380,9 @@ function App() {
 |------|------|---------|-------------|
 | `initialMap` | `VenueMap` | mapa vacío | Mapa inicial. Se puede actualizar desde fuera para recargar el editor. |
 | `onChange` | `(map: VenueMap) => void` | — | Se llama en cada cambio del estado interno. |
-| `domainConfig` | `DomainConfig` | vacío | Tipos de elementos predefinidos disponibles en la paleta (opcional). |
+| `domainConfigs` | `DomainConfig[]` | `[]` | Array de catálogos de tipos predefinidos. Cada uno aparece como una pestaña separada en la paleta. |
+| `domainConfig` | `DomainConfig` | — | **Obsoleto** — usa `domainConfigs`. Catálogo único (se convierte internamente a un array de un elemento). |
+| `libraryStorageKey` | `string` | `'venueMapEditor:libraries'` | Clave de `localStorage` donde se persisten las librerías importadas. Pasa `''` para deshabilitar la persistencia. |
 | `width` | `string \| number` | `'100%'` | Ancho del componente. |
 | `height` | `string \| number` | `'600px'` | Alto del componente. |
 | `gridSize` | `number` | `20` | Tamaño de la cuadrícula en unidades de canvas. |
@@ -434,9 +436,60 @@ const estados: ElementStatus[] = [
 
 ---
 
+### Múltiples catálogos de elementos (domainConfigs)
+
+Pasa varios `DomainConfig` vía la prop `domainConfigs`. Cada catálogo aparece como una **pestaña separada** en la paleta — los tipos nunca se mezclan entre tabs.
+
+```tsx
+import { VenueMapEditor } from 'neogestify-ui-components/VenueMapEditor';
+import type { DomainConfig } from 'neogestify-ui-components/VenueMapEditor';
+
+const mobiliario: DomainConfig = {
+  id: 'furniture',
+  name: 'Mobiliario',
+  elementTypes: [
+    { id: 'CHAIR',      label: 'Silla',        shape: 'circle', defaultWidth: 30,  defaultHeight: 30,  color: '#fef3c7', strokeColor: '#d97706' },
+    { id: 'TABLE_RECT', label: 'Mesa rect.',   shape: 'rect',   defaultWidth: 100, defaultHeight: 60,  color: '#fef3c7', strokeColor: '#d97706' },
+  ],
+};
+
+const iluminacion: DomainConfig = {
+  id: 'lighting',
+  name: 'Iluminación',
+  elementTypes: [
+    { id: 'SPOT_LIGHT', label: 'Foco',   shape: 'circle', defaultWidth: 40, defaultHeight: 40, color: '#fef9c3', strokeColor: '#ca8a04' },
+    { id: 'STRIP_LIGHT', label: 'Tira LED', shape: 'rect', defaultWidth: 120, defaultHeight: 15, color: '#fef9c3', strokeColor: '#ca8a04' },
+  ],
+};
+
+<VenueMapEditor domainConfigs={[mobiliario, iluminacion]} />
+```
+
+La paleta mostrará:
+
+```
+[ Mobiliario ]  [ Iluminación ]
+─────────────────────────────
+  [Silla]  [Mesa rect.]
+```
+
+---
+
 ### Crear una librería de elementos (JSON)
 
-Los elementos que aparecen en la paleta del editor se definen en archivos JSON que el usuario carga desde el botón **⊞** (Cargar librería) de la barra de herramientas. Una vez cargada, la librería queda **embebida dentro del propio mapa** y se exporta junto a él — no se pierde al reabrir el archivo.
+Los elementos que aparecen en la paleta también se pueden definir en archivos JSON que el usuario carga desde el botón **⊞** (Cargar librería).
+
+**Persistencia automática:** las librerías importadas se guardan en `localStorage` bajo la clave `libraryStorageKey` (por defecto `'venueMapEditor:libraries'`). Al recargar la página se restauran automáticamente **antes** de que el mapa renderice, evitando errores de "tipo de elemento desconocido".
+
+**Merge inteligente al importar:** si un grupo con el mismo `id` ya existe, se añaden únicamente los elementos cuyo `id` no esté duplicado. Los elementos existentes nunca se sobreescriben.
+
+```tsx
+// Cambiar la clave de almacenamiento (útil con múltiples editores en la misma app)
+<VenueMapEditor libraryStorageKey="mi-proyecto:libs" />
+
+// Deshabilitar persistencia
+<VenueMapEditor libraryStorageKey="" />
+```
 
 #### Formato del JSON
 
@@ -493,15 +546,18 @@ Los elementos que aparecen en la paleta del editor se definen en archivos JSON q
 
 #### Propiedades de cada objeto
 
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `id` | `string` | Identificador único del tipo. Debe ser **único en toda la librería**. Se usa como key en `onElementTypeClick`. |
-| `label` | `string` | Nombre visible en la paleta. |
-| `shape` | `"rect" \| "circle" \| "arrow"` | Forma del objeto en el canvas. |
-| `defaultWidth` | `number` | Ancho inicial al colocar el elemento (unidades de canvas ≈ píxeles a zoom 1×). |
-| `defaultHeight` | `number` | Alto inicial. |
-| `color` | `string` | Color de relleno (cualquier valor CSS: `#hex`, `rgb()`, `hsl()`, etc.). |
-| `strokeColor` | `string` | Color del borde. |
+| Campo | Tipo | Requerido | Descripción |
+|-------|------|-----------|-------------|
+| `id` | `string` | ✓ | Identificador único del tipo. Se usa como key en `onElementTypeClick`. |
+| `label` | `string` | ✓ | Nombre visible en la paleta y en el canvas. |
+| `shape` | `"rect" \| "circle" \| "arrow" \| "path"` | ✓ | Forma del objeto. |
+| `defaultWidth` | `number` | ✓ | Ancho inicial al colocar el elemento (unidades de canvas ≈ px a zoom 1×). |
+| `defaultHeight` | `number` | ✓ | Alto inicial. |
+| `color` | `string` | ✓ | Color de relleno (cualquier valor CSS: `#hex`, `rgb()`, `hsl()`, etc.). |
+| `strokeColor` | `string` | ✓ | Color del borde. |
+| `svgPath` | `string` | solo para `shape:"path"` | Atributo `d` de un `<path>` SVG. Se escala automáticamente al bounding box del elemento. |
+| `viewBox` | `string` | — | Espacio de coordenadas del `svgPath`. Formato: `"minX minY w h"`. Default: `"0 0 100 100"`. |
+| `fillRule` | `"nonzero" \| "evenodd"` | — | Regla de relleno SVG. Usa `"evenodd"` para crear huecos con sub-paths (engranajes, letras, donuts). Default: `"nonzero"`. |
 
 #### Formas disponibles
 
@@ -510,10 +566,50 @@ Los elementos que aparecen en la paleta del editor se definen en archivos JSON q
 | `rect` | Rectángulo | Mesas, espacios de parqueo, habitaciones |
 | `circle` | Elipse (círculo si `width === height`) | Mesas redondas, columnas, plantas |
 | `arrow` | Flecha apuntando a la derecha | Entradas, salidas, sentidos de circulación |
+| `path` | Forma SVG personalizada libre | Cualquier figura: estrella, engranaje, piano, logo... |
+
+#### Formas personalizadas con `shape: "path"`
+
+El campo `svgPath` acepta el atributo `d` de cualquier `<path>` SVG estándar. El sistema escala la figura para que ocupe exactamente el bounding box `width × height` del elemento. Puedes diseñar tus formas con Inkscape, Figma u otro editor vectorial y copiar el `d=` directamente.
+
+```json
+{
+  "especiales": {
+    "name": "Especiales",
+    "objects": [
+      {
+        "id": "STAR",
+        "label": "Estrella",
+        "shape": "path",
+        "viewBox": "0 0 100 100",
+        "svgPath": "M50 5 L61 35 L95 35 L68 57 L79 91 L50 70 L21 91 L32 57 L5 35 L39 35 Z",
+        "defaultWidth": 60,
+        "defaultHeight": 60,
+        "color": "#facc15",
+        "strokeColor": "#ca8a04"
+      },
+      {
+        "id": "GEAR",
+        "label": "Engranaje",
+        "shape": "path",
+        "viewBox": "0 0 100 100",
+        "fillRule": "evenodd",
+        "svgPath": "M36.61,17.66 L44.13,5.39 L55.87,5.39 L63.39,17.66 A35,35 0 0,1 77.40,14.30 L85.70,22.60 L82.34,36.61 A35,35 0 0,1 94.61,44.13 L94.61,55.87 L82.34,63.39 A35,35 0 0,1 85.70,77.40 L77.40,85.70 L63.39,82.34 A35,35 0 0,1 55.87,94.61 L44.13,94.61 L36.61,82.34 A35,35 0 0,1 22.60,85.70 L14.30,77.40 L17.66,63.39 A35,35 0 0,1 5.39,55.87 L5.39,44.13 L17.66,36.61 A35,35 0 0,1 14.30,22.60 L22.60,14.30 Z M65,50 A15,15 0 1,0 35,50 A15,15 0 1,0 65,50 Z",
+        "defaultWidth": 70,
+        "defaultHeight": 70,
+        "color": "#94a3b8",
+        "strokeColor": "#334155"
+      }
+    ]
+  }
+}
+```
+
+> **Hitbox de piso:** para formas personalizadas que no llenan su bounding box (estrellas, logos, etc.), la detección de bordes usa un cuadrado de lado `min(width, height)` centrado en el elemento — esto evita que la figura quede demasiado restringida al área del piso.
 
 #### Varios grupos en un archivo
 
-Un mismo archivo puede tener tantos grupos como necesites. Cada grupo aparece como una sección separada en la paleta. Se pueden cargar múltiples archivos — los grupos se acumulan. Cada grupo importado muestra un botón **×** para eliminarlo.
+Un mismo archivo puede tener tantos grupos como necesites. Cada grupo aparece como una **pestaña separada** en la paleta. Se pueden cargar múltiples archivos — los grupos se acumulan. Cada grupo importado muestra un botón **×** en su pestaña para eliminarlo.
 
 ```json
 {
@@ -636,9 +732,9 @@ Los elementos y paredes siempre se mantienen dentro del piso al moverlos o coloc
 
 | Botón | Función |
 |-------|---------|
-| ⬇ Exportar mapa | Descarga el estado actual como `.json` (incluye las librerías embebidas). |
+| ⬇ Exportar mapa | Descarga el estado actual como `.json` (incluye las librerías embebidas para portabilidad). |
 | ⬆ Importar mapa | Carga un `.json` exportado previamente, reemplazando el mapa actual. |
-| ⊞ Cargar librería | Carga un `.json` de elementos y añade sus grupos a la paleta sin reemplazar los existentes. |
+| ⊞ Cargar librería | Carga un `.json` de elementos. Los grupos se añaden a la paleta como nuevas pestañas. Si el grupo ya existe, sólo se añaden los objetos con `id` nuevo (sin sobrescribir). La librería se persiste automáticamente en `localStorage`. |
 
 ---
 
