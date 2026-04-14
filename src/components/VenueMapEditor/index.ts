@@ -33,3 +33,5 @@ export { useLibraryStorage } from './hooks/useLibraryStorage';
 // Utils (for advanced consumers)
 export { genId } from './utils/idGen';
 export { snapToGrid, snapPoint, findNearestNode } from './utils/snapUtils';
+export { parseSvgMarkup } from './utils/svgParser';
+export type { ParsedSvgMarkup } from './utils/svgParser';

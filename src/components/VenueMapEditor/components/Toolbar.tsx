@@ -6,6 +6,7 @@ import {
   IconDownload, IconUpload, IconLayers,
 } from '../../icons';
 import type { ToolMode, ElementTypeDef, AreaShape } from '../types';
+import { parseSvgMarkup } from '../utils/svgParser';
 
 // ─── ToolButton ───────────────────────────────────────────────────────────────
 
@@ -94,10 +95,19 @@ function TypeChip({ typeDef, active, onClick }: TypeChipProps) {
           : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50',
       ].join(' ')}
     >
-      <span
-        className="w-2.5 h-2.5 rounded-sm shrink-0"
-        style={{ background: typeDef.color, border: `1px solid ${typeDef.strokeColor}` }}
-      />
+      {typeDef.shape === 'svg' && typeDef.svgMarkup ? (
+        <svg
+          viewBox={parseSvgMarkup(typeDef.svgMarkup).viewBox}
+          className="w-2.5 h-2.5 shrink-0"
+          style={{ color: typeDef.strokeColor }}
+          dangerouslySetInnerHTML={{ __html: parseSvgMarkup(typeDef.svgMarkup).innerHtml }}
+        />
+      ) : (
+        <span
+          className="w-2.5 h-2.5 rounded-sm shrink-0"
+          style={{ background: typeDef.color, border: `1px solid ${typeDef.strokeColor}` }}
+        />
+      )}
       {typeDef.label}
     </button>
   );

@@ -4,6 +4,7 @@ import type { MapElement, ElementTypeDef, ToolMode } from '../types';
 import type { PanZoomState } from '../hooks/usePanZoom';
 import { useDrag } from '../hooks/useDrag';
 import { snapToGrid } from '../utils/snapUtils';
+import { parseSvgMarkup } from '../utils/svgParser';
 
 // ─── Arrow shape ──────────────────────────────────────────────────────────────
 
@@ -307,6 +308,27 @@ export function ElementNode({
           />
         </g>
       )}
+      {typeDef.shape === 'svg' && typeDef.svgMarkup && (() => {
+        const parsed = parseSvgMarkup(typeDef.svgMarkup);
+        const parts = parsed.viewBox.split(/[\s,]+/).map(Number);
+        const vw = parts[2] ?? 100;
+        const vh = parts[3] ?? 100;
+        const sx = vw > 0 ? w / vw : 1;
+        const sy = vh > 0 ? h / vh : 1;
+        const avgScale = Math.sqrt(Math.abs(sx * sy)) || 1;
+        return (
+          <g
+            transform={`translate(${x}, ${y}) scale(${sx}, ${sy})`}
+            fill={fillColor}
+            stroke={isSelected ? '#3b82f6' : typeDef.strokeColor}
+            strokeWidth={isSelected ? (sw / avgScale) * 1.5 : sw / avgScale}
+            style={{ cursor: bodyCursor }}
+            onMouseDown={tool === 'SELECT' && !onViewerClick ? handleBodyDown : undefined}
+            onClick={handleBodyClick}
+            dangerouslySetInnerHTML={{ __html: parsed.innerHtml }}
+          />
+        );
+      })()}
 
       {/* ── Label ── */}
       {(element.label ?? typeDef.label) && (

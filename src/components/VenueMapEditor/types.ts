@@ -2,7 +2,7 @@
 
 export type WallMaterial = 'concrete' | 'brick' | 'glass' | 'drywall' | 'wood';
 export type AreaShape = 'rect' | 'polygon';
-export type ElementShape = 'rect' | 'circle' | 'arrow' | 'path';
+export type ElementShape = 'rect' | 'circle' | 'arrow' | 'path' | 'svg';
 export type ToolMode = 'SELECT' | 'WALL' | 'PLACE' | 'PAN' | 'ERASE';
 
 // ─── Wall graph ───────────────────────────────────────────────────────────────
@@ -104,6 +104,16 @@ export interface ElementTypeDef {
    * Defaults to `'nonzero'`.
    */
   fillRule?: 'nonzero' | 'evenodd';
+  /**
+   * Complete SVG markup for `shape === 'svg'`.
+   * Must be a valid `<svg>` element with a `viewBox` attribute.
+   * The inner content is extracted and rendered inside the element's bounding box,
+   * automatically scaled from the viewBox to `width × height`.
+   *
+   * @example
+   * svgMarkup: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="5"/><path d="M50 10 L90 90 L10 90 Z"/></svg>'
+   */
+  svgMarkup?: string;
 }
 
 export interface DomainConfig {

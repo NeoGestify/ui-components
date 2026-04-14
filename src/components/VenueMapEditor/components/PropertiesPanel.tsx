@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import type { ChangeEvent } from 'react';
 import type { MapElement, ElementTypeDef } from '../types';
+import { parseSvgMarkup } from '../utils/svgParser';
 
 interface PropertiesPanelProps {
   elements: MapElement[];
@@ -112,11 +113,23 @@ export function PropertiesPanel({
         {/* Type badge */}
         {typeDef && (
           <div className="flex items-center gap-2">
-            <span
-              className="w-3.5 h-3.5 rounded-sm shrink-0 border"
-              style={{ background: typeDef.color, borderColor: typeDef.strokeColor }}
-            />
+            {typeDef.shape === 'svg' ? (
+              <svg
+                viewBox={(() => { try { return typeDef.svgMarkup ? parseSvgMarkup(typeDef.svgMarkup).viewBox : '0 0 100 100'; } catch { return '0 0 100 100'; } })()}
+                className="w-3.5 h-3.5 shrink-0 border border-slate-300 rounded-sm"
+                style={{ color: typeDef.strokeColor }}
+                dangerouslySetInnerHTML={{ __html: (() => { try { return typeDef.svgMarkup ? parseSvgMarkup(typeDef.svgMarkup).innerHtml : ''; } catch { return ''; } })() }}
+              />
+            ) : (
+              <span
+                className="w-3.5 h-3.5 rounded-sm shrink-0 border"
+                style={{ background: typeDef.color, borderColor: typeDef.strokeColor }}
+              />
+            )}
             <span className="text-xs font-medium text-slate-700 truncate">{typeDef.label}</span>
+            {typeDef.shape === 'svg' && (
+              <span className="text-[9px] uppercase tracking-wide text-slate-400 font-medium ml-auto">SVG</span>
+            )}
           </div>
         )}
 

@@ -584,12 +584,13 @@ Ahora puedes definir cualquier figura SVG usando un path:
 |-------|------|-----------|-------------|
 | `id` | `string` | ✓ | Identificador único del tipo. Se usa como key en `onElementTypeClick`. |
 | `label` | `string` | ✓ | Nombre visible en la paleta y en el canvas. |
-| `shape` | `"rect" \| "circle" \| "arrow" \| "path"` | ✓ | Forma del objeto. |
+| `shape` | `"rect" \| "circle" \| "arrow" \| "path" \| "svg"` | ✓ | Forma del objeto. |
 | `defaultWidth` | `number` | ✓ | Ancho inicial al colocar el elemento (unidades de canvas ≈ px a zoom 1×). |
 | `defaultHeight` | `number` | ✓ | Alto inicial. |
 | `color` | `string` | ✓ | Color de relleno (cualquier valor CSS: `#hex`, `rgb()`, `hsl()`, etc.). |
 | `strokeColor` | `string` | ✓ | Color del borde. |
 | `svgPath` | `string` | solo para `shape:"path"` | Atributo `d` de un `<path>` SVG. Se escala automáticamente al bounding box del elemento. |
+| `svgMarkup` | `string` | solo para `shape:"svg"` | Markup SVG completo `<svg>...</svg>`. Se extrae el contenido interno y se escala al bounding box del elemento. Debe incluir `viewBox`. |
 | `viewBox` | `string` | — | Espacio de coordenadas del `svgPath`. Formato: `"minX minY w h"`. Default: `"0 0 100 100"`. |
 | `fillRule` | `"nonzero" \| "evenodd"` | — | Regla de relleno SVG. Usa `"evenodd"` para crear huecos con sub-paths (engranajes, letras, donuts). Default: `"nonzero"`. |
 
@@ -601,6 +602,7 @@ Ahora puedes definir cualquier figura SVG usando un path:
 | `circle` | Elipse (círculo si `width === height`) | Mesas redondas, columnas, plantas |
 | `arrow` | Flecha apuntando a la derecha | Entradas, salidas, sentidos de circulación |
 | `path` | Forma SVG personalizada libre | Cualquier figura: estrella, engranaje, piano, logo... |
+| `svg` | SVG completo inline | Cualquier SVG con múltiples elementos, gradientes, etc. |
 
 #### Formas personalizadas con `shape: "path"`
 
@@ -640,6 +642,49 @@ El campo `svgPath` acepta el atributo `d` de cualquier `<path>` SVG estándar. E
 ```
 
 > **Hitbox de piso:** para formas personalizadas que no llenan su bounding box (estrellas, logos, etc.), la detección de bordes usa un cuadrado de lado `min(width, height)` centrado en el elemento — esto evita que la figura quede demasiado restringida al área del piso.
+
+#### Formas personalizadas con `shape: "svg"`
+
+El campo `svgMarkup` acepta un **SVG completo** como string. El sistema extrae el `viewBox` del tag `<svg>` y renderiza los elementos internos escalados al bounding box del elemento. Esto permite usar figuras con múltiples paths, círculos, rectángulos, textos, etc.
+
+> **Seguridad:** el markup se sanitiza automáticamente eliminando `<script>`, `on*` event handlers, `javascript:` URIs y tags peligrosos.
+
+```json
+{
+  "iconos": {
+    "name": "Iconos SVG",
+    "objects": [
+      {
+        "id": "CAR",
+        "label": "Carro",
+        "shape": "svg",
+        "svgMarkup": "<svg viewBox=\"0 0 100 100\"><rect x=\"10\" y=\"40\" width=\"80\" height=\"35\" rx=\"5\" fill=\"currentColor\"/><rect x=\"5\" y=\"50\" width=\"90\" height=\"20\" rx=\"3\" fill=\"currentColor\"/><circle cx=\"28\" cy=\"75\" r=\"9\" fill=\"currentColor\"/><circle cx=\"72\" cy=\"75\" r=\"9\" fill=\"currentColor\"/><rect x=\"25\" y=\"44\" width=\"20\" height=\"12\" rx=\"2\" fill=\"white\" opacity=\"0.4\"/><rect x=\"55\" y=\"44\" width=\"20\" height=\"12\" rx=\"2\" fill=\"white\" opacity=\"0.4\"/></svg>",
+        "defaultWidth": 80,
+        "defaultHeight": 80,
+        "color": "#3b82f6",
+        "strokeColor": "#1e40af"
+      },
+      {
+        "id": "PEOPLE",
+        "label": "Persona",
+        "shape": "svg",
+        "svgMarkup": "<svg viewBox=\"0 0 100 100\"><circle cx=\"50\" cy=\"25\" r=\"15\"/><path d=\"M30 90 L30 50 Q30 40 40 40 L60 40 Q70 40 70 50 L70 90 M20 60 L80 60\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"6\" stroke-linecap=\"round\"/></svg>",
+        "defaultWidth": 50,
+        "defaultHeight": 50,
+        "color": "#f97316",
+        "strokeColor": "#c2410c"
+      }
+    ]
+  }
+}
+```
+
+**Notas sobre `shape: "svg"`:**
+
+- El string `svgMarkup` **debe** ser un `<svg>` válido con atributo `viewBox`.
+- Los atributos `color` y `strokeColor` del `ElementTypeDef` se aplican como `fill` y `stroke` en el `<g>` contenedor. Usa `currentColor` en tu SVG para heredar el color.
+- El `viewBox` se extrae automáticamente del `<svg>` — no necesitas especificarlo por separado.
+- Funciona con cualquier combinación de elementos SVG internos: `<path>`, `<circle>`, `<rect>`, `<g>`, `<line>`, `<polygon>`, etc.
 
 #### Varios grupos en un archivo
 
