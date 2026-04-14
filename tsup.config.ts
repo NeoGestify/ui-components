@@ -8,6 +8,7 @@ export default defineConfig({
     'components/alerts/index': 'src/components/alerts/index.ts',
     'context/theme/index': 'src/context/theme/index.ts',
     'components/VenueMapEditor/index': 'src/components/VenueMapEditor/index.ts',
+    'components/ElementLibraryBuilder/index': 'src/components/ElementLibraryBuilder/index.ts',
   },
   format: ['cjs', 'esm'],
   dts: true,

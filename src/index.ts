@@ -4,3 +4,4 @@ export * from './components/icons/index';
 export * from './components/alerts/index';
 export * from './context/theme/index';
 export * from './components/VenueMapEditor/index';
+export * from './components/ElementLibraryBuilder/index';

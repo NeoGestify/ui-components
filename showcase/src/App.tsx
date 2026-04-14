@@ -1,4 +1,4 @@
-import { AddIcon, AlertaAdvertencia, AlertaConfirmacion, AlertaError, AlertaExito, AlertaToast, Button, CheckIcon, CloseIcon, DeleteIcon, EditIcon, Form, HomeIcon, Input, Modal, ModalRef, SaveIcon, SearchIcon, Select, SpinnerIcon, Table, ThemeToggle, useTheme, VenueMap, VenueMapEditor } from 'neogestify-ui-components';
+import { AddIcon, AlertaAdvertencia, AlertaConfirmacion, AlertaError, AlertaExito, AlertaToast, Button, CheckIcon, CloseIcon, DeleteIcon, EditIcon, Form, HomeIcon, Input, Modal, ModalRef, SaveIcon, SearchIcon, Select, SpinnerIcon, Table, ThemeToggle, useTheme, VenueMap, VenueMapEditor, ElementLibraryBuilder } from 'neogestify-ui-components';
 import { useState, useRef } from 'react';
 
 function App() {
@@ -258,6 +258,19 @@ function App() {
                 Usa el hook <code className="bg-gray-200 dark:bg-gray-600 px-2 py-1 rounded">useTheme()</code> para acceder al tema y sus funciones.
               </p>
             </div>
+          </div>
+        </section>
+
+        {/* Element Library Builder Section */}
+        <section className="mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 overflow-hidden">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Constructor de Librerías (Shapes JSON)
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+            Crea colecciones personalizadas de formas utilizando tus inputs nativos y expórtalas en JSON.
+          </p>
+          <div className="bg-white dark:bg-gray-50 rounded border dark:border-none shadow-inner h-[650px] overflow-hidden">
+            <ElementLibraryBuilder />
           </div>
         </section>
 
