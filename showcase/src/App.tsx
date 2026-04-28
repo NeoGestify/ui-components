@@ -174,7 +174,7 @@ function App() {
         <section className="mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Tablas</h2>
           <Table
-            headers={['ID', 'Nombre', 'Email', 'Rol', 'Acciones']}
+            columns={['ID', 'Nombre', 'Email', 'Rol', 'Acciones']}
             rows={[
               ['1', 'Juan Pérez', 'juan@ejemplo.com', 'Admin',
                 <div className="flex gap-2" key="actions-1">
