@@ -4,37 +4,34 @@ Biblioteca de componentes UI reutilizables con React, Tailwind CSS y SweetAlert2
 
 ## Características
 
-- Componentes HTML preestilizados (Button, Input, Form, Select, Table, Modal)
-- Colección de iconos SVG
-- Alertas preconfiguradas con SweetAlert2
+- Componentes HTML preestilizados (Button, Input, TextArea, Form, Select, Table, Modal, Loading)
+- Colección de iconos SVG (50+ iconos)
+- Alertas preconfiguradas con SweetAlert2 + componente InfoAlert
+- Sistema de tema (light/dark) con Context Provider
+- Editor de mapas interactivo (VenueMapEditor/VenueMapViewer)
+- Constructor de librerías de elementos (ElementLibraryBuilder)
 - Soporte para modo claro/oscuro
 - TypeScript incluido
-- Compatible con Tailwind CSS 4.1
+- Compatible con Tailwind CSS 4.x
 
 ## Instalación
 
-Si estás usando workspaces con npm/bun:
-
 ### NPM
-
 ```bash
-# En tu proyecto
 npm i neogestify-ui-components
 ```
 
 ### BUN
 ```bash
-# En tu proyecto
-npm i neogestify-ui-components
+bun add neogestify-ui-components
 ```
-
 
 ## Configuración
 
 ### 1. Asegúrate de tener Tailwind CSS configurado en tu proyecto
 
 ```bash
-bun add -D tailwindcss@4.1.0
+bun add -D tailwindcss
 ```
 
 Tu proyecto debe tener Tailwind configurado ya que los componentes solo usan clases de Tailwind (no incluyen CSS compilado).
@@ -42,8 +39,6 @@ Tu proyecto debe tener Tailwind configurado ya que los componentes solo usan cla
 ### 2. Configura Tailwind para escanear los componentes de la biblioteca
 
 **⚠️ IMPORTANTE:** Esta librería requiere que configures Tailwind para escanear sus archivos fuente.
-
-**Para Tailwind CSS v4:**
 
 En tu archivo CSS principal (por ejemplo `src/index.css`):
 
@@ -74,48 +69,317 @@ bun add react react-dom sweetalert2 sweetalert2-react-content
 
 ## Uso
 
-La biblioteca está organizada en módulos independientes:
-
-### Componentes HTML
+Importa todo desde un solo punto:
 
 ```tsx
-import { Button, Input, Form, Select, Table, Modal } from 'neogestify-ui-components/html';
-
-function MiComponente() {
-  return (
-    <Form onSubmit={handleSubmit}>
-      <Input
-        label="Nombre"
-        placeholder="Tu nombre"
-        value={nombre}
-        onChange={(e) => setNombre(e.target.value)}
-      />
-
-      <Select
-        label="País"
-        options={[
-          { value: 'mx', label: 'México' },
-          { value: 'ar', label: 'Argentina' }
-        ]}
-      />
-
-      <Button variant="primary" type="submit">
-        Enviar
-      </Button>
-    </Form>
-  );
-}
+import {
+  Button,
+  Input,
+  TextArea,
+  Form,
+  Select,
+  Table,
+  Modal,
+  Loading,
+  // Iconos
+  HomeIcon,
+  SaveIcon,
+  DeleteIcon,
+  // Alertas
+  AlertaExito,
+  AlertaError,
+  AlertaAdvertencia,
+  AlertaConfirmacion,
+  AlertaToast,
+  InfoAlert,
+  // Theme
+  ThemeProvider,
+  useTheme,
+  ThemeToggle,
+  // VenueMapEditor
+  VenueMapEditor,
+  VenueMapViewer,
+  // ElementLibraryBuilder
+  ElementLibraryBuilder,
+} from 'neogestify-ui-components';
 ```
 
-### Iconos
+---
+
+## Componentes HTML
+
+### Button
+
+Variantes: `primary`, `secondary`, `danger`, `success`, `warning`, `outline`, `icon`, `nav`, `link`, `toggle`, `custom`
+
+```tsx
+<Button variant="primary" isLoading loadingText="Guardando...">
+  Guardar
+</Button>
+
+<Button variant="toggle" isActive={active} onClick={toggle}>
+  Toggle
+</Button>
+```
+
+Props:
+- `variant`: Variante del botón (`primary` | `secondary` | `icon` | `danger` | `success` | `outline` | `nav` | `custom` | `link` | `warning` | `toggle`)
+- `isLoading`: Muestra estado de carga (boolean)
+- `loadingText`: Texto durante carga
+- `isActive`: Estado activo para variant `toggle` o `nav` (boolean)
+- `disabled`: Deshabilita el botón
+- `type`: Tipo HTML (`button`, `submit`, `reset`)
+- `className`: Clases adicionales
+- `children`: Contenido del botón
+
+---
+
+### Input
+
+Soporta tipos: `text`, `email`, `password`, `number`, `checkbox`, `radio`, `date`, `tel`, `url`, `file`
+
+```tsx
+<Input
+  label="Email"
+  type="email"
+  error="Email inválido"
+  helperText="Ingresa tu correo electrónico"
+/>
+
+{/* Con icono */}
+<Input
+  label="Buscar"
+  icon={<SearchIcon className="w-5 h-5" />}
+  iconSide="left"
+/>
+
+{/* Checkbox */}
+<Input type="checkbox" label="Acepto términos" />
+```
+
+Props:
+- `label`: Etiqueta del campo (string | ReactNode)
+- `type`: Tipo de input HTML (`text`, `email`, `password`, `number`, `checkbox`, `radio`, `date`, `tel`, `url`, `file`)
+- `placeholder`: Placeholder
+- `value`: Valor controlado
+- `onChange`: Handler de cambio
+- `error`: Mensaje de error
+- `helperText`: Texto de ayuda
+- `icon`: Icono a mostrar (ReactNode)
+- `iconSide`: Lado del icono (`'left'` | `'right'`)
+- `disabled`: Deshabilitado
+- `required`: Requerido
+- `className`: Clases adicionales
+- `id`: ID del input (auto-generado si no se provee)
+
+---
+
+### TextArea
+
+```tsx
+<TextArea
+  label="Descripción"
+  placeholder="Escribe una descripción..."
+  variant="outline"
+  size="large"
+/>
+```
+
+Props:
+- `label`: Etiqueta (string | ReactNode)
+- `placeholder`: Placeholder
+- `value`: Valor controlado
+- `onChange`: Handler de cambio
+- `rows`: Número de filas (heredado de HTML)
+- `variant`: Variante visual (`'default'` | `'outline'` | `'filled'` | `'minimal'`)
+- `size`: Tamaño (`'small'` | `'medium'` | `'large'`)
+- `error`: Mensaje de error
+- `helperText`: Texto de ayuda
+- `disabled`: Deshabilitado
+- `className`: Clases adicionales
+- `id`: ID del textarea (auto-generado si no se provee)
+
+---
+
+### Form
+
+```tsx
+<Form onSubmit={handleSubmit} variant="card">
+  <Input label="Nombre" placeholder="Tu nombre" />
+  <Input label="Email" type="email" />
+  <Button variant="primary" type="submit">Enviar</Button>
+</Form>
+
+<Form variant="inline">
+  <Input label="Buscar" placeholder="..." />
+  <Button variant="secondary">Buscar</Button>
+</Form>
+```
+
+Props:
+- `onSubmit`: Handler del submit
+- `variant`: Variante del layout (`'default'` | `'modal'` | `'card'` | `'inline'` | `'compact'`)
+- `className`: Clases adicionales
+- Hereda props de `<form>` (method, action, etc.)
+
+---
+
+### Select
+
+```tsx
+<Select
+  label="Categoría"
+  placeholder="Selecciona..."
+  options={[
+    { value: '1', label: 'Opción 1' },
+    { value: '2', label: 'Opción 2', disabled: true },
+    { value: '3', label: 'Opción 3', selected: true }
+  ]}
+  variant="small"
+  error
+  helperText="Selecciona una opción"
+/>
+```
+
+Props:
+- `label`: Etiqueta (string | ReactNode)
+- `placeholder`: Placeholder
+- `options`: Array de opciones:
+  - `value`: Valor de la opción (string | number)
+  - `label`: Texto a mostrar
+  - `disabled`: Deshabilita la opción (boolean)
+  - `selected`: Selecciona la opción por defecto (boolean)
+- `value`: Valor seleccionado (controlado)
+- `onChange`: Handler de cambio
+- `variant`: Variante (`'default'` | `'small'`)
+- `error`: Muestra estado de error (boolean)
+- `helperText`: Texto de ayuda
+- `disabled`: Deshabilita el select
+- `className`: Clases adicionales
+- `id`: ID del select (auto-generado si no se provee)
+
+---
+
+### Table
+
+```tsx
+<Table
+  columns={[
+    { header: 'ID', align: 'center' },
+    { header: 'Nombre', className: 'font-bold' },
+    { header: 'Email' }
+  ]}
+  rows={[
+    [<Badge>1</Badge>, 'Juan', 'juan@ejemplo.com'],
+    [<Badge>2</Badge>, 'María', 'maria@ejemplo.com']
+  ]}
+  variant="striped"
+  size="sm"
+  onRowClick={(index) => console.log('Click fila', index)}
+/>
+```
+
+Props:
+- `columns`: Encabezados de columnas. Puede ser:
+  - Array de strings o ReactNode (simple)
+  - Array de `ColumnDef`: `{ header: ReactNode, className?: string, align?: 'left' | 'center' | 'right' }`
+- `rows`: Datos de las filas (Array de Arrays de ReactNode)
+- `variant`: Variante visual (`'default'` | `'striped'` | `'bordered'` | `'minimal'` | `'custom'`)
+- `size`: Tamaño de celdas (`'sm'` | `'md'` | `'lg'`)
+- `className`: Clases adicionales para el wrapper
+- `tableClassName`: Clases adicionales para el `<table>`
+- `thClassName`: Clases adicionales para cada `<th>`
+- `tdClassName`: Clases adicionales para cada `<td>`
+- `trClassName`: Clases adicionales para cada `<tr>` (string | función `(rowIndex) => string`)
+- `emptyState`: Contenido a mostrar cuando no hay datos (ReactNode)
+- `onRowClick`: Callback al hacer click en una fila `(rowIndex) => void`
+- `hideHeader`: Oculta el encabezado (boolean)
+- `style`: Estilos inline para el `<table>`
+
+---
+
+### Modal
+
+```tsx
+const modalRef = useRef<ModalRef>(null);
+
+<Modal
+  ref={modalRef}
+  title="Mi Modal"
+  maxWidth="max-w-md"
+  showCloseButton={true}
+  zIndex={60}
+  onClose={() => setShowModal(false)}
+  footer={
+    <>
+      <Button variant="secondary" onClick={() => modalRef.current?.handleClose()}>
+        Cancelar
+      </Button>
+      <Button onClick={handleConfirm}>
+        Confirmar
+      </Button>
+    </>
+  }
+>
+  <p>Contenido del modal</p>
+</Modal>
+```
+
+Props:
+- `title`: Título del modal
+- `children`: Contenido
+- `footer`: Contenido del pie
+- `onClose`: Handler al cerrar
+- `maxWidth`: Ancho máximo (`max-w-2xl` por defecto)
+- `showCloseButton`: Muestra botón de cerrar (boolean, default: true)
+- `zIndex`: Z-index del modal (number, default: 50)
+- `className`: Clases adicionales
+
+Métodos del ref (ModalRef):
+- `handleClose()`: Cierra el modal con animación
+
+---
+
+### Loading
+
+```tsx
+<Loading variant="spinner" size="large" color="primary" label="Cargando..." />
+
+<Loading variant="dots" size="medium" color="white" />
+<Loading variant="pulse" size="small" color="success" />
+<Loading variant="bars" size="xl" color="danger" />
+<Loading variant="ring" color="warning" />
+<Loading variant="cube" size="large" />
+```
+
+Props:
+- `variant`: Variante del loader (`'spinner'` | `'dots'` | `'pulse'` | `'bars'` | `'ring'` | `'cube'`)
+- `size`: Tamaño (`'small'` | `'medium'` | `'large'` | `'xl'`)
+- `color`: Color del icono (`'primary'` | `'white'` | `'gray'` | `'success'` | `'danger'` | `'warning'`)
+- `label`: Texto a mostrar debajo del icono
+- `className`: Clases adicionales
+
+---
+
+## Iconos SVG
+
+La biblioteca incluye más de 50 iconos SVG:
 
 ```tsx
 import {
   HomeIcon,
   SaveIcon,
   DeleteIcon,
-  EditIcon
-} from 'neogestify-ui-components/icons';
+  EditIcon,
+  SearchIcon,
+  AddIcon,
+  CloseIcon,
+  MenuIcon,
+  CheckIcon,
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  // ... y muchos más
+} from 'neogestify-ui-components';
 
 function MiComponente() {
   return (
@@ -127,7 +391,28 @@ function MiComponente() {
 }
 ```
 
-### Alertas
+**Lista completa de iconos:**
+
+- SpinnerIcon, AnimateSpin, GearIcon, CheckIcon, BackIcon
+- NotFoundIcon, BoxIcon, ChartIcon, UsersIcon, DocumentIcon
+- LogoutIcon, HomeIcon, BuildingIcon, CashIcon, MenuIcon
+- CloseIcon, AddIcon, SearchIcon, SaveIcon, CancelIcon
+- DeleteIcon, EditIcon, CategorieIcon, FolderIcon, ArrowIcon
+- FilterIcon, QuestionIcon, LocationIcon, CalendarIcon, InfoIcon
+- MoonIcon, SunIcon, CamaraIcon, ArrowLeftIcon, ArrowRightIcon
+- TrashIcon, MinusIcon, MoneyIcon, PercentIcon, StackIcon
+- ClockIcon, CheckCircleIcon, CajasIcon, PrinterIcon, NetworkIcon
+- TestIcon, FacturacionIcon, WhatsAppIcon, ArchiveIcon, CopyIcon
+- PasteIcon, RestaurantMenuIcon, CloudIcon, ShieldIcon
+- BarsChartsIcon, LightingIcon, LifeGuardIcon, MonitorIcon
+- TruckIcon, IconCursor, IconHand, IconGrid, IconZoomIn
+- IconZoomOut, IconReset, IconUndo, IconRedo, IconPlace
+- IconErase, IconDuplicate, IconWall, IconDownload, IconUpload
+- IconPolygon, IconLayers
+
+---
+
+## Alertas (SweetAlert2)
 
 ```tsx
 import {
@@ -135,49 +420,132 @@ import {
   AlertaError,
   AlertaAdvertencia,
   AlertaConfirmacion,
-  AlertaToast
-} from 'neogestify-ui-components/alerts';
+  AlertaToast,
+  AlertaInfo,
+  Alerta, // función genérica
+} from 'neogestify-ui-components';
 
 function MiComponente() {
   const handleGuardar = async () => {
-    try {
-      await guardarDatos();
-      AlertaExito('¡Guardado!', 'Los datos se guardaron correctamente');
-    } catch (error) {
-      AlertaError('Error', 'No se pudieron guardar los datos');
-    }
+    await guardarDatos();
+    AlertaExito('¡Guardado!', 'Los datos se guardaron correctamente');
   };
 
-  const handleEliminar = () => {
+  const handleError = () => {
+    AlertaError('Error', 'No se pudieron guardar los datos');
+  };
+
+  const handleAdvertencia = () => {
     AlertaAdvertencia(
       '¿Estás seguro?',
       'Esta acción no se puede deshacer',
-      async () => {
-        await eliminarDatos();
-        AlertaToast('Eliminado', 'Registro eliminado', 'success');
-      }
+      async () => { await eliminarDatos(); }
     );
   };
 
+  const handleConfirmacion = () => {
+    AlertaConfirmacion(
+      '¿Continuar?',
+      '¿Deseas proceder con la acción?',
+      () => { console.log('Confirmado'); },
+      () => { console.log('Cancelado'); }
+    );
+  };
+
+  const handleToast = () => {
+    AlertaToast('Éxito', 'Operación completada', 'success', 3000, 'top-end');
+  };
+
   return (
-    <Button variant="danger" onClick={handleEliminar}>
+    <Button variant="danger" onClick={handleAdvertencia}>
       Eliminar
     </Button>
   );
 }
 ```
 
-### Sistema de Tema
+### Funciones disponibles
 
-El sistema de tema incluye un Context Provider y un componente toggle listo para usar.
+| Función | Descripción |
+|---------|-------------|
+| `Alerta(options)` | Función genérica con todas las opciones |
+| `AlertaExito(title, text, onConfirm?, options?)` | Alerta de éxito |
+| `AlertaError(title, text, onConfirm?, options?)` | Alerta de error |
+| `AlertaInfo(title, text, onConfirm?, options?)` | Alerta informativa |
+| `AlertaAdvertencia(title, text, onConfirm?, onCancel?, options?)` | Alerta de advertencia |
+| `AlertaConfirmacion(title, text, onConfirm?, onCancel?, options?)` | Alerta de confirmación |
+| `AlertaToast(title, text, icon?, timer?, position?)` | Notificación toast |
 
-#### 1. Configurar el ThemeProvider
+### Opciones de Alerta genérica
+
+```tsx
+Alerta({
+  title: 'Título',
+  text: 'Descripción',
+  icon: 'success' | 'error' | 'warning' | 'info' | 'question',
+  confirmButtonText: 'Aceptar',
+  showCancelButton: true,
+  cancelButtonText: 'Cancelar',
+  showDenyButton: true,
+  denyButtonText: 'No',
+  onConfirm: () => {},
+  onCancel: () => {},
+  onDeny: () => {},
+  toast: true,
+  timer: 3000,
+  position: 'top-end',
+  allowOutsideClick: true,
+  allowEscapeKey: true,
+  input: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select',
+  inputLabel: 'Label',
+  inputPlaceholder: 'Placeholder',
+  inputValue: 'Valor inicial',
+  inputValidator: (value) => null | 'Error message',
+});
+```
+
+---
+
+## InfoAlert (Componente)
+
+Componente visual de alerta en línea:
+
+```tsx
+import { InfoAlert } from 'neogestify-ui-components';
+
+<InfoAlert>
+  Este es un mensaje informativo
+</InfoAlert>
+
+<InfoAlert type="success">
+  Operación exitosa
+</InfoAlert>
+
+<InfoAlert type="warning">
+  Advertencia importante
+</InfoAlert>
+
+<InfoAlert type="error">
+  Ha ocurrido un error
+</InfoAlert>
+```
+
+Props:
+- `type`: Variante (`info` | `success` | `warning` | `error`)
+- `children`: Contenido
+- `className`: Clases adicionales
+
+---
+
+## Sistema de Tema
+
+### 1. Configurar el ThemeProvider
 
 Envuelve tu aplicación con el `ThemeProvider`:
 
 ```tsx
 // main.tsx o App.tsx
-import { ThemeProvider } from 'neogestify-ui-components/theme';
+import { ThemeProvider } from 'neogestify-ui-components';
 
 function Main() {
   return (
@@ -188,10 +556,10 @@ function Main() {
 }
 ```
 
-#### 2. Usar el ThemeToggle
+### 2. Usar el ThemeToggle
 
 ```tsx
-import { ThemeToggle } from 'neogestify-ui-components/theme';
+import { ThemeToggle } from 'neogestify-ui-components';
 
 function Header() {
   return (
@@ -202,10 +570,10 @@ function Header() {
 }
 ```
 
-#### 3. Usar el hook useTheme
+### 3. Usar el hook useTheme
 
 ```tsx
-import { useTheme } from 'neogestify-ui-components/theme';
+import { useTheme } from 'neogestify-ui-components';
 
 function MiComponente() {
   const { theme, toggleTheme, setTheme } = useTheme();
@@ -223,73 +591,6 @@ function MiComponente() {
 
 El tema se guarda automáticamente en `localStorage` y se aplica al cargar la página.
 
-## Componentes Disponibles
-
-### Button
-
-Variantes: `primary`, `secondary`, `danger`, `success`, `warning`, `outline`, `icon`, `nav`, `link`, `toggle`
-
-```tsx
-<Button variant="primary" isLoading loadingText="Guardando...">
-  Guardar
-</Button>
-```
-
-### Input
-
-Soporta tipos: `text`, `email`, `password`, `number`, `checkbox`, etc.
-
-```tsx
-<Input
-  label="Email"
-  type="email"
-  error="Email inválido"
-  helperText="Ingresa tu correo electrónico"
-/>
-```
-
-### Select
-
-```tsx
-<Select
-  label="Categoría"
-  placeholder="Selecciona..."
-  options={categorias}
-  variant="default"
-/>
-```
-
-### Table
-
-```tsx
-<Table
-  headers={['ID', 'Nombre', 'Email']}
-  rows={[
-    ['1', 'Juan', 'juan@ejemplo.com'],
-    ['2', 'María', 'maria@ejemplo.com']
-  ]}
-/>
-```
-
-### Modal
-
-```tsx
-const modalRef = useRef<ModalRef>(null);
-
-<Modal
-  ref={modalRef}
-  title="Mi Modal"
-  onClose={() => setShowModal(false)}
-  footer={
-    <Button onClick={() => modalRef.current?.handleClose()}>
-      Cerrar
-    </Button>
-  }
->
-  <p>Contenido del modal</p>
-</Modal>
-```
-
 ---
 
 ## VenueMapEditor
@@ -300,19 +601,16 @@ Editor de mapas de recintos interactivo basado en SVG puro. Permite diseñar la 
 
 ```tsx
 import {
-  VenueMapEditor,  // editor completo
-  VenueMapViewer,  // modo solo lectura
-} from 'neogestify-ui-components/VenueMapEditor';
+  VenueMapEditor,
+  VenueMapViewer,
+} from 'neogestify-ui-components';
 
-// Tipos TypeScript
 import type {
   VenueMap, Floor, MapElement,
   ElementTypeDef, ElementGroup, ElementLibrary,
   ElementStatus, VenueMapEditorProps,
-} from 'neogestify-ui-components/VenueMapEditor';
+} from 'neogestify-ui-components';
 ```
-
----
 
 ### Uso básico
 
@@ -332,28 +630,24 @@ Con configuración mínima:
 />
 ```
 
----
-
 ### Cargar y guardar un mapa desde código
 
-El prop `initialMap` acepta un `VenueMap` (del estado de la app, de una API, de `localStorage`, etc.). Cuando el valor cambia por referencia, el editor reinicia su historial al nuevo mapa. El ciclo `onChange → initialMap` es **seguro** — el componente detecta el eco de su propio `onChange` y no genera bucles infinitos.
+El prop `initialMap` acepta un `VenueMap`. Cuando el valor cambia por referencia, el editor reinicia su historial al nuevo mapa.
 
 ```tsx
 import { useState, useEffect } from 'react';
-import { VenueMapEditor } from 'neogestify-ui-components/VenueMapEditor';
-import type { VenueMap } from 'neogestify-ui-components/VenueMapEditor';
+import { VenueMapEditor } from 'neogestify-ui-components';
+import type { VenueMap } from 'neogestify-ui-components';
 
 function App() {
   const [map, setMap] = useState<VenueMap | undefined>();
 
-  // Carga asíncrona desde API
   useEffect(() => {
     fetch('/api/maps/1')
       .then(r => r.json())
       .then(setMap);
   }, []);
 
-  // Guarda automáticamente en cada cambio
   const handleChange = (updated: VenueMap) => {
     setMap(updated);
     fetch('/api/maps/1', {
@@ -372,84 +666,59 @@ function App() {
 }
 ```
 
----
-
 ### Props
 
 | Prop | Tipo | Default | Descripción |
 |------|------|---------|-------------|
-| `initialMap` | `VenueMap` | mapa vacío | Mapa inicial. Se puede actualizar desde fuera para recargar el editor. |
-| `onChange` | `(map: VenueMap) => void` | — | Se llama en cada cambio del estado interno. |
-| `domainConfigs` | `DomainConfig[]` | `[]` | Array de catálogos de tipos predefinidos. Cada uno aparece como una pestaña separada en la paleta. |
-| `domainConfig` | `DomainConfig` | — | **Obsoleto** — usa `domainConfigs`. Catálogo único (se convierte internamente a un array de un elemento). |
-| `libraryStorageKey` | `string` | `'venueMapEditor:libraries'` | Clave de `localStorage` donde se persisten las librerías importadas. Pasa `''` para deshabilitar la persistencia. |
-| `width` | `string \| number` | `'100%'` | Ancho del componente. |
-| `height` | `string \| number` | `'600px'` | Alto del componente. |
-| `gridSize` | `number` | `20` | Tamaño de la cuadrícula en unidades de canvas. |
-| `showGrid` | `boolean` | `true` | Mostrar/ocultar cuadrícula al iniciar. |
-| `snapToGrid` | `boolean` | `false` | Activar snap de elementos a la cuadrícula. |
-| `readOnly` | `boolean` | `false` | Modo lectura: no se puede editar pero sí hacer pan/zoom. |
-| `fixed` | `boolean` | `false` | Igual que `readOnly` pero además oculta la barra de herramientas. Pensado para el viewer en producción. |
-| `elementStatus` | `ElementStatus[]` | — | Array de estados visuales por elemento (libre, ocupado, reservado, deshabilitado). |
-| `onElementClick` | `(el: MapElement) => void` | — | Callback genérico al hacer click en cualquier elemento (en modo viewer). |
-| `onElementTypeClick` | `Record<string, (el: MapElement) => void>` | — | Callbacks por tipo de elemento. El tipo específico tiene prioridad sobre `onElementClick`. |
-
----
+| `initialMap` | `VenueMap` | mapa vacío | Mapa inicial |
+| `onChange` | `(map: VenueMap) => void` | — | Callback en cada cambio |
+| `domainConfigs` | `DomainConfig[]` | `[]` | Catálogos de tipos predefinidos |
+| `domainConfig` | `DomainConfig` | — | **Obsoleto** — usa `domainConfigs` |
+| `libraryStorageKey` | `string` | `'venueMapEditor:libraries'` | Clave de localStorage |
+| `width` | `string \| number` | `'100%'` | Ancho |
+| `height` | `string \| number` | `'600px'` | Alto |
+| `gridSize` | `number` | `20` | Tamaño de cuadrícula |
+| `showGrid` | `boolean` | `true` | Mostrar cuadrícula |
+| `snapToGrid` | `boolean` | `false` | Snap a cuadrícula |
+| `readOnly` | `boolean` | `false` | Modo lectura (edición deshabilitada) |
+| `fixed` | `boolean` | `false` | Modo lectura + oculta toolbar |
+| `elementStatus` | `ElementStatus[]` | — | Estados visuales por elemento |
+| `onElementClick` | `(el: MapElement) => void` | — | Click genérico |
+| `onElementTypeClick` | `Record<string, (el: MapElement) => void>` | — | Click por tipo |
 
 ### Modo Viewer
 
-`VenueMapViewer` es un alias de `VenueMapEditor` con `fixed={true}`. Úsalo para mostrar el mapa en producción con elementos interactivos:
+`VenueMapViewer` es un alias de `VenueMapEditor` con `fixed={true}`:
 
 ```tsx
-import { VenueMapViewer } from 'neogestify-ui-components/VenueMapEditor';
-import type { ElementStatus } from 'neogestify-ui-components/VenueMapEditor';
+import { VenueMapViewer } from 'neogestify-ui-components';
+import type { ElementStatus } from 'neogestify-ui-components';
 
 const estados: ElementStatus[] = [
   { elementId: 'mesa-1', status: 'occupied' },
   { elementId: 'mesa-2', status: 'free' },
   { elementId: 'mesa-3', status: 'reserved' },
-  { elementId: 'spot-4', status: 'disabled' },
 ];
 
 <VenueMapViewer
   initialMap={myMap}
   elementStatus={estados}
   onElementTypeClick={{
-    // El key es el `id` del tipo definido en la librería JSON
     TABLE_ROUND: (el) => abrirReserva(el.id),
-    TABLE_RECT:  (el) => abrirReserva(el.id),
-    PARKING_SPOT:(el) => asignarEspacio(el.id),
+    TABLE_RECT: (el) => abrirReserva(el.id),
   }}
-  // Fallback para tipos sin handler específico
-  onElementClick={(el) => console.log('click en', el.type, el.id)}
 />
 ```
 
-**Colores de estado:**
-
-| `status` | Color |
-|----------|-------|
-| `free` | Verde claro |
-| `occupied` | Rojo claro |
-| `reserved` | Amarillo |
-| `disabled` | Gris |
-
----
-
-### Múltiples catálogos de elementos (domainConfigs)
-
-Pasa varios `DomainConfig` vía la prop `domainConfigs`. Cada catálogo aparece como una **pestaña separada** en la paleta — los tipos nunca se mezclan entre tabs.
+### Múltiples catálogos (domainConfigs)
 
 ```tsx
-import { VenueMapEditor } from 'neogestify-ui-components/VenueMapEditor';
-import type { DomainConfig } from 'neogestify-ui-components/VenueMapEditor';
-
 const mobiliario: DomainConfig = {
   id: 'furniture',
   name: 'Mobiliario',
   elementTypes: [
-    { id: 'CHAIR',      label: 'Silla',        shape: 'circle', defaultWidth: 30,  defaultHeight: 30,  color: '#fef3c7', strokeColor: '#d97706' },
-    { id: 'TABLE_RECT', label: 'Mesa rect.',   shape: 'rect',   defaultWidth: 100, defaultHeight: 60,  color: '#fef3c7', strokeColor: '#d97706' },
+    { id: 'CHAIR', label: 'Silla', shape: 'circle', defaultWidth: 30, defaultHeight: 30, color: '#fef3c7', strokeColor: '#d97706' },
+    { id: 'TABLE_RECT', label: 'Mesa rect.', shape: 'rect', defaultWidth: 100, defaultHeight: 60, color: '#fef3c7', strokeColor: '#d97706' },
   ],
 };
 
@@ -457,41 +726,14 @@ const iluminacion: DomainConfig = {
   id: 'lighting',
   name: 'Iluminación',
   elementTypes: [
-    { id: 'SPOT_LIGHT', label: 'Foco',   shape: 'circle', defaultWidth: 40, defaultHeight: 40, color: '#fef9c3', strokeColor: '#ca8a04' },
-    { id: 'STRIP_LIGHT', label: 'Tira LED', shape: 'rect', defaultWidth: 120, defaultHeight: 15, color: '#fef9c3', strokeColor: '#ca8a04' },
+    { id: 'SPOT_LIGHT', label: 'Foco', shape: 'circle', defaultWidth: 40, defaultHeight: 40, color: '#fef9c3', strokeColor: '#ca8a04' },
   ],
 };
 
 <VenueMapEditor domainConfigs={[mobiliario, iluminacion]} />
 ```
 
-La paleta mostrará:
-
-```
-[ Mobiliario ]  [ Iluminación ]
-─────────────────────────────
-  [Silla]  [Mesa rect.]
-```
-
----
-
-### Crear una librería de elementos (JSON)
-
-Los elementos que aparecen en la paleta también se pueden definir en archivos JSON que el usuario carga desde el botón **⊞** (Cargar librería).
-
-**Persistencia automática:** las librerías importadas se guardan en `localStorage` bajo la clave `libraryStorageKey` (por defecto `'venueMapEditor:libraries'`). Al recargar la página se restauran automáticamente **antes** de que el mapa renderice, evitando errores de "tipo de elemento desconocido".
-
-**Merge inteligente al importar:** si un grupo con el mismo `id` ya existe, se añaden únicamente los elementos cuyo `id` no esté duplicado. Los elementos existentes nunca se sobreescriben.
-
-```tsx
-// Cambiar la clave de almacenamiento (útil con múltiples editores en la misma app)
-<VenueMapEditor libraryStorageKey="mi-proyecto:libs" />
-
-// Deshabilitar persistencia
-<VenueMapEditor libraryStorageKey="" />
-```
-
-#### Formato del JSON
+### Formato JSON de librería
 
 ```json
 {
@@ -517,96 +759,93 @@ Los elementos que aparecen en la paleta también se pueden definir en archivos J
         "strokeColor": "#d97706"
       }
     ]
-  },
-  "infraestructura": {
-    "name": "Infraestructura",
-    "objects": [
-      {
-        "id": "PILLAR",
-        "label": "Columna",
-        "shape": "circle",
-        "defaultWidth": 25,
-        "defaultHeight": 25,
-        "color": "#e5e7eb",
-        "strokeColor": "#6b7280"
-      },
-      {
-        "id": "ENTRANCE",
-        "label": "Entrada",
-        "shape": "arrow",
-        "defaultWidth": 80,
-        "defaultHeight": 30,
-        "color": "#dcfce7",
-        "strokeColor": "#16a34a"
-      }
-    ]
   }
 }
 ```
 
-#### Formas personalizadas SVG (`shape: "path"`)
+### Formas personalizadas
 
-Ahora puedes definir cualquier figura SVG usando un path:
+| `shape` | Descripción |
+|---------|-------------|
+| `rect` | Rectángulo |
+| `circle` | Elipse/círculo |
+| `arrow` | Flecha |
+| `path` | SVG path personalizado |
+| `svg` | SVG completo inline |
 
+**Shape `path`:**
 ```json
 {
-  "mi_libreria": {
-    "name": "Mi librería",
-    "objects": [
-      {
-        "id": "STAR",
-        "label": "Estrella",
-        "shape": "path",
-        "svgPath": "M50 5 L61 35 L95 35 L68 57 L79 91 L50 70 L21 91 L32 57 L5 35 L39 35 Z",
-        "viewBox": "0 0 100 100",
-        "defaultWidth": 60,
-        "defaultHeight": 60,
-        "color": "#facc15",
-        "strokeColor": "#ca8a04"
-      }
-    ]
-  }
+  "id": "STAR",
+  "label": "Estrella",
+  "shape": "path",
+  "svgPath": "M50 5 L61 35 ...",
+  "viewBox": "0 0 100 100",
+  "defaultWidth": 60,
+  "defaultHeight": 60,
+  "color": "#facc15",
+  "strokeColor": "#ca8a04"
 }
 ```
 
-**Propiedades para `shape: "path"`:**
+**Shape `svg`:**
+```json
+{
+  "id": "CAR",
+  "label": "Carro",
+  "shape": "svg",
+  "svgMarkup": "<svg viewBox=\"0 0 100 100\"><rect .../></svg>",
+  "defaultWidth": 80,
+  "defaultHeight": 80,
+  "color": "#3b82f6",
+  "strokeColor": "#1e40af"
+}
+```
 
-| Campo | Tipo | Default | Descripción |
-|-------|------|---------|-------------|
-| `svgPath` | `string` | **requerido** | El atributo `d` del elemento `<path>` SVG |
-| `viewBox` | `string` | `"0 0 100 100"` | Espacio de coordenadas del path (formato: `"minX minY width height"`) |
+### Colores de estado
 
-> **Nota:** El path se escala automáticamente para llenar el bounding box `width × height` del elemento. El `strokeWidth` se compensa por el factor de escala para que sea visualmente consistente con los otros shapes.
+| `status` | Color |
+|----------|-------|
+| `free` | Verde claro |
+| `occupied` | Rojo claro |
+| `reserved` | Amarillo |
+| `disabled` | Gris |
 
-#### Propiedades de cada objeto
+### Persistencia de librerías
+
+Las librerías importadas se guardan en `localStorage` bajo la clave `libraryStorageKey` (por defecto `'venueMapEditor:libraries'`). Al recargar la página se restauran automáticamente.
+
+**Merge inteligente al importar:** si un grupo con el mismo `id` ya existe, se añaden únicamente los elementos cuyo `id` no esté duplicado. Los elementos existentes nunca se sobrescriben.
+
+```tsx
+// Cambiar la clave de almacenamiento (útil con múltiples editores)
+<VenueMapEditor libraryStorageKey="mi-proyecto:libs" />
+
+// Deshabilitar persistencia
+<VenueMapEditor libraryStorageKey="" />
+```
+
+### Propiedades de cada objeto
 
 | Campo | Tipo | Requerido | Descripción |
 |-------|------|-----------|-------------|
-| `id` | `string` | ✓ | Identificador único del tipo. Se usa como key en `onElementTypeClick`. |
-| `label` | `string` | ✓ | Nombre visible en la paleta y en el canvas. |
-| `shape` | `"rect" \| "circle" \| "arrow" \| "path" \| "svg"` | ✓ | Forma del objeto. |
-| `defaultWidth` | `number` | ✓ | Ancho inicial al colocar el elemento (unidades de canvas ≈ px a zoom 1×). |
-| `defaultHeight` | `number` | ✓ | Alto inicial. |
-| `color` | `string` | ✓ | Color de relleno (cualquier valor CSS: `#hex`, `rgb()`, `hsl()`, etc.). |
-| `strokeColor` | `string` | ✓ | Color del borde. |
-| `svgPath` | `string` | solo para `shape:"path"` | Atributo `d` de un `<path>` SVG. Se escala automáticamente al bounding box del elemento. |
-| `svgMarkup` | `string` | solo para `shape:"svg"` | Markup SVG completo `<svg>...</svg>`. Se extrae el contenido interno y se escala al bounding box del elemento. Debe incluir `viewBox`. |
-| `viewBox` | `string` | — | Espacio de coordenadas del `svgPath`. Formato: `"minX minY w h"`. Default: `"0 0 100 100"`. |
-| `fillRule` | `"nonzero" \| "evenodd"` | — | Regla de relleno SVG. Usa `"evenodd"` para crear huecos con sub-paths (engranajes, letras, donuts). Default: `"nonzero"`. |
+| `id` | `string` | ✓ | Identificador único del tipo |
+| `label` | `string` | ✓ | Nombre visible en la paleta |
+| `shape` | `"rect" \| "circle" \| "arrow" \| "path" \| "svg"` | ✓ | Forma del objeto |
+| `defaultWidth` | `number` | ✓ | Ancho inicial (unidades de canvas) |
+| `defaultHeight` | `number` | ✓ | Alto inicial |
+| `color` | `string` | ✓ | Color de relleno (#hex, rgb(), hsl()) |
+| `strokeColor` | `string` | ✓ | Color del borde |
+| `svgPath` | `string` | solo para `shape:"path"` | Atributo `d` del path SVG |
+| `svgMarkup` | `string` | solo para `shape:"svg"` | Markup SVG completo |
+| `viewBox` | `string` | — | Espacio de coordenadas del path |
+| `fillRule` | `"nonzero" \| "evenodd"` | — | Regla de relleno SVG |
 
-#### Formas disponibles
+> **Hitbox de piso:** para formas personalizadas que no llenan su bounding box (estrellas, logos), la detección de bordes usa un cuadrado de lado `min(width, height)` centrado en el elemento.
 
-| `shape` | Descripción | Caso de uso típico |
-|---------|-------------|-------------------|
-| `rect` | Rectángulo | Mesas, espacios de parqueo, habitaciones |
-| `circle` | Elipse (círculo si `width === height`) | Mesas redondas, columnas, plantas |
-| `arrow` | Flecha apuntando a la derecha | Entradas, salidas, sentidos de circulación |
-| `path` | Forma SVG personalizada libre | Cualquier figura: estrella, engranaje, piano, logo... |
-| `svg` | SVG completo inline | Cualquier SVG con múltiples elementos, gradientes, etc. |
+### Shape `path` detallado
 
-#### Formas personalizadas con `shape: "path"`
-
-El campo `svgPath` acepta el atributo `d` de cualquier `<path>` SVG estándar. El sistema escala la figura para que ocupe exactamente el bounding box `width × height` del elemento. Puedes diseñar tus formas con Inkscape, Figma u otro editor vectorial y copiar el `d=` directamente.
+El campo `svgPath` acepta el atributo `d` de cualquier `<path>` SVG estándar. El sistema escala la figura para que ocupe exactamente el bounding box `width × height`.
 
 ```json
 {
@@ -630,7 +869,7 @@ El campo `svgPath` acepta el atributo `d` de cualquier `<path>` SVG estándar. E
         "shape": "path",
         "viewBox": "0 0 100 100",
         "fillRule": "evenodd",
-        "svgPath": "M36.61,17.66 L44.13,5.39 L55.87,5.39 L63.39,17.66 A35,35 0 0,1 77.40,14.30 L85.70,22.60 L82.34,36.61 A35,35 0 0,1 94.61,44.13 L94.61,55.87 L82.34,63.39 A35,35 0 0,1 85.70,77.40 L77.40,85.70 L63.39,82.34 A35,35 0 0,1 55.87,94.61 L44.13,94.61 L36.61,82.34 A35,35 0 0,1 22.60,85.70 L14.30,77.40 L17.66,63.39 A35,35 0 0,1 5.39,55.87 L5.39,44.13 L17.66,36.61 A35,35 0 0,1 14.30,22.60 L22.60,14.30 Z M65,50 A15,15 0 1,0 35,50 A15,15 0 1,0 65,50 Z",
+        "svgPath": "M36.61,17.66 ...",
         "defaultWidth": 70,
         "defaultHeight": 70,
         "color": "#94a3b8",
@@ -641,11 +880,9 @@ El campo `svgPath` acepta el atributo `d` de cualquier `<path>` SVG estándar. E
 }
 ```
 
-> **Hitbox de piso:** para formas personalizadas que no llenan su bounding box (estrellas, logos, etc.), la detección de bordes usa un cuadrado de lado `min(width, height)` centrado en el elemento — esto evita que la figura quede demasiado restringida al área del piso.
+### Shape `svg` detallado
 
-#### Formas personalizadas con `shape: "svg"`
-
-El campo `svgMarkup` acepta un **SVG completo** como string. El sistema extrae el `viewBox` del tag `<svg>` y renderiza los elementos internos escalados al bounding box del elemento. Esto permite usar figuras con múltiples paths, círculos, rectángulos, textos, etc.
+El campo `svgMarkup` acepta un **SVG completo** como string. El sistema extrae el `viewBox` del tag `<svg>` y renderiza los elementos internos escalados.
 
 > **Seguridad:** el markup se sanitiza automáticamente eliminando `<script>`, `on*` event handlers, `javascript:` URIs y tags peligrosos.
 
@@ -658,37 +895,20 @@ El campo `svgMarkup` acepta un **SVG completo** como string. El sistema extrae e
         "id": "CAR",
         "label": "Carro",
         "shape": "svg",
-        "svgMarkup": "<svg viewBox=\"0 0 100 100\"><rect x=\"10\" y=\"40\" width=\"80\" height=\"35\" rx=\"5\" fill=\"currentColor\"/><rect x=\"5\" y=\"50\" width=\"90\" height=\"20\" rx=\"3\" fill=\"currentColor\"/><circle cx=\"28\" cy=\"75\" r=\"9\" fill=\"currentColor\"/><circle cx=\"72\" cy=\"75\" r=\"9\" fill=\"currentColor\"/><rect x=\"25\" y=\"44\" width=\"20\" height=\"12\" rx=\"2\" fill=\"white\" opacity=\"0.4\"/><rect x=\"55\" y=\"44\" width=\"20\" height=\"12\" rx=\"2\" fill=\"white\" opacity=\"0.4\"/></svg>",
+        "svgMarkup": "<svg viewBox=\"0 0 100 100\"><rect x=\"10\" y=\"40\" width=\"80\" height=\"35\" rx=\"5\" fill=\"currentColor\"/><circle cx=\"28\" cy=\"75\" r=\"9\" fill=\"currentColor\"/></svg>",
         "defaultWidth": 80,
         "defaultHeight": 80,
         "color": "#3b82f6",
         "strokeColor": "#1e40af"
-      },
-      {
-        "id": "PEOPLE",
-        "label": "Persona",
-        "shape": "svg",
-        "svgMarkup": "<svg viewBox=\"0 0 100 100\"><circle cx=\"50\" cy=\"25\" r=\"15\"/><path d=\"M30 90 L30 50 Q30 40 40 40 L60 40 Q70 40 70 50 L70 90 M20 60 L80 60\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"6\" stroke-linecap=\"round\"/></svg>",
-        "defaultWidth": 50,
-        "defaultHeight": 50,
-        "color": "#f97316",
-        "strokeColor": "#c2410c"
       }
     ]
   }
 }
 ```
 
-**Notas sobre `shape: "svg"`:**
+### Varios grupos en un archivo JSON
 
-- El string `svgMarkup` **debe** ser un `<svg>` válido con atributo `viewBox`.
-- Los atributos `color` y `strokeColor` del `ElementTypeDef` se aplican como `fill` y `stroke` en el `<g>` contenedor. Usa `currentColor` en tu SVG para heredar el color.
-- El `viewBox` se extrae automáticamente del `<svg>` — no necesitas especificarlo por separado.
-- Funciona con cualquier combinación de elementos SVG internos: `<path>`, `<circle>`, `<rect>`, `<g>`, `<line>`, `<polygon>`, etc.
-
-#### Varios grupos en un archivo
-
-Un mismo archivo puede tener tantos grupos como necesites. Cada grupo aparece como una **pestaña separada** en la paleta. Se pueden cargar múltiples archivos — los grupos se acumulan. Cada grupo importado muestra un botón **×** en su pestaña para eliminarlo.
+Un mismo archivo puede tener tantos grupos como necesites. Cada grupo aparece como una **pestaña separada** en la paleta.
 
 ```json
 {
@@ -698,7 +918,7 @@ Un mismo archivo puede tener tantos grupos como necesites. Cada grupo aparece co
 }
 ```
 
-#### Librería de ejemplo — Parqueadero
+### Librería de ejemplo — Parqueadero
 
 ```json
 {
@@ -722,11 +942,7 @@ Un mismo archivo puede tener tantos grupos como necesites. Cada grupo aparece co
 }
 ```
 
----
-
-### Modelo de datos TypeScript
-
-El estado del editor se serializa en un objeto `VenueMap`. Puedes guardarlo en tu base de datos como JSON y restaurarlo con `initialMap`.
+### Modelo de datos completo
 
 ```
 VenueMap
@@ -752,18 +968,14 @@ VenueMap
         └── metadata?: Record<string, unknown>  ← datos propios de tu app
 ```
 
-El campo `metadata` en `MapElement` está disponible para que cada app guarde datos propios por elemento (ej. ID de reserva, capacidad, propietario, estado personalizado).
+El campo `metadata` está disponible para que cada app guarde datos propios por elemento (ej. ID de reserva, capacidad, propietario).
 
 ```tsx
-// Ejemplo: guardar datos de negocio en metadata al crear elementos
 const handleClick = (el: MapElement) => {
-  // El metadata lo pone tu app, no el editor
   const reservaId = el.metadata?.reservaId as string;
   abrirModal(reservaId);
 };
 ```
-
----
 
 ### Herramientas del editor
 
@@ -782,8 +994,6 @@ const handleClick = (el: MapElement) => {
 | Rueda ratón | — | Zoom centrado en el cursor. |
 | Click medio + drag | — | Pan del canvas en cualquier modo. |
 
----
-
 ### Gestión de plantas
 
 La barra de pestañas (visible incluso en viewer) permite:
@@ -794,8 +1004,6 @@ La barra de pestañas (visible incluso en viewer) permite:
 - **×** → eliminar la planta (mínimo 1)
 - **+** → añadir nueva planta
 
----
-
 ### Forma del piso (Rect vs Polígono)
 
 El botón **Rect / Poly** de la barra de herramientas alterna entre:
@@ -805,15 +1013,40 @@ El botón **Rect / Poly** de la barra de herramientas alterna entre:
 
 Los elementos y paredes siempre se mantienen dentro del piso al moverlos o colocarlos.
 
----
-
 ### Exportar / Importar el mapa
 
 | Botón | Función |
 |-------|---------|
 | ⬇ Exportar mapa | Descarga el estado actual como `.json` (incluye las librerías embebidas para portabilidad). |
 | ⬆ Importar mapa | Carga un `.json` exportado previamente, reemplazando el mapa actual. |
-| ⊞ Cargar librería | Carga un `.json` de elementos. Los grupos se añaden a la paleta como nuevas pestañas. Si el grupo ya existe, sólo se añaden los objetos con `id` nuevo (sin sobrescribir). La librería se persiste automáticamente en `localStorage`. |
+| ⊞ Cargar librería | Carga un `.json` de elementos. Los grupos se añaden a la paleta como nuevas pestañas. Si el grupo ya existe, sólo se añaden los objetos con `id` nuevo. La librería se persiste automáticamente en `localStorage`. |
+
+---
+
+## ElementLibraryBuilder
+
+Interfaz visual para crear librerías de elementos JSON para el VenueMapEditor:
+
+```tsx
+import { ElementLibraryBuilder } from 'neogestify-ui-components';
+
+function App() {
+  return (
+    <div style={{ height: '800px' }}>
+      <ElementLibraryBuilder />
+    </div>
+  );
+}
+```
+
+Características:
+- Crear/renombrar/eliminar grupos de elementos
+- Añadir/editar/eliminar elementos
+- Configurar forma, tamaño, colores
+- Soporte para shapes: rect, circle, arrow, path, svg
+- Vista previa del JSON generado
+- Descargar como archivo .json
+- Copiar al portapapeles
 
 ---
 
@@ -842,12 +1075,16 @@ bun run build
 ui-components/
 ├── src/
 │   ├── components/
-│   │   ├── html/        # Componentes HTML
-│   │   ├── icons/       # Iconos SVG
-│   │   └── alerts/      # Alertas SweetAlert2
-│   └── types/           # Tipos TypeScript
-├── showcase/            # Demo/Showcase
-└── dist/                # Build output
+│   │   ├── html/          # Componentes HTML
+│   │   ├── icons/        # Iconos SVG
+│   │   ├── alerts/       # Alertas SweetAlert2
+│   │   ├── VenueMapEditor/  # Editor de mapas
+│   │   └── ElementLibraryBuilder/ # Constructor de librerías
+│   ├── context/
+│   │   └── theme/        # Sistema de tema
+│   └── types/            # Tipos TypeScript
+├── showcase/             # Demo/Showcase
+└── dist/                 # Build output
 ```
 
 ## Modo Oscuro
@@ -857,17 +1094,17 @@ Los componentes soportan modo oscuro automáticamente usando las clases `dark:` 
 ```js
 // tailwind.config.js
 export default {
-  darkMode: 'class', // o 'media'
-  // ...
+  darkMode: 'class',
 }
 ```
 
 Para activar el modo oscuro:
 
 ```tsx
-// Agregar/quitar la clase 'dark' en el html
 document.documentElement.classList.add('dark');
 ```
+
+O usa el sistema de tema de la librería (ThemeProvider + ThemeToggle).
 
 ## Licencia
 
