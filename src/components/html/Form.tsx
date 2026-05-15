@@ -1,39 +1,59 @@
-import { type FormHTMLAttributes, type FC, type FormEvent, type ReactNode } from 'react';
+import { type FormHTMLAttributes, type FC, type FormEvent, type ReactNode, type CSSProperties } from 'react';
 
 interface FormProps extends FormHTMLAttributes<HTMLFormElement> {
     children: ReactNode;
     onSubmit?: (e: FormEvent<HTMLFormElement>) => void;
     variant?: 'default' | 'modal' | 'card' | 'inline' | 'compact';
+    /** Number of columns for a CSS grid layout. 1 = single column, >1 = multi-column grid. */
+    columns?: number;
 }
 
-export const Form: FC<FormProps> = ({ onSubmit, children, variant = 'default', className = '', ...props }) => {
+export const Form: FC<FormProps> = ({
+    onSubmit,
+    children,
+    variant = 'default',
+    columns,
+    className = '',
+    style,
+    ...props
+}) => {
     const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        if (onSubmit) {
-            onSubmit(e);
-        }
+        onSubmit?.(e);
     };
 
-    const getVariantClasses = () => {
+    const hasGrid = columns !== undefined && columns > 1;
+
+    const getVariantClasses = (): string => {
         switch (variant) {
             case 'modal':
                 return 'flex-1 px-6 py-4 overflow-y-auto';
             case 'card':
-                return 'p-6 space-y-6';
+                return `bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6${hasGrid ? '' : ' space-y-6'}`;
             case 'inline':
-                return 'flex flex-wrap gap-4 items-end';
+                return hasGrid ? '' : 'flex flex-wrap gap-4 items-end';
             case 'compact':
-                return 'space-y-3';
+                return hasGrid ? '' : 'space-y-3';
             case 'default':
             default:
-                return 'space-y-4';
+                return hasGrid ? '' : 'space-y-4';
         }
     };
 
-    const combinedClassName = `${getVariantClasses()} ${className}`.trim();
+    const gridStyle: CSSProperties = hasGrid
+        ? { display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: '1rem' }
+        : {};
+
+    const combinedClassName = [getVariantClasses(), className].filter(Boolean).join(' ');
+    const combinedStyle: CSSProperties = { ...gridStyle, ...style };
 
     return (
-        <form onSubmit={handleSubmit} className={combinedClassName} {...props}>
+        <form
+            onSubmit={handleSubmit}
+            className={combinedClassName}
+            style={Object.keys(combinedStyle).length > 0 ? combinedStyle : undefined}
+            {...props}
+        >
             {children}
         </form>
     );

@@ -110,11 +110,19 @@ import {
 
 ### Button
 
-Variantes: `primary`, `secondary`, `danger`, `success`, `warning`, `outline`, `icon`, `nav`, `link`, `toggle`, `custom`
+Variantes: `primary`, `secondary`, `danger`, `success`, `warning`, `outline`, `ghost`, `icon`, `nav`, `link`, `toggle`, `custom`
 
 ```tsx
-<Button variant="primary" isLoading loadingText="Guardando...">
+<Button variant="primary" size="lg" isLoading loadingText="Guardando...">
   Guardar
+</Button>
+
+<Button variant="ghost" leftIcon={<SaveIcon className="w-4 h-4" />}>
+  Exportar
+</Button>
+
+<Button variant="primary" fullWidth shape="pill">
+  Continuar
 </Button>
 
 <Button variant="toggle" isActive={active} onClick={toggle}>
@@ -123,7 +131,12 @@ Variantes: `primary`, `secondary`, `danger`, `success`, `warning`, `outline`, `i
 ```
 
 Props:
-- `variant`: Variante del botón (`primary` | `secondary` | `icon` | `danger` | `success` | `outline` | `nav` | `custom` | `link` | `warning` | `toggle`)
+- `variant`: Variante del botón (`primary` | `secondary` | `icon` | `danger` | `success` | `outline` | `ghost` | `nav` | `custom` | `link` | `warning` | `toggle`)
+- `size`: Tamaño (`'sm'` | `'md'` | `'lg'`). Default: `'md'`
+- `shape`: Forma del borde (`'rounded'` | `'pill'` | `'square'`). Default: `'rounded'` (`'pill'` para `icon`)
+- `leftIcon`: Icono antes del texto (ReactNode)
+- `rightIcon`: Icono después del texto (ReactNode)
+- `fullWidth`: Ocupa el 100% del ancho (boolean)
 - `isLoading`: Muestra estado de carga (boolean)
 - `loadingText`: Texto durante carga
 - `isActive`: Estado activo para variant `toggle` o `nav` (boolean)
@@ -142,15 +155,33 @@ Soporta tipos: `text`, `email`, `password`, `number`, `checkbox`, `radio`, `date
 <Input
   label="Email"
   type="email"
+  required
   error="Email inválido"
   helperText="Ingresa tu correo electrónico"
 />
 
+{/* Variantes visuales */}
+<Input label="Nombre" variant="filled" size="lg" />
+<Input label="Buscar" variant="minimal" />
+
 {/* Con icono */}
 <Input
   label="Buscar"
-  icon={<SearchIcon className="w-5 h-5" />}
+  icon={<SearchIcon className="w-4 h-4" />}
   iconSide="left"
+/>
+
+{/* Addons de texto (prefix / suffix) */}
+<Input label="Precio" prefix="$" suffix="USD" />
+<Input label="Sitio web" prefix="https://" suffix=".com" />
+
+{/* Clearable */}
+<Input
+  label="Filtrar"
+  value={filtro}
+  onChange={e => setFiltro(e.target.value)}
+  clearable
+  onClear={() => setFiltro('')}
 />
 
 {/* Checkbox */}
@@ -160,15 +191,21 @@ Soporta tipos: `text`, `email`, `password`, `number`, `checkbox`, `radio`, `date
 Props:
 - `label`: Etiqueta del campo (string | ReactNode)
 - `type`: Tipo de input HTML (`text`, `email`, `password`, `number`, `checkbox`, `radio`, `date`, `tel`, `url`, `file`)
+- `variant`: Variante visual (`'default'` | `'outline'` | `'filled'` | `'minimal'`). Default: `'default'`
+- `size`: Tamaño (`'sm'` | `'md'` | `'lg'`). Default: `'md'`
+- `prefix`: Addon pegado al borde izquierdo (ReactNode)
+- `suffix`: Addon pegado al borde derecho (ReactNode)
+- `clearable`: Muestra botón `×` para limpiar cuando hay valor (boolean)
+- `onClear`: Callback al hacer click en el botón limpiar
 - `placeholder`: Placeholder
 - `value`: Valor controlado
 - `onChange`: Handler de cambio
-- `error`: Mensaje de error
+- `error`: Mensaje de error (string)
 - `helperText`: Texto de ayuda
 - `icon`: Icono a mostrar (ReactNode)
 - `iconSide`: Lado del icono (`'left'` | `'right'`)
+- `required`: Muestra asterisco `*` en el label (boolean)
 - `disabled`: Deshabilitado
-- `required`: Requerido
 - `className`: Clases adicionales
 - `id`: ID del input (auto-generado si no se provee)
 
@@ -182,7 +219,21 @@ Props:
   placeholder="Escribe una descripción..."
   variant="outline"
   size="large"
+  autoResize
 />
+
+{/* Con contador de caracteres */}
+<TextArea
+  label="Bio"
+  value={bio}
+  onChange={e => setBio(e.target.value)}
+  maxLength={200}
+  showCount
+  variant="filled"
+/>
+
+{/* Sin redimensión */}
+<TextArea label="Notas" resize="none" rows={4} />
 ```
 
 Props:
@@ -193,6 +244,10 @@ Props:
 - `rows`: Número de filas (heredado de HTML)
 - `variant`: Variante visual (`'default'` | `'outline'` | `'filled'` | `'minimal'`)
 - `size`: Tamaño (`'small'` | `'medium'` | `'large'`)
+- `autoResize`: Crece automáticamente al escribir (boolean)
+- `showCount`: Muestra contador de caracteres. Con `maxLength` muestra `12 / 200` (boolean)
+- `resize`: Control de redimensión (`'vertical'` | `'horizontal'` | `'both'` | `'none'`). Default: `'vertical'`
+- `required`: Muestra asterisco `*` en el label (boolean)
 - `error`: Mensaje de error
 - `helperText`: Texto de ayuda
 - `disabled`: Deshabilitado
@@ -204,10 +259,27 @@ Props:
 ### Form
 
 ```tsx
+{/* Variante card con borde y sombra reales */}
 <Form onSubmit={handleSubmit} variant="card">
   <Input label="Nombre" placeholder="Tu nombre" />
   <Input label="Email" type="email" />
   <Button variant="primary" type="submit">Enviar</Button>
+</Form>
+
+{/* Grid de 2 columnas */}
+<Form variant="card" columns={2}>
+  <Input label="Nombre" />
+  <Input label="Apellido" />
+  <Input label="Email" type="email" />
+  <Input label="Teléfono" type="tel" />
+  <Button variant="primary" type="submit" fullWidth>Registrar</Button>
+</Form>
+
+{/* Grid de 3 columnas */}
+<Form columns={3}>
+  <Input label="Calle" />
+  <Input label="Ciudad" />
+  <Input label="País" />
 </Form>
 
 <Form variant="inline">
@@ -219,6 +291,8 @@ Props:
 Props:
 - `onSubmit`: Handler del submit
 - `variant`: Variante del layout (`'default'` | `'modal'` | `'card'` | `'inline'` | `'compact'`)
+  - `card`: Ahora incluye fondo blanco/oscuro, borde y sombra reales
+- `columns`: Número de columnas del grid CSS (cualquier entero ≥ 2 activa el layout de grid con `gap` de `1rem`; con `1` se comporta como `default`)
 - `className`: Clases adicionales
 - Hereda props de `<form>` (method, action, etc.)
 
@@ -230,14 +304,25 @@ Props:
 <Select
   label="Categoría"
   placeholder="Selecciona..."
+  required
   options={[
     { value: '1', label: 'Opción 1' },
     { value: '2', label: 'Opción 2', disabled: true },
-    { value: '3', label: 'Opción 3', selected: true }
+    { value: '3', label: 'Opción 3', selected: true },
   ]}
-  variant="small"
-  error
-  helperText="Selecciona una opción"
+  error="Debes seleccionar una categoría"
+/>
+
+{/* Variantes visuales */}
+<Select label="País" variant="outline" size="lg" />
+<Select label="Estado" variant="filled" />
+<Select label="Tipo" variant="minimal" />
+
+{/* Con icono izquierdo */}
+<Select
+  label="Categoría"
+  icon={<CategorieIcon className="w-4 h-4" />}
+  options={opciones}
 />
 ```
 
@@ -248,12 +333,15 @@ Props:
   - `value`: Valor de la opción (string | number)
   - `label`: Texto a mostrar
   - `disabled`: Deshabilita la opción (boolean)
-  - `selected`: Selecciona la opción por defecto (boolean)
+  - `selected`: Pre-selecciona la opción en modo no controlado (boolean)
+- `variant`: Variante visual (`'default'` | `'outline'` | `'filled'` | `'minimal'` | `'custom'`). `'small'` sigue siendo válido por compatibilidad (equivale a `size='sm'`)
+- `size`: Tamaño (`'sm'` | `'md'` | `'lg'`). Default: `'md'`
+- `icon`: Icono en el lado izquierdo (ReactNode)
 - `value`: Valor seleccionado (controlado)
 - `onChange`: Handler de cambio
-- `variant`: Variante (`'default'` | `'small'`)
-- `error`: Muestra estado de error (boolean)
-- `helperText`: Texto de ayuda
+- `error`: Estado de error. Si es `string` muestra el mensaje; si es `true` solo aplica estilos de error
+- `helperText`: Texto de ayuda (se muestra si no hay `error` string)
+- `required`: Muestra asterisco `*` en el label (boolean)
 - `disabled`: Deshabilita el select
 - `className`: Clases adicionales
 - `id`: ID del select (auto-generado si no se provee)
@@ -265,36 +353,121 @@ Props:
 ```tsx
 <Table
   columns={[
-    { header: 'ID', align: 'center' },
-    { header: 'Nombre', className: 'font-bold' },
-    { header: 'Email' }
+    { header: 'ID', align: 'center', width: 60 },
+    { header: 'Nombre', className: 'font-bold', sticky: true },
+    { header: 'Email' },
+    { header: 'Ventas', key: 'ventas', sortable: true, align: 'right' },
   ]}
   rows={[
-    [<Badge>1</Badge>, 'Juan', 'juan@ejemplo.com'],
-    [<Badge>2</Badge>, 'María', 'maria@ejemplo.com']
+    ['1', 'Juan', 'juan@ejemplo.com', '$1,200'],
+    ['2', 'María', 'maria@ejemplo.com', '$3,400'],
   ]}
   variant="striped"
   size="sm"
+  rounded
+  shadow
   onRowClick={(index) => console.log('Click fila', index)}
+  sortState={{ key: 'ventas', direction: 'desc' }}
+  onSort={(key) => console.log('Ordenar por', key)}
 />
 ```
 
-Props:
-- `columns`: Encabezados de columnas. Puede ser:
-  - Array de strings o ReactNode (simple)
-  - Array de `ColumnDef`: `{ header: ReactNode, className?: string, align?: 'left' | 'center' | 'right' }`
-- `rows`: Datos de las filas (Array de Arrays de ReactNode)
-- `variant`: Variante visual (`'default'` | `'striped'` | `'bordered'` | `'minimal'` | `'custom'`)
-- `size`: Tamaño de celdas (`'sm'` | `'md'` | `'lg'`)
-- `className`: Clases adicionales para el wrapper
+#### Variantes
+
+| Variante | Descripción |
+|----------|-------------|
+| `default` | Fondo blanco con divisores horizontales y hover gris |
+| `striped` | Filas alternas gris/blanco con hover azul |
+| `bordered` | Bordes en todas las celdas |
+| `minimal` | Sin fondos, solo línea inferior en header y celdas |
+| `ghost` | Sin fondos, borde inferior doble en header, divisores sutiles |
+| `card` | Header con fondo suave, divisores finos entre filas |
+| `accent` | Header azul (`bg-blue-600`) con texto blanco |
+| `dark` | Header oscuro (`bg-gray-800`) con texto claro |
+| `custom` | Sin estilos predefinidos, control total vía clases |
+
+#### ColumnDef
+
+```tsx
+interface ColumnDef {
+  header: ReactNode;           // Contenido del encabezado
+  className?: string;          // Clase para th y td de esta columna
+  align?: 'left' | 'center' | 'right';
+  width?: string | number;     // Ancho fijo (px, %, rem…)
+  minWidth?: string | number;  // Ancho mínimo
+  sticky?: boolean;            // Fija la columna a la izquierda en scroll horizontal
+  thStyle?: CSSProperties;     // Estilos inline solo para <th>
+  tdStyle?: CSSProperties;     // Estilos inline solo para <td>
+  sortable?: boolean;          // Muestra indicador de ordenación (requiere key)
+  key?: string;                // Clave usada en sortState y onSort
+}
+```
+
+#### Props
+
+- `columns`: Array de `ColumnDef` o strings/ReactNode simples
+- `rows`: Datos del cuerpo (`ReactNode[][]`)
+- `variant`: Variante visual (ver tabla arriba). Default: `'default'`
+- `size`: Tamaño de padding (`'sm'` | `'md'` | `'lg'`). Default: `'md'`
+- `className`: Clases adicionales para el wrapper `<div>`
 - `tableClassName`: Clases adicionales para el `<table>`
 - `thClassName`: Clases adicionales para cada `<th>`
 - `tdClassName`: Clases adicionales para cada `<td>`
-- `trClassName`: Clases adicionales para cada `<tr>` (string | función `(rowIndex) => string`)
-- `emptyState`: Contenido a mostrar cuando no hay datos (ReactNode)
-- `onRowClick`: Callback al hacer click en una fila `(rowIndex) => void`
-- `hideHeader`: Oculta el encabezado (boolean)
+- `trClassName`: Clases por fila (`string` | `(rowIndex: number) => string`)
+- `emptyState`: Contenido cuando no hay datos (ReactNode)
+- `onRowClick`: Callback al hacer click en una fila (`(rowIndex) => void`)
+- `hideHeader`: Oculta el `<thead>` (boolean)
 - `style`: Estilos inline para el `<table>`
+- `stickyHeader`: Fija el `<thead>` al hacer scroll vertical (boolean)
+- `caption`: Caption accesible renderizado en `<caption>`
+- `footerRows`: Filas del `<tfoot>` (`ReactNode[][]`)
+- `loading`: Muestra esqueleto animado en lugar de filas (boolean)
+- `loadingRows`: Número de filas esqueleto cuando `loading=true`. Default: `4`
+- `getRowStyle`: Estilo inline por fila (`(rowIndex: number) => CSSProperties`)
+- `rounded`: Agrega `rounded-lg` al wrapper (boolean)
+- `shadow`: Agrega sombra al wrapper (boolean)
+- `hoverable`: Desactiva el efecto hover si es `false`. Default: `true`
+- `sortState`: Estado de ordenación activo (`{ key: string, direction: 'asc' | 'desc' }`)
+- `onSort`: Callback al hacer click en un `<th>` sortable (`(key: string) => void`)
+
+#### Ejemplos adicionales
+
+```tsx
+{/* Con loading skeleton */}
+<Table columns={['Nombre', 'Email', 'Rol']} rows={[]} loading loadingRows={5} />
+
+{/* Con footer de totales */}
+<Table
+  columns={['Producto', 'Cantidad', 'Total']}
+  rows={[['Teclado', '2', '$60'], ['Mouse', '3', '$45']]}
+  footerRows={[['', 'Total', '$105']]}
+  variant="card"
+  rounded
+  shadow
+/>
+
+{/* Header fijo + columna sticky + sort */}
+<Table
+  columns={[
+    { header: '#', sticky: true, width: 50 },
+    { header: 'Nombre', sticky: true },
+    { header: 'Fecha', key: 'fecha', sortable: true },
+    { header: 'Monto', key: 'monto', sortable: true, align: 'right' },
+  ]}
+  rows={data}
+  stickyHeader
+  sortState={sort}
+  onSort={(key) => setSort(prev => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))}
+/>
+
+{/* Filas coloreadas dinámicamente */}
+<Table
+  columns={['Estado', 'Mensaje']}
+  rows={logs.map(l => [l.level, l.message])}
+  getRowStyle={(i) => logs[i].level === 'error' ? { background: '#fef2f2' } : {}}
+  variant="minimal"
+/>
+```
 
 ---
 
@@ -305,37 +478,69 @@ const modalRef = useRef<ModalRef>(null);
 
 <Modal
   ref={modalRef}
-  title="Mi Modal"
-  maxWidth="max-w-md"
-  showCloseButton={true}
-  zIndex={60}
+  title="Confirmar acción"
+  size="md"
+  variant="danger"
+  closeOnBackdrop
+  closeOnEsc
   onClose={() => setShowModal(false)}
   footer={
     <>
       <Button variant="secondary" onClick={() => modalRef.current?.handleClose()}>
         Cancelar
       </Button>
-      <Button onClick={handleConfirm}>
-        Confirmar
+      <Button variant="danger" onClick={handleConfirm}>
+        Eliminar
       </Button>
     </>
   }
 >
-  <p>Contenido del modal</p>
+  <p>¿Estás seguro de que deseas continuar?</p>
+</Modal>
+
+{/* Con title como ReactNode */}
+<Modal
+  title={<span className="flex items-center gap-2"><InfoIcon className="w-5 h-5" /> Información</span>}
+  size="lg"
+  onClose={onClose}
+>
+  {children}
 </Modal>
 ```
 
+#### Variantes de header
+
+| Variante | Descripción |
+|----------|-------------|
+| `default` | Header gris neutro |
+| `danger` | Header rojo para acciones destructivas |
+| `success` | Header verde para confirmaciones positivas |
+| `warning` | Header amarillo para advertencias |
+
+#### Tamaños
+
+| Size | Ancho máximo |
+|------|-------------|
+| `sm` | `max-w-sm` |
+| `md` | `max-w-md` |
+| `lg` | `max-w-2xl` |
+| `xl` | `max-w-4xl` |
+| `full` | `95vw` |
+
 Props:
-- `title`: Título del modal
+- `title`: Título del modal (string | ReactNode)
 - `children`: Contenido
 - `footer`: Contenido del pie
 - `onClose`: Handler al cerrar
-- `maxWidth`: Ancho máximo (`max-w-2xl` por defecto)
-- `showCloseButton`: Muestra botón de cerrar (boolean, default: true)
-- `zIndex`: Z-index del modal (number, default: 50)
-- `className`: Clases adicionales
+- `size`: Tamaño predefinido (`'sm'` | `'md'` | `'lg'` | `'xl'` | `'full'`)
+- `maxWidth`: Clase de ancho personalizada (deprecated, usar `size`)
+- `variant`: Estilo del header (`'default'` | `'danger'` | `'success'` | `'warning'`)
+- `closeOnBackdrop`: Cierra al hacer click fuera del modal (boolean, default: `false`)
+- `closeOnEsc`: Cierra al presionar Escape (boolean, default: `false`)
+- `showCloseButton`: Muestra botón de cerrar (boolean, default: `true`)
+- `zIndex`: Z-index del modal (number, default: `50`)
 
-Métodos del ref (ModalRef):
+Métodos del ref (`ModalRef`):
 - `handleClose()`: Cierra el modal con animación
 
 ---
@@ -350,13 +555,24 @@ Métodos del ref (ModalRef):
 <Loading variant="bars" size="xl" color="danger" />
 <Loading variant="ring" color="warning" />
 <Loading variant="cube" size="large" />
+
+{/* Overlay sobre el contenedor (el padre debe tener position: relative) */}
+<div className="relative h-48">
+  <MiContenido />
+  {cargando && <Loading overlay variant="ring" color="primary" />}
+</div>
+
+{/* Overlay de página completa */}
+{cargando && <Loading fullPage label="Procesando..." />}
 ```
 
 Props:
 - `variant`: Variante del loader (`'spinner'` | `'dots'` | `'pulse'` | `'bars'` | `'ring'` | `'cube'`)
 - `size`: Tamaño (`'small'` | `'medium'` | `'large'` | `'xl'`)
-- `color`: Color del icono (`'primary'` | `'white'` | `'gray'` | `'success'` | `'danger'` | `'warning'`)
-- `label`: Texto a mostrar debajo del icono
+- `color`: Color (`'primary'` | `'white'` | `'gray'` | `'success'` | `'danger'` | `'warning'`)
+- `label`: Texto debajo del icono
+- `overlay`: Cubre el contenedor más cercano con `position: relative` con fondo semitransparente (boolean)
+- `fullPage`: Overlay `fixed` que cubre toda la pantalla (`z-50`) (boolean)
 - `className`: Clases adicionales
 
 ---
@@ -409,6 +625,7 @@ function MiComponente() {
 - IconZoomOut, IconReset, IconUndo, IconRedo, IconPlace
 - IconErase, IconDuplicate, IconWall, IconDownload, IconUpload
 - IconPolygon, IconLayers
+- ChevronDownIcon, SortAscIcon, SortDescIcon, SortBothIcon
 
 ---
 

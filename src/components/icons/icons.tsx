@@ -688,3 +688,35 @@ export function IconLayers({ className }: Props) {
     </svg>
   );
 }
+
+export function ChevronDownIcon({ className }: Props) {
+  return (
+    <svg viewBox="0 0 16 16" className={className} fill="currentColor" aria-hidden>
+      <path d="M4.516 7.548c.436-.446 1.043-.481 1.576 0L8 9.747l1.908-2.199c.533-.481 1.14-.446 1.576 0 .436.445.408 1.197 0 1.615-.408.418-2.695 2.977-2.695 2.977-.27.282-.64.423-1.01.423s-.74-.14-1.01-.423c0 0-2.287-2.559-2.695-2.977-.408-.418-.436-1.17 0-1.615z" />
+    </svg>
+  );
+}
+
+export function SortAscIcon({ className }: Props) {
+  return (
+    <svg viewBox="0 0 12 12" className={className} fill="currentColor" aria-hidden>
+      <path d="M6 2.5l4 5H2l4-5z" />
+    </svg>
+  );
+}
+
+export function SortDescIcon({ className }: Props) {
+  return (
+    <svg viewBox="0 0 12 12" className={className} fill="currentColor" aria-hidden>
+      <path d="M6 9.5L2 4.5h8L6 9.5z" />
+    </svg>
+  );
+}
+
+export function SortBothIcon({ className }: Props) {
+  return (
+    <svg viewBox="0 0 12 12" className={className} fill="currentColor" aria-hidden>
+      <path d="M6 1.5l3 3.5H3L6 1.5zm0 9l-3-3.5h6L6 10.5z" />
+    </svg>
+  );
+}
