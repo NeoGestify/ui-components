@@ -346,7 +346,7 @@ export function Table({
                         <tr>
                             {cols.map((col, i) => {
                                 const isSortable = col.sortable && col.key;
-                                const activeSort = sortState?.key === col.key ? sortState!.direction : null;
+                                const activeSort = (sortState && col.key && sortState.key === col.key) ? sortState.direction : null;
                                 return (
                                     <th
                                         key={i}
