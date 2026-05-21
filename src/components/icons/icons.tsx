@@ -546,177 +546,202 @@ export function TruckIcon({ className }: Props) {
 }
 
 export function IconCursor({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M2 1l12 5.5-5.5 1.5L7 13.5 2 1z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M2 1l12 5.5-5.5 1.5L7 13.5 2 1z" />
+        </svg>
+    );
 }
 
 export function IconHand({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M8 1a1 1 0 011 1v4.586l1.293-1.293a1 1 0 111.414 1.414L8 10.414 4.293 6.707a1 1 0 111.414-1.414L7 6.586V2a1 1 0 011-1z" />
-      <path d="M3 8a1 1 0 011-1h.5V4.5a1 1 0 012 0V7h1V3.5a1 1 0 012 0V7h1V4.5a1 1 0 012 0V9a5 5 0 01-5 5H6A3 3 0 013 11V8z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M8 1a1 1 0 011 1v4.586l1.293-1.293a1 1 0 111.414 1.414L8 10.414 4.293 6.707a1 1 0 111.414-1.414L7 6.586V2a1 1 0 011-1z" />
+            <path d="M3 8a1 1 0 011-1h.5V4.5a1 1 0 012 0V7h1V3.5a1 1 0 012 0V7h1V4.5a1 1 0 012 0V9a5 5 0 01-5 5H6A3 3 0 013 11V8z" />
+        </svg>
+    );
 }
 
 export function IconGrid({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path
-        fillRule="evenodd"
-        d="M1 1h6v6H1V1zm8 0h6v6H9V1zM1 9h6v6H1V9zm8 0h6v6H9V9z"
-        clipRule="evenodd"
-        opacity={0.7}
-      />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path
+                fillRule="evenodd"
+                d="M1 1h6v6H1V1zm8 0h6v6H9V1zM1 9h6v6H1V9zm8 0h6v6H9V9z"
+                clipRule="evenodd"
+                opacity={0.7}
+            />
+        </svg>
+    );
 }
 
 export function IconZoomIn({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M6.5 1a5.5 5.5 0 104.39 8.803l3.154 3.153a.75.75 0 001.06-1.06l-3.153-3.154A5.5 5.5 0 006.5 1zM2.5 6.5a4 4 0 118 0 4 4 0 01-8 0zM6 4.75a.75.75 0 011.5 0V6h1.25a.75.75 0 010 1.5H7.5v1.25a.75.75 0 01-1.5 0V7.5H4.75a.75.75 0 010-1.5H6V4.75z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M6.5 1a5.5 5.5 0 104.39 8.803l3.154 3.153a.75.75 0 001.06-1.06l-3.153-3.154A5.5 5.5 0 006.5 1zM2.5 6.5a4 4 0 118 0 4 4 0 01-8 0zM6 4.75a.75.75 0 011.5 0V6h1.25a.75.75 0 010 1.5H7.5v1.25a.75.75 0 01-1.5 0V7.5H4.75a.75.75 0 010-1.5H6V4.75z" />
+        </svg>
+    );
 }
 
 export function IconZoomOut({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M6.5 1a5.5 5.5 0 104.39 8.803l3.154 3.153a.75.75 0 001.06-1.06l-3.153-3.154A5.5 5.5 0 006.5 1zM2.5 6.5a4 4 0 118 0 4 4 0 01-8 0zM4.75 6a.75.75 0 000 1.5h3.5a.75.75 0 000-1.5h-3.5z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M6.5 1a5.5 5.5 0 104.39 8.803l3.154 3.153a.75.75 0 001.06-1.06l-3.153-3.154A5.5 5.5 0 006.5 1zM2.5 6.5a4 4 0 118 0 4 4 0 01-8 0zM4.75 6a.75.75 0 000 1.5h3.5a.75.75 0 000-1.5h-3.5z" />
+        </svg>
+    );
 }
 
 export function IconReset({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM8 4a.75.75 0 01.75.75v3.19l1.28 1.28a.75.75 0 01-1.06 1.06l-1.5-1.5A.75.75 0 017.25 8V4.75A.75.75 0 018 4z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5a5.5 5.5 0 110 11 5.5 5.5 0 010-11zM8 4a.75.75 0 01.75.75v3.19l1.28 1.28a.75.75 0 01-1.06 1.06l-1.5-1.5A.75.75 0 017.25 8V4.75A.75.75 0 018 4z" />
+        </svg>
+    );
 }
 
 export function IconUndo({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M2.5 5.5A.5.5 0 013 5h5a5 5 0 110 10H3a.5.5 0 010-1h5a4 4 0 100-8H3.707l1.647 1.646a.5.5 0 01-.708.708l-2.5-2.5a.5.5 0 010-.708l2.5-2.5a.5.5 0 01.708.708L3.207 5H3a.5.5 0 01-.5-.5z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M2.5 5.5A.5.5 0 013 5h5a5 5 0 110 10H3a.5.5 0 010-1h5a4 4 0 100-8H3.707l1.647 1.646a.5.5 0 01-.708.708l-2.5-2.5a.5.5 0 010-.708l2.5-2.5a.5.5 0 01.708.708L3.207 5H3a.5.5 0 01-.5-.5z" />
+        </svg>
+    );
 }
 
 export function IconRedo({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M13.5 5.5A.5.5 0 0113 5H8a4 4 0 100 8h5a.5.5 0 010 1H8A5 5 0 118 5h4.293l-1.647-1.646a.5.5 0 01.708-.708l2.5 2.5a.5.5 0 010 .708l-2.5 2.5a.5.5 0 01-.708-.708L12.793 6H13a.5.5 0 01.5.5z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M13.5 5.5A.5.5 0 0113 5H8a4 4 0 100 8h5a.5.5 0 010 1H8A5 5 0 118 5h4.293l-1.647-1.646a.5.5 0 01.708-.708l2.5 2.5a.5.5 0 010 .708l-2.5 2.5a.5.5 0 01-.708-.708L12.793 6H13a.5.5 0 01.5.5z" />
+        </svg>
+    );
 }
 
 export function IconPlace({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M2 2a.5.5 0 01.5-.5h2a.5.5 0 010 1H3v1.5a.5.5 0 01-1 0V2zm11 0a.5.5 0 00-.5-.5h-2a.5.5 0 000 1H12v1.5a.5.5 0 001 0V2zM2 14a.5.5 0 00.5.5h2a.5.5 0 000-1H3v-1.5a.5.5 0 00-1 0V14zm11 0a.5.5 0 01-.5.5h-2a.5.5 0 010-1H12v-1.5a.5.5 0 011 0V14zM8 4.5a.5.5 0 000 1V7H6.5a.5.5 0 000 1H8v1.5a.5.5 0 001 0V8h1.5a.5.5 0 000-1H9V5.5a.5.5 0 00-1 0z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M2 2a.5.5 0 01.5-.5h2a.5.5 0 010 1H3v1.5a.5.5 0 01-1 0V2zm11 0a.5.5 0 00-.5-.5h-2a.5.5 0 000 1H12v1.5a.5.5 0 001 0V2zM2 14a.5.5 0 00.5.5h2a.5.5 0 000-1H3v-1.5a.5.5 0 00-1 0V14zm11 0a.5.5 0 01-.5.5h-2a.5.5 0 010-1H12v-1.5a.5.5 0 011 0V14zM8 4.5a.5.5 0 000 1V7H6.5a.5.5 0 000 1H8v1.5a.5.5 0 001 0V8h1.5a.5.5 0 000-1H9V5.5a.5.5 0 00-1 0z" />
+        </svg>
+    );
 }
 
 export function IconErase({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M8.086 2.207a2 2 0 012.828 0l2.879 2.878a2 2 0 010 2.83l-7.513 7.51A2 2 0 014.872 16H2.4a1 1 0 01-.966-.741L.8 13.2a2 2 0 01.5-1.946l7.786-9.047zM7.586 5L5 7.586 8.414 11 11 8.414 7.586 5zM6 12L4 10l-1.5 1.5a1 1 0 000 1.414l.587.587A1 1 0 003.793 15H5l1-1-1-1 1-1z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M8.086 2.207a2 2 0 012.828 0l2.879 2.878a2 2 0 010 2.83l-7.513 7.51A2 2 0 014.872 16H2.4a1 1 0 01-.966-.741L.8 13.2a2 2 0 01.5-1.946l7.786-9.047zM7.586 5L5 7.586 8.414 11 11 8.414 7.586 5zM6 12L4 10l-1.5 1.5a1 1 0 000 1.414l.587.587A1 1 0 003.793 15H5l1-1-1-1 1-1z" />
+        </svg>
+    );
 }
 
 export function IconDuplicate({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M4 2a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H4zm0 1h8a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z" />
-      <path d="M2 5H1a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1v-1H9v1H1V6h1V5z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M4 2a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H4zm0 1h8a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z" />
+            <path d="M2 5H1a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1v-1H9v1H1V6h1V5z" />
+        </svg>
+    );
 }
 
 export function IconWall({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
-      {/* Two parallel lines forming a wall corner — represents wall cross-section */}
-      <path strokeWidth="2" d="M3 14 L3 2 L14 2" />
-      <path strokeWidth="2" d="M6 14 L6 5 L14 5" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">
+            {/* Two parallel lines forming a wall corner — represents wall cross-section */}
+            <path strokeWidth="2" d="M3 14 L3 2 L14 2" />
+            <path strokeWidth="2" d="M6 14 L6 5 L14 5" />
+        </svg>
+    );
 }
 
 export function IconDownload({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/>
-      <path d="M7.646 11.854a.5.5 0 00.708 0l3-3a.5.5 0 00-.708-.708L8.5 10.293V1.5a.5.5 0 00-1 0v8.793L5.354 8.146a.5.5 0 10-.708.708l3 3z"/>
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z" />
+            <path d="M7.646 11.854a.5.5 0 00.708 0l3-3a.5.5 0 00-.708-.708L8.5 10.293V1.5a.5.5 0 00-1 0v8.793L5.354 8.146a.5.5 0 10-.708.708l3 3z" />
+        </svg>
+    );
 }
 
 export function IconUpload({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z"/>
-      <path d="M7.646 1.146a.5.5 0 01.708 0l3 3a.5.5 0 01-.708.708L8.5 2.707V11.5a.5.5 0 01-1 0V2.707L5.354 4.854a.5.5 0 11-.708-.708l3-3z"/>
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M.5 9.9a.5.5 0 01.5.5v2.5a1 1 0 001 1h12a1 1 0 001-1v-2.5a.5.5 0 011 0v2.5a2 2 0 01-2 2H2a2 2 0 01-2-2v-2.5a.5.5 0 01.5-.5z" />
+            <path d="M7.646 1.146a.5.5 0 01.708 0l3 3a.5.5 0 01-.708.708L8.5 2.707V11.5a.5.5 0 01-1 0V2.707L5.354 4.854a.5.5 0 11-.708-.708l3-3z" />
+        </svg>
+    );
 }
 
 export function IconPolygon({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="none" stroke="currentColor" strokeLinejoin="round">
-      <path strokeWidth="1.5" d="M8 2 L14 6 L12 13 L4 13 L2 6 Z"/>
-      <circle cx="8" cy="2" r="1.5" fill="currentColor" stroke="none"/>
-      <circle cx="14" cy="6" r="1.5" fill="currentColor" stroke="none"/>
-      <circle cx="12" cy="13" r="1.5" fill="currentColor" stroke="none"/>
-      <circle cx="4" cy="13" r="1.5" fill="currentColor" stroke="none"/>
-      <circle cx="2" cy="6" r="1.5" fill="currentColor" stroke="none"/>
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="none" stroke="currentColor" strokeLinejoin="round">
+            <path strokeWidth="1.5" d="M8 2 L14 6 L12 13 L4 13 L2 6 Z" />
+            <circle cx="8" cy="2" r="1.5" fill="currentColor" stroke="none" />
+            <circle cx="14" cy="6" r="1.5" fill="currentColor" stroke="none" />
+            <circle cx="12" cy="13" r="1.5" fill="currentColor" stroke="none" />
+            <circle cx="4" cy="13" r="1.5" fill="currentColor" stroke="none" />
+            <circle cx="2" cy="6" r="1.5" fill="currentColor" stroke="none" />
+        </svg>
+    );
 }
 
 export function IconLayers({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-      <path d="M8.235 1.559a.5.5 0 0 0-.47 0l-7.5 4a.5.5 0 0 0 0 .882L3.188 8 .265 9.559a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882L12.813 8l2.922-1.559a.5.5 0 0 0 0-.882l-7.5-4zm3.515 7.008L14.438 10 8 13.433 1.562 10 4.25 8.567l3.515 1.874a.5.5 0 0 0 .47 0l3.515-1.874zM8 9.433 1.562 6 8 2.567 14.438 6 8 9.433z"/>
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
+            <path d="M8.235 1.559a.5.5 0 0 0-.47 0l-7.5 4a.5.5 0 0 0 0 .882L3.188 8 .265 9.559a.5.5 0 0 0 0 .882l7.5 4a.5.5 0 0 0 .47 0l7.5-4a.5.5 0 0 0 0-.882L12.813 8l2.922-1.559a.5.5 0 0 0 0-.882l-7.5-4zm3.515 7.008L14.438 10 8 13.433 1.562 10 4.25 8.567l3.515 1.874a.5.5 0 0 0 .47 0l3.515-1.874zM8 9.433 1.562 6 8 2.567 14.438 6 8 9.433z" />
+        </svg>
+    );
 }
 
 export function ChevronDownIcon({ className }: Props) {
-  return (
-    <svg viewBox="0 0 16 16" className={className} fill="currentColor" aria-hidden>
-      <path d="M4.516 7.548c.436-.446 1.043-.481 1.576 0L8 9.747l1.908-2.199c.533-.481 1.14-.446 1.576 0 .436.445.408 1.197 0 1.615-.408.418-2.695 2.977-2.695 2.977-.27.282-.64.423-1.01.423s-.74-.14-1.01-.423c0 0-2.287-2.559-2.695-2.977-.408-.418-.436-1.17 0-1.615z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 16 16" className={className} fill="currentColor" aria-hidden>
+            <path d="M4.516 7.548c.436-.446 1.043-.481 1.576 0L8 9.747l1.908-2.199c.533-.481 1.14-.446 1.576 0 .436.445.408 1.197 0 1.615-.408.418-2.695 2.977-2.695 2.977-.27.282-.64.423-1.01.423s-.74-.14-1.01-.423c0 0-2.287-2.559-2.695-2.977-.408-.418-.436-1.17 0-1.615z" />
+        </svg>
+    );
 }
 
 export function SortAscIcon({ className }: Props) {
-  return (
-    <svg viewBox="0 0 12 12" className={className} fill="currentColor" aria-hidden>
-      <path d="M6 2.5l4 5H2l4-5z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 12 12" className={className} fill="currentColor" aria-hidden>
+            <path d="M6 2.5l4 5H2l4-5z" />
+        </svg>
+    );
 }
 
 export function SortDescIcon({ className }: Props) {
-  return (
-    <svg viewBox="0 0 12 12" className={className} fill="currentColor" aria-hidden>
-      <path d="M6 9.5L2 4.5h8L6 9.5z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 12 12" className={className} fill="currentColor" aria-hidden>
+            <path d="M6 9.5L2 4.5h8L6 9.5z" />
+        </svg>
+    );
 }
 
 export function SortBothIcon({ className }: Props) {
-  return (
-    <svg viewBox="0 0 12 12" className={className} fill="currentColor" aria-hidden>
-      <path d="M6 1.5l3 3.5H3L6 1.5zm0 9l-3-3.5h6L6 10.5z" />
-    </svg>
-  );
+    return (
+        <svg viewBox="0 0 12 12" className={className} fill="currentColor" aria-hidden>
+            <path d="M6 1.5l3 3.5H3L6 1.5zm0 9l-3-3.5h6L6 10.5z" />
+        </svg>
+    );
+}
+
+export function FingerPrintIcon({ className }: Props) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+        </svg>
+    );
+}
+
+export function PasswordIcon({ className }: Props) {
+    return (
+        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+        </svg>
+    );
+}
+
+export function ShareIcon({ className }: Props) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className={className}>
+            <path d="M17 22q-1.25 0-2.125-.875T14 19q0-.15.075-.7L7.05 14.2q-.4.375-.925.588T5 15q-1.25 0-2.125-.875T2 12t.875-2.125T5 9q.6 0 1.125.213t.925.587l7.025-4.1q-.05-.175-.062-.337T14 5q0-1.25.875-2.125T17 2t2.125.875T20 5t-.875 2.125T17 8q-.6 0-1.125-.213T14.95 7.2l-7.025 4.1q.05.175.063.338T8 12t-.012.363t-.063.337l7.025 4.1q.4-.375.925-.587T17 16q1.25 0 2.125.875T20 19t-.875 2.125T17 22m0-2q.425 0 .713-.287T18 19t-.288-.712T17 18t-.712.288T16 19t.288.713T17 20M5 13q.425 0 .713-.288T6 12t-.288-.712T5 11t-.712.288T4 12t.288.713T5 13m12.713-7.288Q18 5.426 18 5t-.288-.712T17 4t-.712.288T16 5t.288.713T17 6t.713-.288M17 5" />
+        </svg>
+    );
 }

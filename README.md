@@ -46,6 +46,14 @@ En tu archivo CSS principal (por ejemplo `src/index.css`):
 @import "tailwindcss";
 
 @source "../node_modules/neogestify-ui-components/src";
+
+@theme {
+    /* Configuración de dark mode para Tailwind v4 */
+}
+
+@variant dark (&:where(.dark, .dark *)) {
+    /* Variante dark mode */
+}
 ```
 
 **Agrega este script a tu index.html**
