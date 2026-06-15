@@ -99,6 +99,7 @@ import {
   AlertaAdvertencia,
   AlertaConfirmacion,
   AlertaToast,
+  AlertaInfo,
   InfoAlert,
   // Theme
   ThemeProvider,
@@ -587,7 +588,7 @@ Props:
 
 ## Iconos SVG
 
-La biblioteca incluye más de 50 iconos SVG:
+La biblioteca incluye más de 80 iconos SVG:
 
 ```tsx
 import {
@@ -634,6 +635,7 @@ function MiComponente() {
 - IconErase, IconDuplicate, IconWall, IconDownload, IconUpload
 - IconPolygon, IconLayers
 - ChevronDownIcon, SortAscIcon, SortDescIcon, SortBothIcon
+- FingerPrintIcon, PasswordIcon, ShareIcon, QRIcon
 
 ---
 
@@ -733,32 +735,17 @@ Alerta({
 
 ## InfoAlert (Componente)
 
-Componente visual de alerta en línea:
+Botón con ícono de interrogación que dispara un popup informativo con SweetAlert2 al hacer click:
 
 ```tsx
 import { InfoAlert } from 'neogestify-ui-components';
 
-<InfoAlert>
-  Este es un mensaje informativo
-</InfoAlert>
-
-<InfoAlert type="success">
-  Operación exitosa
-</InfoAlert>
-
-<InfoAlert type="warning">
-  Advertencia importante
-</InfoAlert>
-
-<InfoAlert type="error">
-  Ha ocurrido un error
-</InfoAlert>
+<InfoAlert title="Info" text="Este es un mensaje informativo" />
 ```
 
 Props:
-- `type`: Variante (`info` | `success` | `warning` | `error`)
-- `children`: Contenido
-- `className`: Clases adicionales
+- `title`: Título del popup (string, requerido)
+- `text`: Mensaje del popup (string, requerido)
 
 ---
 
@@ -1314,12 +1301,11 @@ ui-components/
 
 ## Modo Oscuro
 
-Los componentes soportan modo oscuro automáticamente usando las clases `dark:` de Tailwind. Asegúrate de configurar el modo oscuro en tu proyecto:
+Los componentes soportan modo oscuro automáticamente usando las clases `dark:` de Tailwind. Si usas Tailwind v4, asegúrate de tener la variante configurada en tu CSS principal (ver [Configuración](#configuración)):
 
-```js
-// tailwind.config.js
-export default {
-  darkMode: 'class',
+```css
+@variant dark (&:where(.dark, .dark *)) {
+  /* Variante dark mode */
 }
 ```
 
