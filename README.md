@@ -8,7 +8,7 @@ Reusable UI component library built with React, Tailwind CSS and SweetAlert2.
 - SVG icon collection (80+ icons)
 - Preconfigured SweetAlert2 alerts + InfoAlert component
 - Theme system (light/dark) with a Context Provider
-- Interactive venue map editor (VenueMapEditor/VenueMapViewer)
+- Interactive venue map editor (VenueMapEditor/VenueMapViewer) with full touch support (pinch-zoom, two-finger pan)
 - Element library builder (ElementLibraryBuilder)
 - Light/dark mode support
 - TypeScript included
@@ -1370,7 +1370,7 @@ const handleClick = (el: MapElement) => {
 | Key | Tool | Function |
 |-------|-------------|---------|
 | `V` | Select | Move, resize and rotate elements. Drag the floor's **border** to move it. |
-| `H` | Pan | Pan the canvas with the left button. |
+| `H` | Pan | Pan the canvas with the left button (or one finger). |
 | `W` | Wall | A click sets the start; the next click ends the segment and chains the next one from that same node. Right-click or `Esc` cancels. |
 | `P` | Place | A click on the floor places the element selected in the palette. |
 | `E` | Erase | Clicking an element or wall deletes it. |
@@ -1384,10 +1384,66 @@ const handleClick = (el: MapElement) => {
 | `Ctrl+0` | — | Fit the view to the plan. |
 | Mouse wheel | — | Zoom centered on the cursor (respects trackpad sensitivity). |
 | Middle click + drag | — | Pan the canvas in any mode. |
-| Touch / stylus | — | All gestures work with finger and stylus. |
 
 > The shortcuts only fire when focus is **inside** the editor, so several editors
 > (or a form next to it) can coexist on the same page without stealing keys.
+
+### Responsive layout
+
+The editor adapts to the space it is actually given. The breakpoints are based on
+the **editor's own container**, measured with a `ResizeObserver` — not on the
+viewport. This is deliberate: as an embeddable component it may live in a 300 px
+sidebar on a 1920 px screen, where Tailwind's viewport-based `sm:`/`md:`
+variants would wrongly apply the desktop layout.
+
+| Container width | Layout |
+|-----------------|--------|
+| ≥ 640 px | Toolbar in one row · properties panel as a **side column** (224 px) |
+| < 640 px | Properties panel becomes a **bottom sheet** (full width, max 45% height, with a close button) · palette scrolls in a single row |
+| < 420 px | The zoom percentage and separators are hidden; the toolbar scrolls horizontally |
+
+The toolbar never squashes or overflows: it scrolls horizontally when it doesn't
+fit. Floor tabs already scroll.
+
+**The view re-fits itself.** Whenever the layout changes — rotating a device,
+opening the panel, switching to compact — the map is re-framed so it stays fully
+visible. Without this, resizing left the plan cropped off-screen, since the fit
+only happened on mount. If you have already panned or zoomed by hand, your
+framing is kept and never overridden; press **Fit view** (or `Ctrl+0`) to hand
+control back to the automatic fit.
+
+### Touch screens
+
+The editor is built on Pointer Events, so every gesture works the same with a
+mouse, a finger or a stylus. On top of that, touch-specific behavior:
+
+| Gesture | Action |
+|---------|--------|
+| One finger drag | Same as the active tool: move an element, draw the lasso, pan in PAN mode. |
+| **Two fingers pinch** | Zoom, anchored at the midpoint between the fingers. |
+| **Two fingers drag** | Pan the canvas — works in **any** tool, no need to switch to PAN. |
+| Double tap on a vertex | Deletes it (polygon floor). |
+| Double tap on a floor tab | Renames it. |
+
+Touch adjustments applied automatically when a coarse pointer (a finger) is
+detected via `(any-pointer: coarse)`:
+
+- **Grab areas grow** from ~14 px to ~44 px. The handles keep their small visual
+  size, but each one gets a larger invisible hit area, which is what makes
+  resizing and rotating usable with a fingertip.
+- **Floor tabs and their buttons get taller**, so switching or closing a floor
+  doesn't need pixel precision.
+- While drawing a wall, a **"Cancel" chip** appears on the canvas: touch has no
+  right-click and no `Esc` key, so without it the wall tool would be impossible
+  to back out of.
+
+The canvas sets `touch-action: none`, so the browser never steals the gesture for
+page scroll or its own pinch-zoom. Starting a two-finger gesture also cancels any
+lasso or wall in progress, so a pinch can't be mistaken for a selection.
+
+> Keyboard shortcuts obviously aren't available on a tablet without a keyboard.
+> Every destructive action also has a button: delete and duplicate live in the
+> properties panel, and undo/redo/zoom are in the toolbar.
 
 ### Selection
 
@@ -1452,6 +1508,17 @@ Features:
 - Preview of the generated JSON
 - Download as a .json file
 - Copy to clipboard
+
+### Responsive layout
+
+Like the map editor, the builder measures **its own container** (not the
+viewport) and reflows its three columns:
+
+| Container width | Layout |
+|-----------------|--------|
+| ≥ 900 px | Three columns: groups/elements · element editor · output JSON |
+| 640–900 px | Groups/elements and the editor side by side; **output JSON moves below** |
+| < 640 px | Single column: everything stacked, form fields become one per row, and the element list is height-capped so it doesn't push the rest off-screen |
 
 ---
 

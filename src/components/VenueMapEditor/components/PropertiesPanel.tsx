@@ -15,12 +15,28 @@ interface PropertiesPanelProps {
   onChangeGeometry: (id: string, x: number, y: number, w: number, h: number, r: number) => void;
   onDelete: (ids: string[]) => void;
   onDuplicate: (ids: string[]) => void;
+  /** Contenedor estrecho: el panel pasa de columna lateral a hoja inferior. */
+  compact?: boolean;
+  /** Contenedor bajo: se limita más la altura de la hoja. */
+  short?: boolean;
+  /** Cierra el panel (solo se ofrece en compacto, donde tapa el lienzo). */
+  onClose?: () => void;
 }
 
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
 
-const PANEL_CLS =
-  'w-56 shrink-0 border-l border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex flex-col';
+const PANEL_BASE =
+  'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex flex-col shrink-0';
+
+/**
+ * En pantallas anchas es una columna lateral fija; en estrechas se convierte en
+ * una hoja inferior a todo el ancho, porque 224 px de columna se comen más de
+ * la mitad de la pantalla de un móvil y dejan el lienzo inservible.
+ */
+function panelCls(compact: boolean, short: boolean): string {
+  if (!compact) return `${PANEL_BASE} w-56 border-l`;
+  return `${PANEL_BASE} w-full border-t ${short ? 'max-h-[55%]' : 'max-h-[45%]'} overflow-y-auto`;
+}
 const HEADER_CLS =
   'px-3 py-2 border-b border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide';
 const FIELD_LABEL_CLS =
@@ -98,6 +114,36 @@ function NumField({ label, value, onChange, step = 1, min }: NumFieldProps) {
   );
 }
 
+// ─── Cabecera ─────────────────────────────────────────────────────────────────
+
+function PanelHeader({
+  title,
+  compact,
+  onClose,
+}: {
+  title: string;
+  compact: boolean;
+  onClose?: () => void;
+}) {
+  return (
+    <div className={`${HEADER_CLS} flex items-center justify-between gap-2`}>
+      <span>{title}</span>
+      {/* Como hoja inferior el panel tapa parte del lienzo, así que necesita
+          una forma explícita de cerrarse. */}
+      {compact && onClose && (
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Cerrar panel"
+          className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 px-2 -my-1 text-base leading-none"
+        >
+          ×
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ─── Panel de pared ───────────────────────────────────────────────────────────
 
 const MATERIAL_LABELS: Record<WallMaterial, string> = {
@@ -112,14 +158,20 @@ function WallPanel({
   wall,
   onChangeWall,
   onDeleteWall,
+  compact = false,
+  short = false,
+  onClose,
 }: {
   wall: Wall;
   onChangeWall?: PropertiesPanelProps['onChangeWall'];
   onDeleteWall?: PropertiesPanelProps['onDeleteWall'];
+  compact?: boolean;
+  short?: boolean;
+  onClose?: () => void;
 }) {
   return (
-    <div className={PANEL_CLS}>
-      <div className={HEADER_CLS}>Pared</div>
+    <div className={panelCls(compact, short)}>
+      <PanelHeader title="Pared" compact={compact} onClose={onClose} />
       <div className="flex-1 flex flex-col gap-4 p-3">
         <label className="flex flex-col gap-0.5">
           <span className={FIELD_LABEL_CLS}>Material</span>
@@ -165,6 +217,9 @@ export function PropertiesPanel({
   onChangeGeometry,
   onDelete,
   onDuplicate,
+  compact = false,
+  short = false,
+  onClose,
 }: PropertiesPanelProps) {
   const count = elements.length;
 
@@ -192,15 +247,18 @@ export function PropertiesPanel({
   );
 
   if (count === 0) {
-    return wall ? <WallPanel wall={wall} onChangeWall={onChangeWall} onDeleteWall={onDeleteWall} /> : null;
+    return wall
+      ? <WallPanel wall={wall} onChangeWall={onChangeWall} onDeleteWall={onDeleteWall}
+                   compact={compact} short={short} onClose={onClose} />
+      : null;
   }
 
   // ── Multi-selection ───────────────────────────────────────────────────────
   if (count > 1) {
     const ids = elements.map(e => e.id);
     return (
-      <div className={PANEL_CLS}>
-        <div className={HEADER_CLS}>Propiedades</div>
+      <div className={panelCls(compact, short)}>
+        <PanelHeader title="Propiedades" compact={compact} onClose={onClose} />
         <div className="flex-1 flex flex-col items-center justify-center gap-3 p-4 text-center">
           <span className="text-2xl font-bold text-slate-700 dark:text-slate-200">{count}</span>
           <span className="text-xs text-slate-400 dark:text-slate-500">elementos seleccionados</span>
@@ -232,9 +290,9 @@ export function PropertiesPanel({
   };
 
   return (
-    <div className={`${PANEL_CLS} overflow-y-auto`}>
+    <div className={`${panelCls(compact, short)} ${compact ? '' : 'overflow-y-auto'}`}>
       {/* Header */}
-      <div className={HEADER_CLS}>Propiedades</div>
+      <PanelHeader title="Propiedades" compact={compact} onClose={onClose} />
 
       <div className="flex-1 flex flex-col gap-4 p-3">
         {/* Type badge */}

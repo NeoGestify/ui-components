@@ -4,6 +4,7 @@ import type { Floor, WallNode, ElementTypeDef, ToolMode } from '../types';
 import type { PanZoomState, Bounds } from '../hooks/usePanZoom';
 import type { VenuePalette } from '../theme';
 import { usePanZoom } from '../hooks/usePanZoom';
+import { useCoarsePointer } from '../hooks/usePointerCapabilities';
 import { findNearestNode, snapPoint } from '../utils/snapUtils';
 import { wallSegmentPath } from '../utils/wallGeometry';
 import { elementFootprint } from '../utils/collision';
@@ -119,6 +120,11 @@ interface EditorCanvasProps {
   onRegisterZoomBy?: (fn: (factor: number) => void) => void;
   onRegisterResetView?: (fn: () => void) => void;
   onRegisterFitView?: (fn: () => void) => void;
+  /**
+   * Cambia cuando cambia la disposición del editor (tamaño del contenedor,
+   * modo compacto, panel abierto). Dispara el re-encuadre automático.
+   */
+  layoutSignal?: string;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -158,6 +164,7 @@ export function EditorCanvas({
   onRegisterZoomBy,
   onRegisterResetView,
   onRegisterFitView,
+  layoutSignal,
 }: EditorCanvasProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   // `useId` genera un prefijo único por instancia: sin él, dos editores en la
@@ -166,12 +173,15 @@ export function EditorCanvas({
   const rawId = useId();
   const domUid = useMemo(() => `vme${rawId.replace(/[^a-zA-Z0-9]/g, '')}`, [rawId]);
 
+  // Con el dedo las zonas de agarre deben ser mucho mayores que con el ratón.
+  const coarse = useCoarsePointer();
+
   const {
     state: panZoom, isPanning,
     handleWheel, handlePointerDown: handlePanPointerDown,
     handlePointerMove: handlePanPointerMove,
     handlePointerUp: handlePanPointerUp,
-    zoomBy, fitTo, resetView,
+    zoomBy, gesture, fitTo, resetView,
   } = usePanZoom(1, tool === 'PAN');
 
   const panZoomRef = useRef<PanZoomState>(panZoom);
@@ -180,6 +190,43 @@ export function EditorCanvas({
   // ── Lasso state ─────────────────────────────────────────────────────────────
   const [lasso, setLasso] = useState<LassoRect | null>(null);
   const lassoStart = useRef<{ cx: number; cy: number; additive: boolean } | null>(null);
+
+  // ── Gesto de dos dedos (pinch-zoom + pan) ───────────────────────────────────
+  // Sin esto no hay forma de hacer zoom en una pantalla táctil: la rueda del
+  // ratón no existe y los botones de la barra son el único recurso.
+  const touchPoints = useRef(new Map<number, { x: number; y: number }>());
+  const pinchRef = useRef<{ dist: number; midX: number; midY: number } | null>(null);
+  const [isPinching, setIsPinching] = useState(false);
+
+  /** Distancia y punto medio entre los dos primeros dedos activos. */
+  const readPinch = useCallback(() => {
+    const pts = [...touchPoints.current.values()];
+    if (pts.length < 2) return null;
+    const [a, b] = pts;
+    const rect = svgRef.current?.getBoundingClientRect();
+    return {
+      dist: Math.hypot(b.x - a.x, b.y - a.y),
+      midX: (a.x + b.x) / 2 - (rect?.left ?? 0),
+      midY: (a.y + b.y) / 2 - (rect?.top ?? 0),
+    };
+  }, []);
+
+  /** Al entrar en gesto se abortan lazo y trazado de pared en curso. */
+  const beginPinch = useCallback(() => {
+    const p = readPinch();
+    if (!p) return;
+    userAdjustedView.current = true;
+    pinchRef.current = p;
+    setIsPinching(true);
+    lassoStart.current = null;
+    setLasso(null);
+    setWallDraw(null);
+  }, [readPinch]);
+
+  const endPinch = useCallback(() => {
+    pinchRef.current = null;
+    setIsPinching(false);
+  }, []);
 
   // ── Wall draw state ──────────────────────────────────────────────────────────
   const [wallDraw, setWallDraw] = useState<WallDraw | null>(null);
@@ -212,18 +259,58 @@ export function EditorCanvas({
   const floorRef = useRef(floor);
   floorRef.current = floor;
 
+  // ¿El usuario ya movió la vista a mano? Mientras no lo haga, el encuadre se
+  // mantiene automático al cambiar de tamaño el contenedor.
+  const userAdjustedView = useRef(false);
+
+  /** Tamaño del viewport con el que se hizo el último encuadre automático. */
+  const lastFitSize = useRef({ w: 0, h: 0 });
+
   const fitView = useCallback(() => {
     const { w, h } = viewportSize();
     if (w === 0 || h === 0) { resetView(); return; }
     fitTo(floorBounds(floorRef.current), w, h);
+    lastFitSize.current = { w, h };
+    userAdjustedView.current = false;
   }, [fitTo, resetView, viewportSize]);
+
+  /** Marca la vista como ajustada manualmente (pan, zoom o gesto del usuario). */
+  const markUserAdjusted = useCallback(() => { userAdjustedView.current = true; }, []);
+
+  const zoomAtCenterManual = useCallback((factor: number) => {
+    markUserAdjusted();
+    zoomAtCenter(factor);
+  }, [markUserAdjusted, zoomAtCenter]);
+
+  const handleWheelTracked = useCallback((e: Parameters<typeof handleWheel>[0]) => {
+    markUserAdjusted();
+    handleWheel(e);
+  }, [markUserAdjusted, handleWheel]);
+
+  // Re-encuadra cuando cambia la disposición (girar el dispositivo, abrir el
+  // panel, pasar a compacto). Sin esto el mapa quedaba fuera de pantalla tras
+  // un cambio de tamaño, porque el encuadre solo ocurría al montar.
+  //
+  // La señal la manda el padre, que ya mide su contenedor, en lugar de observar
+  // aquí el tamaño del `<svg>`: así se capta también el caso en que el lienzo
+  // cambia de ancho sin que lo haga el editor (al abrirse el panel lateral).
+  //
+  // Se respeta el encuadre manual: si el usuario ya movió la vista, no se toca.
+  useEffect(() => {
+    if (userAdjustedView.current) return;
+    const { w, h } = viewportSize();
+    if (w === 0 || h === 0) return;
+    const { w: lw, h: lh } = lastFitSize.current;
+    if (Math.abs(lw - w) < 1 && Math.abs(lh - h) < 1) return;
+    fitView();
+  }, [layoutSignal, fitView, viewportSize]);
 
   // ── Expose callbacks ────────────────────────────────────────────────────────
   useEffect(() => {
-    onRegisterZoomBy?.(zoomAtCenter);
+    onRegisterZoomBy?.(zoomAtCenterManual);
     onRegisterResetView?.(fitView);
     onRegisterFitView?.(fitView);
-  }, [onRegisterZoomBy, onRegisterResetView, onRegisterFitView, zoomAtCenter, fitView]);
+  }, [onRegisterZoomBy, onRegisterResetView, onRegisterFitView, zoomAtCenterManual, fitView]);
 
   useEffect(() => { onZoomChange?.(panZoom.zoom); }, [panZoom.zoom, onZoomChange]);
 
@@ -297,7 +384,18 @@ export function EditorCanvas({
 
   // ── SVG pointer events ───────────────────────────────────────────────────────
   const handleSvgPointerDown = useCallback((e: ReactPointerEvent<SVGSVGElement>) => {
+    if (e.pointerType === 'touch') {
+      touchPoints.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+      // Segundo dedo: pasa a gesto de dos dedos y descarta la acción en curso.
+      if (touchPoints.current.size === 2) {
+        beginPinch();
+        return;
+      }
+      if (touchPoints.current.size > 2) return;
+    }
+
     if (e.button === 1 || (e.button === 0 && tool === 'PAN')) {
+      markUserAdjusted();
       handlePanPointerDown(e);
       return;
     }
@@ -366,9 +464,25 @@ export function EditorCanvas({
       setLasso({ x: cx, y: cy, w: 0, h: 0 });
     }
   }, [handlePanPointerDown, tool, toCanvas, gridSize, snapEnabled,
-      wallDraw, floor, findSnapNode, clampToArea, onAddWall, onPlaceElement]);
+      wallDraw, floor, findSnapNode, clampToArea, onAddWall, onPlaceElement, beginPinch]);
 
   const handleSvgPointerMove = useCallback((e: ReactPointerEvent<SVGSVGElement>) => {
+    if (e.pointerType === 'touch' && touchPoints.current.has(e.pointerId)) {
+      touchPoints.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+
+    // Gesto de dos dedos: escala por la variación de distancia y desplaza por
+    // la del punto medio, todo en una sola actualización de estado.
+    if (pinchRef.current) {
+      const p = readPinch();
+      if (!p) return;
+      const prev = pinchRef.current;
+      const scale = prev.dist > 0 ? p.dist / prev.dist : 1;
+      gesture(scale, p.midX, p.midY, p.midX - prev.midX, p.midY - prev.midY);
+      pinchRef.current = p;
+      return;
+    }
+
     handlePanPointerMove(e);
 
     const raw = toCanvas(e.clientX, e.clientY);
@@ -388,9 +502,19 @@ export function EditorCanvas({
       const ly = Math.min(cy, lassoStart.current.cy);
       setLasso({ x: lx, y: ly, w: Math.abs(cx - lassoStart.current.cx), h: Math.abs(cy - lassoStart.current.cy) });
     }
-  }, [handlePanPointerMove, tool, toCanvas, gridSize, snapEnabled, wallDraw, findSnapNode]);
+  }, [handlePanPointerMove, tool, toCanvas, gridSize, snapEnabled, wallDraw, findSnapNode,
+      readPinch, gesture]);
 
   const handleSvgPointerUp = useCallback((e: ReactPointerEvent<SVGSVGElement>) => {
+    if (e.pointerType === 'touch') touchPoints.current.delete(e.pointerId);
+    // Al levantar un dedo el gesto termina; el que queda NO reanuda el lazo,
+    // o al soltar un pinch se seleccionaría sin querer.
+    if (pinchRef.current) {
+      endPinch();
+      handlePanPointerUp(e);
+      return;
+    }
+
     handlePanPointerUp(e);
 
     const start = lassoStart.current;
@@ -415,13 +539,15 @@ export function EditorCanvas({
       lassoStart.current = null;
       setLasso(null);
     }
-  }, [handlePanPointerUp, lasso, floor.elements, onSelectSet, onClearSelection, onSelectWall]);
+  }, [handlePanPointerUp, lasso, floor.elements, onSelectSet, onClearSelection, onSelectWall, endPinch]);
 
   const handleSvgPointerCancel = useCallback((e: ReactPointerEvent<SVGSVGElement>) => {
+    if (e.pointerType === 'touch') touchPoints.current.delete(e.pointerId);
+    if (pinchRef.current) endPinch();
     handlePanPointerUp(e);
     lassoStart.current = null;
     setLasso(null);
-  }, [handlePanPointerUp]);
+  }, [handlePanPointerUp, endPinch]);
 
   const handleContextMenu = useCallback((e: ReactMouseEvent<SVGSVGElement>) => {
     e.preventDefault();
@@ -430,7 +556,7 @@ export function EditorCanvas({
   }, [tool]);
 
   // ── Derived ──────────────────────────────────────────────────────────────────
-  const cursor = isPanning ? 'grabbing'
+  const cursor = isPanning || isPinching ? 'grabbing'
     : tool === 'PAN'    ? 'grab'
     : tool === 'WALL'   ? 'crosshair'
     : tool === 'PLACE'  ? 'crosshair'
@@ -450,13 +576,14 @@ export function EditorCanvas({
   })();
 
   return (
+    <>
     <svg
       ref={svgRef}
       className="w-full h-full select-none outline-none"
       // `touchAction: none` es imprescindible para que el navegador no se
       // quede con los gestos táctiles (scroll/pinch) antes que el editor.
       style={{ cursor, display: 'block', touchAction: 'none' }}
-      onWheel={handleWheel}
+      onWheel={handleWheelTracked}
       onPointerDown={handleSvgPointerDown}
       onPointerMove={handleSvgPointerMove}
       onPointerUp={handleSvgPointerUp}
@@ -488,6 +615,7 @@ export function EditorCanvas({
           zoom={zoom}
           palette={palette}
           uid={domUid}
+          coarse={coarse}
           readOnly={readOnly || tool !== 'SELECT'}
         />
 
@@ -521,6 +649,7 @@ export function EditorCanvas({
               snapEnabled={snapEnabled}
               gridSize={gridSize}
               palette={palette}
+              coarse={coarse}
               statusFill={status?.fill}
               statusTooltip={status?.tooltip}
               onSelect={onSelectElement}
@@ -584,5 +713,23 @@ export function EditorCanvas({
         )}
       </g>
     </svg>
+
+    {/* En táctil no hay clic derecho ni tecla Escape, así que el trazado de
+        pared quedaría atrapado sin forma de cancelarlo. */}
+    {wallDraw && coarse && (
+      <div className="absolute inset-x-0 bottom-3 flex justify-center pointer-events-none">
+        <div className="flex items-center gap-3 rounded-full bg-slate-900/90 dark:bg-slate-100/90 px-4 py-2 text-xs text-white dark:text-slate-900 shadow-lg pointer-events-auto">
+          <span>Toca para fijar el siguiente punto</span>
+          <button
+            type="button"
+            onClick={() => setWallDraw(null)}
+            className="rounded-full bg-white/20 dark:bg-slate-900/20 px-3 py-1 font-medium"
+          >
+            Cancelar
+          </button>
+        </div>
+      </div>
+    )}
+    </>
   );
 }

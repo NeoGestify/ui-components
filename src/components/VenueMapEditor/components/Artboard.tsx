@@ -24,8 +24,14 @@ const HANDLE_CURSORS: Record<HandleType, string> = {
 
 const MIN_SIZE = 50;
 const HANDLE_PX = 8;
+/** Half-size (px de pantalla) de la zona de impacto de cada handle. */
+const GRAB_PX = 10;
+const GRAB_PX_COARSE = 22;
 /** Ancho (px de pantalla) de la banda del borde que sirve para mover la planta. */
 const EDGE_GRAB_PX = 12;
+const EDGE_GRAB_PX_COARSE = 28;
+/** Ventana (ms) para reconocer un doble toque. */
+const DOUBLE_TAP_MS = 300;
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -41,6 +47,8 @@ interface ArtboardProps {
   palette: VenuePalette;
   /** Prefijo único por instancia para los ids de `<filter>`. */
   uid: string;
+  /** Puntero grueso (dedo): agranda las zonas de agarre. */
+  coarse?: boolean;
   readOnly?: boolean;
 }
 
@@ -127,6 +135,7 @@ function PolygonArtboard({
   zoom,
   palette,
   uid,
+  coarse = false,
   readOnly = false,
 }: ArtboardProps) {
   const pts = area.points ?? [];
@@ -194,6 +203,25 @@ function PolygonArtboard({
     [onResize, onResizeCommit],
   );
 
+  // `dblclick` no es fiable con el dedo (y con touch-action:none a menudo ni se
+  // emite), así que el doble toque se detecta a mano.
+  const lastTap = useRef<{ idx: number; t: number } | null>(null);
+  const handleVertexTap = useCallback((idx: number) => {
+    const now = Date.now();
+    const prev = lastTap.current;
+    if (prev && prev.idx === idx && now - prev.t < DOUBLE_TAP_MS) {
+      lastTap.current = null;
+      const currentPts = areaRef.current.points ?? [];
+      if (currentPts.length <= 3) return;
+      const newPts = currentPts.filter((_, i) => i !== idx);
+      const newArea: FloorArea = { ...areaRef.current, points: newPts };
+      onResize(newArea);
+      onResizeCommit?.(newArea);
+      return;
+    }
+    lastTap.current = { idx, t: now };
+  }, [onResize, onResizeCommit]);
+
   const handleAddVertex = useCallback(
     (e: SyntheticEvent, insertAfterIdx: number) => {
       e.stopPropagation();
@@ -216,7 +244,9 @@ function PolygonArtboard({
   if (pts.length < 3) return null;
 
   const pointsStr = pts.map(([x, y]) => `${x},${y}`).join(' ');
-  const hs = HANDLE_PX / zoom;
+  const hs = (coarse ? HANDLE_PX * 1.4 : HANDLE_PX) / zoom;
+  const grab = (coarse ? GRAB_PX_COARSE : GRAB_PX) / zoom;
+  const edgeGrab = (coarse ? EDGE_GRAB_PX_COARSE : EDGE_GRAB_PX) / zoom;
   const sw = 1.5 / zoom;
   const dash = `${6 / zoom},${3 / zoom}`;
   const shadowId = `${uid}-artboard-shadow`;
@@ -251,7 +281,7 @@ function PolygonArtboard({
           points={pointsStr}
           fill="none"
           stroke="transparent"
-          strokeWidth={EDGE_GRAB_PX / zoom}
+          strokeWidth={edgeGrab}
           style={{ cursor: 'move', pointerEvents: 'stroke' }}
           onPointerDown={handleBodyDown}
         />
@@ -265,41 +295,56 @@ function PolygonArtboard({
             const mx = (ax + bx) / 2;
             const my = (ay + by) / 2;
             return (
-              <rect
-                key={`mid-${i}`}
-                x={mx - hs * 0.75}
-                y={my - hs * 0.75}
-                width={hs * 1.5}
-                height={hs * 1.5}
-                fill={palette.handleFill}
-                stroke={palette.artboardStroke}
-                strokeWidth={sw}
-                style={{ cursor: 'copy', transform: `rotate(45deg)`, transformOrigin: `${mx}px ${my}px` }}
-                onPointerDown={e => handleAddVertex(e, i)}
-              >
-                <title>Añadir vértice</title>
-              </rect>
+              <g key={`mid-${i}`}>
+                <circle
+                  cx={mx} cy={my} r={grab * 0.8}
+                  fill="transparent"
+                  style={{ cursor: 'copy' }}
+                  onPointerDown={e => handleAddVertex(e, i)}
+                >
+                  <title>Añadir vértice</title>
+                </circle>
+                <rect
+                  x={mx - hs * 0.75}
+                  y={my - hs * 0.75}
+                  width={hs * 1.5}
+                  height={hs * 1.5}
+                  fill={palette.handleFill}
+                  stroke={palette.artboardStroke}
+                  strokeWidth={sw}
+                  style={{ pointerEvents: 'none', transform: `rotate(45deg)`, transformOrigin: `${mx}px ${my}px` }}
+                />
+              </g>
             );
           })}
 
           {/* Vertex square handles */}
           {pts.map(([vx, vy], i) => (
-            <rect
-              key={`v-${i}`}
-              x={vx - hs}
-              y={vy - hs}
-              width={hs * 2}
-              height={hs * 2}
-              rx={1 / zoom}
-              fill={palette.handleFill}
-              stroke={palette.accent}
-              strokeWidth={sw}
-              style={{ cursor: 'move' }}
-              onPointerDown={e => startVertexDrag(e, i)}
-              onDoubleClick={e => handleDeleteVertex(e, i)}
-            >
-              <title>Arrastrar para mover · doble clic para eliminar</title>
-            </rect>
+            <g key={`v-${i}`}>
+              <rect
+                x={vx - grab}
+                y={vy - grab}
+                width={grab * 2}
+                height={grab * 2}
+                fill="transparent"
+                style={{ cursor: 'move' }}
+                onPointerDown={e => { handleVertexTap(i); startVertexDrag(e, i); }}
+                onDoubleClick={e => handleDeleteVertex(e, i)}
+              >
+                <title>Arrastrar para mover · doble toque para eliminar</title>
+              </rect>
+              <rect
+                x={vx - hs}
+                y={vy - hs}
+                width={hs * 2}
+                height={hs * 2}
+                rx={1 / zoom}
+                fill={palette.handleFill}
+                stroke={palette.accent}
+                strokeWidth={sw}
+                style={{ pointerEvents: 'none' }}
+              />
+            </g>
           ))}
         </>
       )}
@@ -321,6 +366,7 @@ function RectArtboard({
   zoom,
   palette,
   uid,
+  coarse = false,
   readOnly = false,
 }: ArtboardProps) {
   const activeHandle = useRef<HandleType | null>(null);
@@ -360,7 +406,9 @@ function RectArtboard({
   const aw = area.width ?? 400;
   const ah = area.height ?? 300;
 
-  const hs = HANDLE_PX / zoom;
+  const hs = (coarse ? HANDLE_PX * 1.4 : HANDLE_PX) / zoom;
+  const grab = (coarse ? GRAB_PX_COARSE : GRAB_PX) / zoom;
+  const edgeGrab = (coarse ? EDGE_GRAB_PX_COARSE : EDGE_GRAB_PX) / zoom;
   const sw = 1.5 / zoom;
   const dash = `${6 / zoom},${3 / zoom}`;
   const shadowId = `${uid}-artboard-shadow`;
@@ -414,7 +462,7 @@ function RectArtboard({
           height={ah}
           fill="none"
           stroke="transparent"
-          strokeWidth={EDGE_GRAB_PX / zoom}
+          strokeWidth={edgeGrab}
           style={{ cursor: 'move', pointerEvents: 'stroke' }}
           onPointerDown={handleBodyDown}
         />
@@ -422,19 +470,28 @@ function RectArtboard({
 
       {!readOnly &&
         handles.map(({ type, cx, cy }) => (
-          <rect
-            key={type}
-            x={cx - hs}
-            y={cy - hs}
-            width={hs * 2}
-            height={hs * 2}
-            rx={1 / zoom}
-            fill={palette.handleFill}
-            stroke={palette.accent}
-            strokeWidth={sw}
-            style={{ cursor: HANDLE_CURSORS[type] }}
-            onPointerDown={e => startHandleDrag(e, type)}
-          />
+          <g key={type}>
+            <rect
+              x={cx - grab}
+              y={cy - grab}
+              width={grab * 2}
+              height={grab * 2}
+              fill="transparent"
+              style={{ cursor: HANDLE_CURSORS[type] }}
+              onPointerDown={e => startHandleDrag(e, type)}
+            />
+            <rect
+              x={cx - hs}
+              y={cy - hs}
+              width={hs * 2}
+              height={hs * 2}
+              rx={1 / zoom}
+              fill={palette.handleFill}
+              stroke={palette.accent}
+              strokeWidth={sw}
+              style={{ pointerEvents: 'none' }}
+            />
+          </g>
         ))}
     </g>
   );

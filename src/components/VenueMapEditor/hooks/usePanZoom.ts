@@ -127,6 +127,31 @@ export function usePanZoom(initialZoom = 1, leftClickPan = false) {
     });
   }, []);
 
+  /**
+   * Aplica un gesto de dos dedos en un solo `setState`: escala alrededor del
+   * punto medio de los dedos y arrastra ese punto medio.
+   *
+   * Hacerlo en una sola actualización evita el temblor que se produce al
+   * encadenar un zoom y un pan por separado en el mismo frame.
+   *
+   * @param scale  factor de escala respecto al frame anterior
+   * @param cx,cy  punto medio entre los dedos, en píxeles del SVG
+   * @param dx,dy  desplazamiento del punto medio desde el frame anterior
+   */
+  const gesture = useCallback((scale: number, cx: number, cy: number, dx: number, dy: number) => {
+    setState(prev => {
+      const newZoom = clampZoom(prev.zoom * scale);
+      // Escala realmente aplicada: si el zoom topó con el límite, el punto bajo
+      // los dedos debe seguir anclado igualmente.
+      const k = newZoom / prev.zoom;
+      return {
+        zoom: newZoom,
+        panX: cx - (cx - prev.panX) * k + dx,
+        panY: cy - (cy - prev.panY) * k + dy,
+      };
+    });
+  }, []);
+
   /** Encuadra `bounds` dentro de un viewport de `vw × vh` píxeles. */
   const fitTo = useCallback((bounds: Bounds, vw: number, vh: number, padding = 48) => {
     if (bounds.width <= 0 || bounds.height <= 0 || vw <= 0 || vh <= 0) return;
@@ -155,6 +180,7 @@ export function usePanZoom(initialZoom = 1, leftClickPan = false) {
     handlePointerUp: stopPan,
     handlePointerCancel: stopPan,
     zoomBy,
+    gesture,
     fitTo,
     resetView,
     ZOOM_MIN,

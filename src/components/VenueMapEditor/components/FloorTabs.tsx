@@ -1,5 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import type { KeyboardEvent } from 'react';
+import { useCoarsePointer } from '../hooks/usePointerCapabilities';
 import type { Floor } from '../types';
 
 interface FloorTabsProps {
@@ -26,6 +27,7 @@ export function FloorTabs({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const coarse = useCoarsePointer();
 
   const sorted = floors.slice().sort((a, b) => a.order - b.order);
 
@@ -47,6 +49,20 @@ export function FloorTabs({
     setEditingId(null);
   }, []);
 
+  // Con el dedo `dblclick` no es fiable, así que el doble toque se detecta a
+  // mano para poder renombrar una planta en táctil.
+  const lastTap = useRef<{ id: string; t: number } | null>(null);
+  const handleTabTap = useCallback((floor: Floor) => {
+    const now = Date.now();
+    const prev = lastTap.current;
+    if (prev && prev.id === floor.id && now - prev.t < 300) {
+      lastTap.current = null;
+      startEditing(floor);
+      return;
+    }
+    lastTap.current = { id: floor.id, t: now };
+  }, [startEditing]);
+
   const handleKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') { e.preventDefault(); commitEdit(); }
     if (e.key === 'Escape') { e.preventDefault(); cancelEdit(); }
@@ -64,7 +80,8 @@ export function FloorTabs({
           <div
             key={floor.id}
             className={[
-              'flex items-center gap-0.5 px-2 py-1 rounded-t border transition-colors shrink-0',
+              'flex items-center gap-0.5 px-2 rounded-t border transition-colors shrink-0',
+              coarse ? 'py-2' : 'py-1',
               isActive
                 ? 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 font-medium'
                 : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer',
@@ -73,7 +90,7 @@ export function FloorTabs({
           >
             {!readOnly && isActive && canMoveLeft && (
               <button
-                className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 px-0.5 leading-none"
+                className={`text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 leading-none ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
                 onClick={e => { e.stopPropagation(); onReorder(floor.id, 'left'); }}
                 title="Mover a la izquierda"
               >
@@ -94,6 +111,7 @@ export function FloorTabs({
             ) : (
               <span
                 onDoubleClick={e => { e.stopPropagation(); startEditing(floor); }}
+                onPointerDown={e => { if (e.pointerType === 'touch') handleTabTap(floor); }}
                 className="select-none"
               >
                 {floor.name}
@@ -102,7 +120,7 @@ export function FloorTabs({
 
             {!readOnly && isActive && canMoveRight && (
               <button
-                className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 px-0.5 leading-none"
+                className={`text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 leading-none ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
                 onClick={e => { e.stopPropagation(); onReorder(floor.id, 'right'); }}
                 title="Mover a la derecha"
               >
@@ -112,7 +130,7 @@ export function FloorTabs({
 
             {!readOnly && floors.length > 1 && (
               <button
-                className="text-slate-400 dark:text-slate-500 hover:text-red-500 px-0.5 leading-none"
+                className={`text-slate-400 dark:text-slate-500 hover:text-red-500 leading-none ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
                 onClick={e => { e.stopPropagation(); onDelete(floor.id); }}
                 title="Eliminar planta"
               >
@@ -125,7 +143,7 @@ export function FloorTabs({
 
       {!readOnly && (
         <button
-          className="flex items-center justify-center w-6 h-6 rounded border border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-blue-400 hover:text-blue-500 transition-colors shrink-0"
+          className={`flex items-center justify-center ${coarse ? 'w-9 h-9' : 'w-6 h-6'} rounded border border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-blue-400 hover:text-blue-500 transition-colors shrink-0`}
           onClick={onAdd}
           title="Añadir planta"
         >

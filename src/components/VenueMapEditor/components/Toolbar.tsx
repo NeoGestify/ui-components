@@ -17,9 +17,11 @@ interface ToolButtonProps {
   title: string;
   onClick: () => void;
   children: ReactNode;
+  /** Área táctil ampliada. */
+  large?: boolean;
 }
 
-function ToolButton({ active, disabled, title, onClick, children }: ToolButtonProps) {
+function ToolButton({ active, disabled, title, onClick, children, large }: ToolButtonProps) {
   return (
     <button
       type="button"
@@ -29,7 +31,8 @@ function ToolButton({ active, disabled, title, onClick, children }: ToolButtonPr
       onClick={onClick}
       disabled={disabled}
       className={[
-        'flex items-center justify-center w-8 h-8 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed',
+        'flex items-center justify-center rounded transition-colors shrink-0 disabled:opacity-30 disabled:cursor-not-allowed',
+        large ? 'w-10 h-10' : 'w-8 h-8',
         active
           ? 'bg-blue-100 dark:bg-blue-500/25 text-blue-700 dark:text-blue-300 ring-1 ring-blue-400 dark:ring-blue-500'
           : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white',
@@ -40,8 +43,9 @@ function ToolButton({ active, disabled, title, onClick, children }: ToolButtonPr
   );
 }
 
-function Sep() {
-  return <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1" />;
+function Sep({ hidden }: { hidden?: boolean }) {
+  if (hidden) return null;
+  return <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 shrink-0" />;
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -77,6 +81,12 @@ interface ToolbarProps {
   onImportMap?: () => void;
   onLoadLibrary?: () => void;
   onRemoveLibraryGroup?: (groupId: string) => void;
+  /** Contenedor estrecho: se compacta la barra. */
+  compact?: boolean;
+  /** Contenedor muy estrecho: se ocultan los adornos prescindibles. */
+  tight?: boolean;
+  /** Puntero grueso: botones más grandes. */
+  coarse?: boolean;
 }
 
 // ─── TypeChip ─────────────────────────────────────────────────────────────────
@@ -159,6 +169,9 @@ export function Toolbar({
   onImportMap,
   onLoadLibrary,
   onRemoveLibraryGroup,
+  compact = false,
+  tight = false,
+  coarse = false,
 }: ToolbarProps) {
   // Active palette tab — track by group ID
   const [activeGroupId, setActiveGroupId] = useState<string | null>(
@@ -177,36 +190,38 @@ export function Toolbar({
 
   return (
     <div className="flex flex-col bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm shrink-0">
-      {/* ── Main row ── */}
-      <div className="flex items-center gap-0.5 px-2 py-1.5">
+      {/* ── Main row ──
+          Con poco ancho la fila se desplaza horizontalmente en lugar de
+          desbordar o aplastar los botones. */}
+      <div className="flex items-center gap-0.5 px-2 py-1.5 overflow-x-auto">
         {/* Selection tools */}
-        <ToolButton title="Seleccionar (V)" active={tool === 'SELECT'} onClick={() => onToolChange('SELECT')}>
+        <ToolButton large={coarse} title="Seleccionar (V)" active={tool === 'SELECT'} onClick={() => onToolChange('SELECT')}>
           <IconCursor className="w-4 h-4" />
         </ToolButton>
-        <ToolButton title="Desplazar (H)" active={tool === 'PAN'} onClick={() => onToolChange('PAN')}>
+        <ToolButton large={coarse} title="Desplazar (H)" active={tool === 'PAN'} onClick={() => onToolChange('PAN')}>
           <IconHand className="w-4 h-4" />
         </ToolButton>
-        <ToolButton title="Dibujar pared (W)" active={tool === 'WALL'} onClick={() => onToolChange('WALL')}>
+        <ToolButton large={coarse} title="Dibujar pared (W)" active={tool === 'WALL'} onClick={() => onToolChange('WALL')}>
           <IconWall className="w-4 h-4" />
         </ToolButton>
-        <ToolButton title="Colocar elemento (P)" active={tool === 'PLACE'} onClick={() => onToolChange('PLACE')}>
+        <ToolButton large={coarse} title="Colocar elemento (P)" active={tool === 'PLACE'} onClick={() => onToolChange('PLACE')}>
           <IconPlace className="w-4 h-4" />
         </ToolButton>
-        <ToolButton title="Borrar (E)" active={tool === 'ERASE'} onClick={() => onToolChange('ERASE')}>
+        <ToolButton large={coarse} title="Borrar (E)" active={tool === 'ERASE'} onClick={() => onToolChange('ERASE')}>
           <IconErase className="w-4 h-4" />
         </ToolButton>
 
-        <Sep />
+        <Sep hidden={tight} />
 
         {/* History */}
-        <ToolButton title="Deshacer (Ctrl+Z)" disabled={!canUndo} onClick={onUndo}>
+        <ToolButton large={coarse} title="Deshacer (Ctrl+Z)" disabled={!canUndo} onClick={onUndo}>
           <IconUndo className="w-4 h-4" />
         </ToolButton>
-        <ToolButton title="Rehacer (Ctrl+Y)" disabled={!canRedo} onClick={onRedo}>
+        <ToolButton large={coarse} title="Rehacer (Ctrl+Y)" disabled={!canRedo} onClick={onRedo}>
           <IconRedo className="w-4 h-4" />
         </ToolButton>
 
-        <Sep />
+        <Sep hidden={tight} />
 
         {/* View */}
         <ToolButton
@@ -217,41 +232,43 @@ export function Toolbar({
           <IconGrid className="w-4 h-4" />
         </ToolButton>
 
-        <Sep />
+        <Sep hidden={tight} />
 
         {/* Zoom */}
-        <ToolButton title="Acercar (+)" onClick={onZoomIn}>
+        <ToolButton large={coarse} title="Acercar (+)" onClick={onZoomIn}>
           <IconZoomIn className="w-4 h-4" />
         </ToolButton>
-        <span className="text-xs text-slate-500 dark:text-slate-400 w-10 text-center tabular-nums select-none">
-          {Math.round(zoom * 100)}%
-        </span>
-        <ToolButton title="Alejar (-)" onClick={onZoomOut}>
+        {!tight && (
+          <span className="text-xs text-slate-500 dark:text-slate-400 w-10 text-center tabular-nums select-none shrink-0">
+            {Math.round(zoom * 100)}%
+          </span>
+        )}
+        <ToolButton large={coarse} title="Alejar (-)" onClick={onZoomOut}>
           <IconZoomOut className="w-4 h-4" />
         </ToolButton>
-        <ToolButton title="Ajustar vista al plano (Ctrl+0)" onClick={onResetView}>
+        <ToolButton large={coarse} title="Ajustar vista al plano (Ctrl+0)" onClick={onResetView}>
           <IconReset className="w-4 h-4" />
         </ToolButton>
 
-        <Sep />
+        <Sep hidden={tight} />
 
         {/* Map export / import */}
-        <ToolButton title="Exportar mapa JSON" onClick={() => onExportMap?.()}>
+        <ToolButton large={coarse} title="Exportar mapa JSON" onClick={() => onExportMap?.()}>
           <IconDownload className="w-4 h-4" />
         </ToolButton>
-        <ToolButton title="Importar mapa JSON" onClick={() => onImportMap?.()}>
+        <ToolButton large={coarse} title="Importar mapa JSON" onClick={() => onImportMap?.()}>
           <IconUpload className="w-4 h-4" />
         </ToolButton>
 
         {/* Element library import */}
-        <ToolButton title="Cargar librería de elementos (.json)" onClick={() => onLoadLibrary?.()}>
+        <ToolButton large={coarse} title="Cargar librería de elementos (.json)" onClick={() => onLoadLibrary?.()}>
           <IconLayers className="w-4 h-4" />
         </ToolButton>
 
         {areaShape !== undefined && (
           <>
-            <Sep />
-            <ToolButton title={areaShape === 'polygon' ? 'Cambiar a rectángulo' : 'Cambiar a polígono'} onClick={() => onToggleAreaShape?.()}>
+            <Sep hidden={tight} />
+            <ToolButton large={coarse} title={areaShape === 'polygon' ? 'Cambiar a rectángulo' : 'Cambiar a polígono'} onClick={() => onToggleAreaShape?.()}>
               <span className="text-xs font-medium">{areaShape === 'polygon' ? 'Poly' : 'Rect'}</span>
             </ToolButton>
           </>
@@ -302,7 +319,14 @@ export function Toolbar({
 
           {/* Active group chips */}
           {activeGroup && (
-            <div className="flex items-center gap-1 flex-wrap px-2 py-1.5 bg-white dark:bg-slate-900 min-h-[36px]">
+            <div
+              className={[
+                'flex items-center gap-1 px-2 py-1.5 bg-white dark:bg-slate-900 min-h-[36px]',
+                // En compacto la paleta no se envuelve (comería el lienzo):
+                // se desplaza en una sola fila.
+                compact ? 'flex-nowrap overflow-x-auto' : 'flex-wrap',
+              ].join(' ')}
+            >
               {activeGroup.types.map(typeDef => (
                 <TypeChip
                   key={typeDef.id}

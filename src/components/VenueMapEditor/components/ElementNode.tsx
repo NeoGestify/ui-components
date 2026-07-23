@@ -64,6 +64,8 @@ interface ElementNodeProps {
   snapEnabled: boolean;
   gridSize: number;
   palette: VenuePalette;
+  /** Puntero grueso (dedo): agranda las zonas de agarre. */
+  coarse?: boolean;
   statusFill?: string;
   statusTooltip?: string;
   /** Todos los callbacks reciben el id para que el padre pueda pasar
@@ -92,6 +94,7 @@ function ElementNodeImpl({
   snapEnabled,
   gridSize,
   palette,
+  coarse = false,
   statusFill,
   statusTooltip,
   onSelect,
@@ -109,8 +112,11 @@ function ElementNodeImpl({
   const cy = y + h / 2;
 
   const sw = 1.5 / zoom;
-  const hs = 7 / zoom;            // handle half-size
-  const rotOffset = 22 / zoom;    // rotate handle distance above bbox
+  // El handle se dibuja algo mayor con el dedo, pero sobre todo se le añade una
+  // zona de impacto invisible: 14 px es cómodo con ratón e inservible al tacto.
+  const hs = (coarse ? 10 : 7) / zoom;   // handle half-size (visual)
+  const grab = (coarse ? 22 : 9) / zoom; // half-size de la zona de impacto
+  const rotOffset = (coarse ? 34 : 22) / zoom;  // rotate handle distance above bbox
   const fontSize = Math.max(9 / zoom, Math.min(13 / zoom, h * 0.35));
 
   const isInteractive = tool === 'SELECT' && !onViewerClick;
@@ -495,25 +501,37 @@ function ElementNodeImpl({
             style={{ pointerEvents: 'none' }}
           />
           <circle
-            cx={cx} cy={y - rotOffset} r={hs * 0.8}
-            fill={palette.handleFill} stroke={selectionStroke} strokeWidth={sw}
+            cx={cx} cy={y - rotOffset} r={grab}
+            fill="transparent"
             style={{ cursor: 'grab' }}
             onPointerDown={handleRotateDown}
           >
             <title>Girar (Mayús: pasos de 15°)</title>
           </circle>
+          <circle
+            cx={cx} cy={y - rotOffset} r={hs * 0.8}
+            fill={palette.handleFill} stroke={selectionStroke} strokeWidth={sw}
+            style={{ pointerEvents: 'none' }}
+          />
 
-          {/* Resize handles */}
+          {/* Resize handles — el rect transparente es el que recibe el gesto */}
           {handles.map(({ type, hx, hy }) => (
-            <rect
-              key={type}
-              x={hx - hs} y={hy - hs}
-              width={hs * 2} height={hs * 2}
-              rx={1 / zoom}
-              fill={palette.handleFill} stroke={selectionStroke} strokeWidth={sw}
-              style={{ cursor: HANDLE_CURSORS[type] }}
-              onPointerDown={e => startHandleDrag(e, type)}
-            />
+            <g key={type}>
+              <rect
+                x={hx - grab} y={hy - grab}
+                width={grab * 2} height={grab * 2}
+                fill="transparent"
+                style={{ cursor: HANDLE_CURSORS[type] }}
+                onPointerDown={e => startHandleDrag(e, type)}
+              />
+              <rect
+                x={hx - hs} y={hy - hs}
+                width={hs * 2} height={hs * 2}
+                rx={1 / zoom}
+                fill={palette.handleFill} stroke={selectionStroke} strokeWidth={sw}
+                style={{ pointerEvents: 'none' }}
+              />
+            </g>
           ))}
         </>
       )}

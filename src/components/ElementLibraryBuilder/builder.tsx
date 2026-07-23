@@ -1,7 +1,16 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import { ElementShape, ElementTypeDef, ElementLibrary } from '../VenueMapEditor/types';
 import { Button, Input, Select, TextArea } from '../html';
 import { IMAGE_ACCEPT, fileToDataUri, sanitizeImageSrc } from '../VenueMapEditor/utils/imageSrc';
+import { useContainerSize } from '../VenueMapEditor/hooks/useContainerSize';
+
+/**
+ * Anchos (px del contenedor) en los que cambia la disposición.
+ * Tres columnas simultáneas necesitan bastante más sitio que el editor de
+ * mapas, de ahí que el umbral principal sea mayor que su `COMPACT_WIDTH`.
+ */
+const STACK_OUTPUT_WIDTH = 900;   // el JSON pasa debajo
+const STACK_ALL_WIDTH = 640;      // todo en una sola columna
 
 type InternalGroup = {
   internalId: string;
@@ -52,6 +61,13 @@ export const ElementLibraryBuilder: React.FC = () => {
   const [currentElement, setCurrentElement] = useState<ElementTypeDef>({ ...DEFAULT_ELEMENT, id: 'rect_1', label: 'New Rect' });
   const [downloadFileName, setDownloadFileName] = useState<string>("libraries");
   const [imageError, setImageError] = useState<string | null>(null);
+
+  // Igual que en el editor de mapas: la disposición depende del contenedor
+  // propio, no del viewport, porque el constructor también puede embeberse.
+  const rootRef = useRef<HTMLDivElement>(null);
+  const { width } = useContainerSize(rootRef);
+  const stackOutput = width > 0 && width < STACK_OUTPUT_WIDTH;
+  const stackAll = width > 0 && width < STACK_ALL_WIDTH;
 
   // ─── Group management ────────────────────────────────────────────────────────
 
@@ -194,9 +210,34 @@ export const ElementLibraryBuilder: React.FC = () => {
   // ─── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex gap-4 p-4 h-full min-h-[600px] text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900">
+    <div
+      ref={rootRef}
+      className={[
+        'flex gap-4 p-4 h-full text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900',
+        stackOutput
+          // Apilado: el contenido crece más que el contenedor, así que éste es
+          // quien scrollea. `min-h-0` evita que los hijos flex impongan su
+          // altura mínima y desborden sin barra.
+          ? 'flex-col overflow-y-auto min-h-0'
+          : 'flex-row min-h-[600px] overflow-hidden',
+      ].join(' ')}
+    >
+      {/* Listas + editor. Con sitio de sobra este envoltorio es `contents`, así
+          que sus hijos participan directamente en el flex de 3 columnas. */}
+      <div
+        className={[
+          stackOutput
+            ? (stackAll ? 'flex flex-col gap-4 shrink-0' : 'flex flex-row gap-4 shrink-0')
+            : 'contents',
+        ].join(' ')}
+      >
       {/* Sidebar columns for Groups and Elements */}
-      <div className="w-1/4 flex flex-col gap-4 border-r dark:border-gray-700 pr-4">
+      <div className={[
+        'flex flex-col gap-4',
+        stackAll
+          ? 'w-full shrink-0 border-b dark:border-gray-700 pb-4'
+          : 'w-1/4 shrink-0 min-h-0 border-r dark:border-gray-700 pr-4',
+      ].join(' ')}>
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <h3 className="font-bold">Libraries (Groups)</h3>
@@ -233,12 +274,12 @@ export const ElementLibraryBuilder: React.FC = () => {
 
         <hr className="dark:border-gray-700" />
 
-        <div className="flex flex-col gap-2 flex-grow overflow-hidden">
+        <div className={`flex flex-col gap-2 overflow-hidden ${stackAll ? '' : 'flex-grow'}`}>
           <div className="flex items-center justify-between">
             <h3 className="font-bold">Elements in {activeGroup?.name || '?'}</h3>
             <Button variant='secondary' onClick={handleAddElement} disabled={!activeGroup}>+ Element</Button>
           </div>
-          <div className="flex flex-col gap-1 overflow-y-auto flex-grow pr-1">
+          <div className={`flex flex-col gap-1 overflow-y-auto pr-1 ${stackAll ? 'max-h-40' : 'flex-grow'}`}>
             {activeGroup?.objects.map((el, i) => (
               <div
                 key={i}
@@ -257,11 +298,14 @@ export const ElementLibraryBuilder: React.FC = () => {
       </div>
 
       {/* Editor Section */}
-      <div className="flex-1 flex flex-col gap-4 px-2 overflow-y-auto">
+      <div className={[
+        'flex-1 min-w-0 flex flex-col gap-4 px-2',
+        stackOutput ? 'shrink-0' : 'min-h-0 overflow-y-auto',
+      ].join(' ')}>
         <h3 className="font-bold text-lg">Element Editor</h3>
         {activeElementIndex !== null ? (
           <div className="flex flex-col gap-4 w-full max-w-2xl">
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
               <Input
                 label="Element ID (unique)"
                 value={currentElement.id}
@@ -274,7 +318,7 @@ export const ElementLibraryBuilder: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
               <Select
                 label="Shape"
                 options={SHAPE_OPTIONS}
@@ -288,7 +332,7 @@ export const ElementLibraryBuilder: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
               <Input
                 type="number"
                 label="Default Width"
@@ -303,7 +347,7 @@ export const ElementLibraryBuilder: React.FC = () => {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-semibold text-gray-700">Fill Color</label>
                 <div className="flex gap-2">
@@ -339,7 +383,7 @@ export const ElementLibraryBuilder: React.FC = () => {
             {currentElement.shape === 'path' && (
               <div className="flex flex-col gap-4 border dark:border-gray-700 p-4 rounded bg-gray-50 dark:bg-gray-800/50">
                 <h4 className="font-semibold text-sm">Path Config</h4>
-                <div className="grid grid-cols-2 gap-4">
+                <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
                   <Input
                     label="ViewBox"
                     placeholder="0 0 100 100"
@@ -449,12 +493,18 @@ export const ElementLibraryBuilder: React.FC = () => {
           </div>
         )}
       </div>
+      </div>
 
       {/* output section */}
-      <div className="w-1/3 flex flex-col gap-2 border-l dark:border-gray-700 pl-4 h-full max-h-full">
-        <div className="flex items-center justify-between shrink-0">
+      <div className={[
+        'flex flex-col gap-2',
+        stackOutput
+          ? 'w-full shrink-0 border-t dark:border-gray-700 pt-4'
+          : 'w-1/3 shrink-0 min-h-0 border-l dark:border-gray-700 pl-4 h-full max-h-full',
+      ].join(' ')}>
+        <div className={`flex gap-2 shrink-0 ${stackAll ? 'flex-col items-stretch' : 'items-center justify-between'}`}>
           <h3 className="font-bold">Output JSON</h3>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Input
               value={downloadFileName}
               onChange={(e) => setDownloadFileName(e.target.value)}
@@ -477,10 +527,14 @@ export const ElementLibraryBuilder: React.FC = () => {
             </Button>
           </div>
         </div>
-        <div className="flex-1 overflow-hidden h-full pb-4">
+        {/* La altura se fija con `rows`, no con `h-full`: el <textarea> vive
+            dentro del wrapper de `TextArea`, que no tiene altura definida, así
+            que `h-full` se resolvía como `auto` y dejaba el JSON en dos líneas. */}
+        <div className={`pb-4 ${stackOutput ? '' : 'flex-1 min-h-0 overflow-hidden'}`}>
           <TextArea
             readOnly
-            className="h-full resize-none font-mono text-xs text-green-600 dark:text-green-400 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+            rows={stackOutput ? 12 : 22}
+            className="resize-none font-mono text-xs text-green-600 dark:text-green-400 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
             value={generatedLib}
           />
         </div>

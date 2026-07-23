@@ -16,6 +16,8 @@ import type {
 import type { ElementTypeDef } from './types';
 import { useLibraryStorage } from './hooks/useLibraryStorage';
 import { useVenueTheme, VENUE_PALETTES } from './theme';
+import { useContainerSize } from './hooks/useContainerSize';
+import { useCoarsePointer } from './hooks/usePointerCapabilities';
 import { Toolbar } from './components/Toolbar';
 import type { PaletteGroup } from './components/Toolbar';
 import { EditorCanvas } from './components/EditorCanvas';
@@ -140,6 +142,12 @@ export function VenueMapEditor({
 }: VenueMapEditorProps) {
   const theme = useVenueTheme(themeSetting);
   const palette = VENUE_PALETTES[theme];
+  const containerRef = useRef<HTMLDivElement>(null);
+  // La disposición responde al ancho del PROPIO editor, no al del viewport:
+  // el componente puede estar embebido en un hueco estrecho de una pantalla
+  // grande, donde los breakpoints de viewport darían el layout equivocado.
+  const { width: containerW, height: containerH, compact, tight, short } = useContainerSize(containerRef);
+  const coarse = useCoarsePointer();
   // Normalise: domainConfigs takes precedence; fall back to legacy domainConfig
   const effectiveConfigs = useMemo<DomainConfig[]>(() => {
     if (domainConfigs && domainConfigs.length > 0) return domainConfigs;
@@ -170,8 +178,6 @@ export function VenueMapEditor({
   const [zoom, setZoom] = useState(1);
   const [activePlaceTypeId, setActivePlaceTypeId] = useState<string | null>(null);
   const [selectedWallId, setSelectedWallId] = useState<string | null>(null);
-
-  const containerRef = useRef<HTMLDivElement>(null);
 
   const zoomByRef = useRef<(factor: number) => void>(() => undefined);
   const resetViewRef = useRef<() => void>(() => undefined);
@@ -918,6 +924,11 @@ export function VenueMapEditor({
   const activeAreaShape: AreaShape | undefined = activeFloor?.area.shape;
   const selectedWall = activeFloor?.walls.find(w => w.id === selectedWallId) ?? null;
 
+  // Todo lo que altera el tamaño del lienzo. Al cambiar, el lienzo se
+  // re-encuadra (salvo que el usuario ya haya movido la vista a mano).
+  const panelOpen = !effectiveReadOnly && (selectedElements.length > 0 || !!selectedWall);
+  const layoutSignal = `${Math.round(containerW)}x${Math.round(containerH)}:${compact}:${panelOpen}`;
+
   return (
     <div
       ref={containerRef}
@@ -984,6 +995,9 @@ export function VenueMapEditor({
           onImportMap={() => importInputRef.current?.click()}
           onLoadLibrary={() => libraryInputRef.current?.click()}
           onRemoveLibraryGroup={handleRemoveLibraryGroup}
+          compact={compact}
+          tight={tight}
+          coarse={coarse}
         />
       )}
 
@@ -1000,8 +1014,9 @@ export function VenueMapEditor({
       />
 
       {/* Canvas + Properties panel */}
-      <div className="flex flex-1 min-h-0">
-        <div className="flex-1 min-w-0 relative">
+      {/* En compacto el panel baja: fila → columna. */}
+      <div className={`flex flex-1 min-h-0 ${compact ? 'flex-col' : 'flex-row'}`}>
+        <div className="flex-1 min-w-0 min-h-0 relative">
           {activeFloor && (
             <EditorCanvas
               key={activeFloor.id}
@@ -1038,6 +1053,7 @@ export function VenueMapEditor({
               onZoomChange={setZoom}
               onRegisterZoomBy={registerZoomBy}
               onRegisterResetView={registerResetView}
+              layoutSignal={layoutSignal}
             />
           )}
         </div>
@@ -1054,6 +1070,9 @@ export function VenueMapEditor({
             onChangeGeometry={handleChangeGeometry}
             onDelete={handleDeleteElements}
             onDuplicate={handleDuplicateElements}
+            compact={compact}
+            short={short}
+            onClose={() => { clearSelection(); setSelectedWallId(null); }}
           />
         )}
       </div>
