@@ -210,6 +210,16 @@ export interface VenueMapEditorProps {
    * ```
    */
   onElementTypeClick?: Record<string, (element: MapElement) => void>;
+  /**
+   * Tema del editor.
+   *
+   * - `'auto'` (por defecto): sigue al documento — clase `.dark`,
+   *   `data-theme="dark"` o `prefers-color-scheme` — y reacciona en vivo.
+   * - `'light'` / `'dark'`: fuerza el tema con independencia de la página.
+   */
+  theme?: 'light' | 'dark' | 'auto';
+  /** Clases extra para el contenedor raíz. */
+  className?: string;
 }
 
 export type VenueMapViewerProps = VenueMapEditorProps;

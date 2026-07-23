@@ -1,4 +1,4 @@
-import { type SelectHTMLAttributes, type FC, type ReactNode } from 'react';
+import { useId, type SelectHTMLAttributes, type FC, type ReactNode } from 'react';
 import { ChevronDownIcon } from '../icons/icons';
 
 type SelectVariant = 'default' | 'outline' | 'filled' | 'minimal' | 'custom' | 'small';
@@ -49,7 +49,9 @@ export const Select: FC<SelectProps> = ({
   id,
   ...props
 }) => {
-  const selectId = id || `select-${Math.random().toString(36).substring(2, 9)}`;
+  const autoId = useId();
+  const selectId = id || `select-${autoId}`;
+  const describedById = `${selectId}-desc`;
 
   // backward compat: variant='small' → size='sm'
   const effectiveSize: SelectSize = variant === 'small' ? 'sm' : size;
@@ -59,13 +61,21 @@ export const Select: FC<SelectProps> = ({
   const errorMsg = typeof error === 'string' ? error : '';
 
   // Compute defaultValue from options[].selected when no controlled value provided
+  const isControlled = props.value !== undefined;
   const computedDefaultValue =
-    props.value === undefined && props.defaultValue === undefined
-      ? options.find((o) => o.selected)?.value?.toString()
+    !isControlled && props.defaultValue === undefined
+      ? options.find((o) => o.selected)?.value?.toString() ?? (placeholder ? '' : undefined)
       : undefined;
 
+  // `color-scheme` es lo que hace que el desplegable NATIVO (la lista que abre
+  // el sistema operativo) se pinte en oscuro. Sin esto, las clases `dark:` del
+  // <select> cambian la caja pero la lista sigue clara — o peor, en Chrome
+  // Windows/Linux queda texto blanco sobre fondo blanco.
   const baseCls =
-    'appearance-none relative block w-full pl-3 pr-9 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 focus:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200';
+    'appearance-none relative block w-full pl-3 pr-9 [color-scheme:light] dark:[color-scheme:dark] ' +
+    'placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md ' +
+    'focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 focus:z-10 ' +
+    'disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200';
 
   const errorCls = hasError
     ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400 focus:border-red-500'
@@ -79,6 +89,12 @@ export const Select: FC<SelectProps> = ({
     icon ? 'pl-9' : '',
     className,
   ].filter(Boolean).join(' ');
+
+  const helpNode = errorMsg
+    ? <p id={describedById} className="text-sm text-red-600 dark:text-red-400" role="alert">{errorMsg}</p>
+    : helperText
+      ? <p id={describedById} className={`text-sm ${hasError ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>{helperText}</p>
+      : null;
 
   return (
     <div className="space-y-1 w-full">
@@ -100,19 +116,22 @@ export const Select: FC<SelectProps> = ({
           id={selectId}
           className={selectCls}
           defaultValue={computedDefaultValue}
+          aria-invalid={hasError || undefined}
+          aria-describedby={helpNode ? describedById : undefined}
           {...props}
         >
           {placeholder && (
-            <option value="" disabled className="bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+            <option value="" disabled>
               {placeholder}
             </option>
           )}
+          {/* Sin clases de color en las <option>: el navegador las hereda de
+              `color-scheme`. Forzarlas rompe el contraste en Windows/Linux. */}
           {options.map((option) => (
             <option
               key={option.value}
               value={option.value}
               disabled={option.disabled}
-              className={`bg-white dark:bg-gray-800 text-gray-900 dark:text-white${option.disabled ? ' opacity-50' : ''}`}
             >
               {option.label}
             </option>
@@ -122,14 +141,7 @@ export const Select: FC<SelectProps> = ({
           <ChevronDownIcon className="w-4 h-4" />
         </div>
       </div>
-      {errorMsg && (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">{errorMsg}</p>
-      )}
-      {helperText && !errorMsg && (
-        <p className={`text-sm ${hasError ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>
-          {helperText}
-        </p>
-      )}
+      {helpNode}
     </div>
   );
 };

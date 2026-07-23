@@ -1,7 +1,8 @@
-import { useRef, useCallback } from 'react';
-import type { RefObject, MouseEvent as ReactMouseEvent } from 'react';
+import { useRef, useCallback, useMemo, memo } from 'react';
+import type { RefObject, PointerEvent as ReactPointerEvent, MouseEvent as ReactMouseEvent, CSSProperties } from 'react';
 import type { MapElement, ElementTypeDef, ToolMode } from '../types';
 import type { PanZoomState } from '../hooks/usePanZoom';
+import type { VenuePalette } from '../theme';
 import { useDrag } from '../hooks/useDrag';
 import { snapToGrid } from '../utils/snapUtils';
 import { parseSvgMarkup } from '../utils/svgParser';
@@ -44,6 +45,11 @@ function rotateDelta(dx: number, dy: number, deg: number): [number, number] {
   return [dx * Math.cos(r) - dy * Math.sin(r), dx * Math.sin(r) + dy * Math.cos(r)];
 }
 
+/** Normaliza a [0, 360) para que la rotación no crezca sin límite al girar. */
+function normalizeAngle(deg: number): number {
+  return ((deg % 360) + 360) % 360;
+}
+
 // ─── Props ────────────────────────────────────────────────────────────────────
 
 interface ElementNodeProps {
@@ -56,21 +62,25 @@ interface ElementNodeProps {
   panZoomRef: { current: PanZoomState };
   snapEnabled: boolean;
   gridSize: number;
+  palette: VenuePalette;
   statusFill?: string;
-  onSelect: (multi: boolean) => void;
-  onMove: (x: number, y: number) => void;
-  onMoveCommit: (x: number, y: number) => void;
-  onResize: (x: number, y: number, w: number, h: number) => void;
-  onResizeCommit: (x: number, y: number, w: number, h: number) => void;
-  onRotate: (rotation: number) => void;
-  onRotateCommit: (rotation: number) => void;
-  onDelete: () => void;
-  onViewerClick?: () => void;
+  statusTooltip?: string;
+  /** Todos los callbacks reciben el id para que el padre pueda pasar
+   *  referencias estables y `memo` evite re-renderizar el resto del mapa. */
+  onSelect: (id: string, multi: boolean) => void;
+  onMove: (id: string, x: number, y: number) => void;
+  onMoveCommit: (id: string, x: number, y: number) => void;
+  onResize: (id: string, x: number, y: number, w: number, h: number) => void;
+  onResizeCommit: (id: string, x: number, y: number, w: number, h: number) => void;
+  onRotate: (id: string, rotation: number) => void;
+  onRotateCommit: (id: string, rotation: number) => void;
+  onDelete: (id: string) => void;
+  onViewerClick?: (id: string) => void;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function ElementNode({
+function ElementNodeImpl({
   element,
   typeDef,
   isSelected,
@@ -80,7 +90,9 @@ export function ElementNode({
   panZoomRef,
   snapEnabled,
   gridSize,
+  palette,
   statusFill,
+  statusTooltip,
   onSelect,
   onMove,
   onMoveCommit,
@@ -91,7 +103,7 @@ export function ElementNode({
   onDelete,
   onViewerClick,
 }: ElementNodeProps) {
-  const { x, y, width: w, height: h, rotation } = element;
+  const { id, x, y, width: w, height: h, rotation } = element;
   const cx = x + w / 2;
   const cy = y + h / 2;
 
@@ -100,11 +112,17 @@ export function ElementNode({
   const rotOffset = 22 / zoom;    // rotate handle distance above bbox
   const fontSize = Math.max(9 / zoom, Math.min(13 / zoom, h * 0.35));
 
+  const isInteractive = tool === 'SELECT' && !onViewerClick;
+
+  /** Marca un arrastre recién terminado para que el `click` posterior no
+   *  reinterprete el gesto como una selección (y, con Ctrl, deseleccione). */
+  const justDragged = useRef(false);
+
   // ── Move drag ───────────────────────────────────────────────────────────────
   const startPos = useRef({ elX: 0, elY: 0, mouseX: 0, mouseY: 0 });
   const lastMovePos = useRef({ x: 0, y: 0 });
 
-  const { handleMouseDown: handleBodyDown } = useDrag(svgRef, panZoomRef, {
+  const { handlePointerDown: handleBodyDown } = useDrag(svgRef, panZoomRef, {
     onDragStart: (mx, my) => {
       startPos.current = { elX: element.x, elY: element.y, mouseX: mx, mouseY: my };
       lastMovePos.current = { x: element.x, y: element.y };
@@ -114,10 +132,14 @@ export function ElementNode({
       let ny = startPos.current.elY + (canvasY - startPos.current.mouseY);
       if (snapEnabled) { nx = snapToGrid(nx, gridSize); ny = snapToGrid(ny, gridSize); }
       lastMovePos.current = { x: nx, y: ny };
-      onMove(nx, ny);
+      onMove(id, nx, ny);
     },
-    onDragEnd: () => {
-      onMoveCommit(lastMovePos.current.x, lastMovePos.current.y);
+    onDragEnd: (_x, _y, moved) => {
+      // Un clic sin desplazamiento no debe ensuciar el historial con un
+      // estado idéntico al anterior.
+      if (!moved) return;
+      justDragged.current = true;
+      onMoveCommit(id, lastMovePos.current.x, lastMovePos.current.y);
     },
   });
 
@@ -126,7 +148,7 @@ export function ElementNode({
   const startGeom = useRef({ x: 0, y: 0, w: 0, h: 0, mouseX: 0, mouseY: 0 });
   const lastResizeGeom = useRef({ x: 0, y: 0, w: 0, h: 0 });
 
-  const { handleMouseDown: handleHandleDown } = useDrag(svgRef, panZoomRef, {
+  const { handlePointerDown: handleHandleDown } = useDrag(svgRef, panZoomRef, {
     onDragStart: (mx, my) => {
       startGeom.current = { x: element.x, y: element.y, w: element.width, h: element.height, mouseX: mx, mouseY: my };
       lastResizeGeom.current = { x: element.x, y: element.y, w: element.width, h: element.height };
@@ -155,19 +177,25 @@ export function ElementNode({
       if (snapEnabled) {
         nw = Math.max(MIN_SIZE, snapToGrid(nw, gridSize));
         nh = Math.max(MIN_SIZE, snapToGrid(nh, gridSize));
+        // Al ajustar el tamaño hay que recolocar el borde anclado, o el lado
+        // opuesto al handle se desplaza.
+        if (type === 'nw' || type === 'sw' || type === 'w') nx = right - nw;
+        if (type === 'nw' || type === 'ne' || type === 'n') ny = bottom - nh;
       }
       lastResizeGeom.current = { x: nx, y: ny, w: nw, h: nh };
-      onResize(nx, ny, nw, nh);
+      onResize(id, nx, ny, nw, nh);
     },
-    onDragEnd: () => {
-      const { x: rx, y: ry, w: rw, h: rh } = lastResizeGeom.current;
-      onResizeCommit(rx, ry, rw, rh);
+    onDragEnd: (_x, _y, moved) => {
       activeHandle.current = null;
+      if (!moved) return;
+      justDragged.current = true;
+      const { x: rx, y: ry, w: rw, h: rh } = lastResizeGeom.current;
+      onResizeCommit(id, rx, ry, rw, rh);
     },
   });
 
   const startHandleDrag = useCallback(
-    (e: ReactMouseEvent, type: HandleType) => {
+    (e: ReactPointerEvent, type: HandleType) => {
       activeHandle.current = type;
       handleHandleDown(e);
     },
@@ -178,11 +206,13 @@ export function ElementNode({
   const rotStart = useRef({ angleOffset: 0 });
 
   const handleRotateDown = useCallback(
-    (e: ReactMouseEvent) => {
+    (e: ReactPointerEvent) => {
+      if (e.button !== 0) return;
       e.stopPropagation();
       e.preventDefault();
       const svgRect = svgRef.current?.getBoundingClientRect();
       if (!svgRect) return;
+      const pointerId = e.pointerId;
       const { panX, panY, zoom: z } = panZoomRef.current;
       const mcx = (e.clientX - svgRect.left - panX) / z;
       const mcy = (e.clientY - svgRect.top - panY) / z;
@@ -192,60 +222,96 @@ export function ElementNode({
       // Track the live rotation so onUp always commits the final value,
       // not the stale element.rotation captured in the useCallback closure.
       let currentRot = element.rotation;
+      let moved = false;
 
-      const onMove = (ev: MouseEvent) => {
+      const onMove = (ev: PointerEvent) => {
+        if (ev.pointerId !== pointerId) return;
         const rect = svgRef.current?.getBoundingClientRect();
         if (!rect) return;
         const { panX: px, panY: py, zoom: z2 } = panZoomRef.current;
         const mx2 = (ev.clientX - rect.left - px) / z2;
         const my2 = (ev.clientY - rect.top - py) / z2;
         let newRot = Math.atan2(my2 - cy, mx2 - cx) * (180 / Math.PI) + rotStart.current.angleOffset;
+        // Shift → pasos de 15°, igual que en la mayoría de editores vectoriales.
         if (ev.shiftKey) newRot = Math.round(newRot / 15) * 15;
+        newRot = normalizeAngle(newRot);
+        if (Math.abs(newRot - currentRot) > 0.01) moved = true;
         currentRot = newRot;
-        onRotate(newRot);
+        onRotate(id, newRot);
       };
 
-      const onUp = () => {
-        onRotateCommit(currentRot);
-        window.removeEventListener('mousemove', onMove);
-        window.removeEventListener('mouseup', onUp);
+      const onUp = (ev: PointerEvent) => {
+        if (ev.pointerId !== pointerId) return;
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', onUp);
+        window.removeEventListener('pointercancel', onUp);
+        if (!moved) return;
+        justDragged.current = true;
+        onRotateCommit(id, currentRot);
       };
 
-      window.addEventListener('mousemove', onMove);
-      window.addEventListener('mouseup', onUp);
+      window.addEventListener('pointermove', onMove);
+      window.addEventListener('pointerup', onUp);
+      window.addEventListener('pointercancel', onUp);
     },
-    [cx, cy, element.rotation, panZoomRef, svgRef, onRotate, onRotateCommit],
+    [id, cx, cy, element.rotation, panZoomRef, svgRef, onRotate, onRotateCommit],
   );
 
   // ── Body click (select / erase) ─────────────────────────────────────────────
   const handleBodyClick = useCallback(
     (e: ReactMouseEvent) => {
-      e.stopPropagation();
-      if (onViewerClick) { onViewerClick(); return; }
-      if (tool === 'ERASE') { onDelete(); return; }
-      if (tool === 'SELECT') { onSelect(e.ctrlKey || e.metaKey || e.shiftKey); }
+      // Cierre de un arrastre: el clic sintético que emite el navegador al
+      // soltar no debe alterar la selección.
+      if (justDragged.current) {
+        justDragged.current = false;
+        e.stopPropagation();
+        return;
+      }
+      if (onViewerClick) { e.stopPropagation(); onViewerClick(id); return; }
+      if (tool === 'ERASE') { e.stopPropagation(); onDelete(id); return; }
+      if (tool === 'SELECT') {
+        e.stopPropagation();
+        onSelect(id, e.ctrlKey || e.metaKey || e.shiftKey);
+      }
+      // En PLACE / WALL / PAN el evento sigue su curso hasta el lienzo, para
+      // poder colocar un elemento o trazar una pared encima de otro.
     },
-    [tool, onDelete, onSelect, onViewerClick],
+    [id, tool, onDelete, onSelect, onViewerClick],
   );
 
   // ── Derived ─────────────────────────────────────────────────────────────────
   const fillColor = statusFill ?? typeDef.color;
-  const bodyCursor = onViewerClick ? 'pointer' : tool === 'ERASE' ? 'crosshair' : tool === 'SELECT' ? 'move' : 'default';
+  const bodyCursor = onViewerClick ? 'pointer' : tool === 'ERASE' ? 'crosshair' : tool === 'SELECT' ? 'move' : 'inherit';
+  const selectionStroke = palette.accent;
+
+  // Durante PLACE/WALL el cuerpo no debe capturar el puntero: el clic tiene que
+  // llegar al lienzo para colocar o trazar sobre un elemento existente.
+  const passThrough = tool === 'PLACE' || tool === 'WALL' || tool === 'PAN';
+  const bodyStyle: CSSProperties = {
+    cursor: bodyCursor,
+    pointerEvents: passThrough && !onViewerClick ? 'none' : 'auto',
+  };
+
+  const bodyHandlers = {
+    onPointerDown: isInteractive ? handleBodyDown : undefined,
+    onClick: handleBodyClick,
+    style: bodyStyle,
+  };
 
   // ── Custom SVG path geometry ─────────────────────────────────────────────────
   // Parse the viewBox to get the coordinate space the path was designed in.
-  const customPath = typeDef.shape === 'path' && typeDef.svgPath
-    ? (() => {
-        const parts = (typeDef.viewBox ?? '0 0 100 100').split(/[\s,]+/).map(Number);
-        const vw = parts[2] ?? 100;
-        const vh = parts[3] ?? 100;
-        const scaleX = vw > 0 ? w / vw : 1;
-        const scaleY = vh > 0 ? h / vh : 1;
-        // Compensate stroke so it renders as ~sw in canvas units regardless of shape scale
-        const avgScale = Math.sqrt(Math.abs(scaleX * scaleY)) || 1;
-        return { scaleX, scaleY, strokeWidth: sw / avgScale };
-      })()
-    : null;
+  const customPath = useMemo(() => {
+    if (typeDef.shape !== 'path' || !typeDef.svgPath) return null;
+    const parts = (typeDef.viewBox ?? '0 0 100 100').split(/[\s,]+/).map(Number);
+    const vw = parts[2] || 100;
+    const vh = parts[3] || 100;
+    return { vw, vh };
+  }, [typeDef.shape, typeDef.svgPath, typeDef.viewBox]);
+
+  const parsedSvg = useMemo(
+    () => (typeDef.shape === 'svg' && typeDef.svgMarkup ? parseSvgMarkup(typeDef.svgMarkup) : null),
+    [typeDef.shape, typeDef.svgMarkup],
+  );
 
   const handles: Array<{ type: HandleType; hx: number; hy: number }> = [
     { type: 'nw', hx: x,      hy: y },
@@ -258,6 +324,9 @@ export function ElementNode({
     { type: 'w',  hx: x,      hy: y+h/2 },
   ];
 
+  const label = element.label ?? typeDef.label;
+  const tooltip = statusTooltip ?? label;
+
   return (
     <g transform={`rotate(${rotation}, ${cx}, ${cy})`}>
       {/* ── Shape ── */}
@@ -265,73 +334,88 @@ export function ElementNode({
         <rect
           x={x} y={y} width={w} height={h}
           fill={fillColor}
-          stroke={isSelected ? '#3b82f6' : typeDef.strokeColor}
+          stroke={isSelected ? selectionStroke : typeDef.strokeColor}
           strokeWidth={isSelected ? sw * 1.5 : sw}
-          style={{ cursor: bodyCursor }}
-          onMouseDown={tool === 'SELECT' && !onViewerClick ? handleBodyDown : undefined}
-          onClick={handleBodyClick}
-        />
+          {...bodyHandlers}
+        >
+          {tooltip && <title>{tooltip}</title>}
+        </rect>
       )}
       {typeDef.shape === 'circle' && (
         <ellipse
           cx={cx} cy={cy} rx={w / 2} ry={h / 2}
           fill={fillColor}
-          stroke={isSelected ? '#3b82f6' : typeDef.strokeColor}
+          stroke={isSelected ? selectionStroke : typeDef.strokeColor}
           strokeWidth={isSelected ? sw * 1.5 : sw}
-          style={{ cursor: bodyCursor }}
-          onMouseDown={tool === 'SELECT' && !onViewerClick ? handleBodyDown : undefined}
-          onClick={handleBodyClick}
-        />
+          {...bodyHandlers}
+        >
+          {tooltip && <title>{tooltip}</title>}
+        </ellipse>
       )}
       {typeDef.shape === 'arrow' && (
         <path
           d={arrowPath(x, y, w, h)}
           fill={fillColor}
-          stroke={isSelected ? '#3b82f6' : typeDef.strokeColor}
+          stroke={isSelected ? selectionStroke : typeDef.strokeColor}
           strokeWidth={isSelected ? sw * 1.5 : sw}
-          style={{ cursor: bodyCursor }}
-          onMouseDown={tool === 'SELECT' && !onViewerClick ? handleBodyDown : undefined}
-          onClick={handleBodyClick}
-        />
+          {...bodyHandlers}
+        >
+          {tooltip && <title>{tooltip}</title>}
+        </path>
       )}
-      {typeDef.shape === 'path' && customPath && typeDef.svgPath && (
-        <g transform={`translate(${x}, ${y}) scale(${customPath.scaleX}, ${customPath.scaleY})`}>
-          <path
-            d={typeDef.svgPath}
-            fill={fillColor}
-            fillRule={typeDef.fillRule ?? 'nonzero'}
-            stroke={isSelected ? '#3b82f6' : typeDef.strokeColor}
-            strokeWidth={isSelected ? customPath.strokeWidth * 1.5 : customPath.strokeWidth}
-            style={{ cursor: bodyCursor }}
-            onMouseDown={tool === 'SELECT' && !onViewerClick ? handleBodyDown : undefined}
-            onClick={handleBodyClick}
-          />
-        </g>
-      )}
-      {typeDef.shape === 'svg' && typeDef.svgMarkup && (() => {
-        const parsed = parseSvgMarkup(typeDef.svgMarkup);
-        const parts = parsed.viewBox.split(/[\s,]+/).map(Number);
-        const vw = parts[2] ?? 100;
-        const vh = parts[3] ?? 100;
-        const sx = vw > 0 ? w / vw : 1;
-        const sy = vh > 0 ? h / vh : 1;
+      {typeDef.shape === 'path' && customPath && typeDef.svgPath && (() => {
+        const scaleX = w / customPath.vw;
+        const scaleY = h / customPath.vh;
+        // Compensa el trazo para que se vea con el mismo grosor sin importar
+        // cuánto se haya escalado la forma.
+        const avgScale = Math.sqrt(Math.abs(scaleX * scaleY)) || 1;
+        const strokeWidth = sw / avgScale;
+        return (
+          <g transform={`translate(${x}, ${y}) scale(${scaleX}, ${scaleY})`}>
+            <path
+              d={typeDef.svgPath}
+              fill={fillColor}
+              fillRule={typeDef.fillRule ?? 'nonzero'}
+              stroke={isSelected ? selectionStroke : typeDef.strokeColor}
+              strokeWidth={isSelected ? strokeWidth * 1.5 : strokeWidth}
+              {...bodyHandlers}
+            >
+              {tooltip && <title>{tooltip}</title>}
+            </path>
+          </g>
+        );
+      })()}
+      {typeDef.shape === 'svg' && parsedSvg && (() => {
+        const parts = parsedSvg.viewBox.split(/[\s,]+/).map(Number);
+        const vw = parts[2] || 100;
+        const vh = parts[3] || 100;
+        const sx = w / vw;
+        const sy = h / vh;
         const avgScale = Math.sqrt(Math.abs(sx * sy)) || 1;
         return (
+          // A diferencia de las formas primitivas, el markup SVG es una
+          // ilustración terminada: en reposo NO se le impone `stroke`. Al
+          // heredarlo del grupo, cualquier trazo que la ilustración no definiera
+          // explícitamente se pintaba con `strokeColor` — negro por defecto — y
+          // aparecía un contorno que el diseño original no tenía.
+          //
+          // Al seleccionar sí se hereda, en color de acento, como resalte.
+          // Se heredan siempre `fill` (permite teñir por estado) y `color`,
+          // para que el markup pueda usar `currentColor`.
           <g
             transform={`translate(${x}, ${y}) scale(${sx}, ${sy})`}
             fill={fillColor}
-            stroke={isSelected ? '#3b82f6' : typeDef.strokeColor}
-            strokeWidth={isSelected ? (sw / avgScale) * 1.5 : sw / avgScale}
-            style={{ cursor: bodyCursor }}
-            onMouseDown={tool === 'SELECT' && !onViewerClick ? handleBodyDown : undefined}
-            onClick={handleBodyClick}
-            dangerouslySetInnerHTML={{ __html: parsed.innerHtml }}
+            color={typeDef.strokeColor}
+            stroke={isSelected ? selectionStroke : undefined}
+            strokeWidth={isSelected ? (sw / avgScale) * 1.5 : undefined}
+            {...bodyHandlers}
+            dangerouslySetInnerHTML={{ __html: parsedSvg.innerHtml }}
           />
         );
       })()}
 
       {/* ── Label ── */}
-      {(element.label ?? typeDef.label) && (
+      {label && (
         <text
           x={cx} y={cy}
           textAnchor="middle"
@@ -340,26 +424,28 @@ export function ElementNode({
           fill={typeDef.strokeColor}
           style={{ pointerEvents: 'none', userSelect: 'none' }}
         >
-          {element.label ?? typeDef.label}
+          {label}
         </text>
       )}
 
       {/* ── Selection overlays ── */}
-      {isSelected && tool === 'SELECT' && (
+      {isSelected && tool === 'SELECT' && !onViewerClick && (
         <>
           {/* Rotate line + handle */}
           <line
             x1={cx} y1={y}
             x2={cx} y2={y - rotOffset}
-            stroke="#3b82f6" strokeWidth={sw}
+            stroke={selectionStroke} strokeWidth={sw}
             style={{ pointerEvents: 'none' }}
           />
           <circle
             cx={cx} cy={y - rotOffset} r={hs * 0.8}
-            fill="white" stroke="#3b82f6" strokeWidth={sw}
+            fill={palette.handleFill} stroke={selectionStroke} strokeWidth={sw}
             style={{ cursor: 'grab' }}
-            onMouseDown={handleRotateDown}
-          />
+            onPointerDown={handleRotateDown}
+          >
+            <title>Girar (Mayús: pasos de 15°)</title>
+          </circle>
 
           {/* Resize handles */}
           {handles.map(({ type, hx, hy }) => (
@@ -368,9 +454,9 @@ export function ElementNode({
               x={hx - hs} y={hy - hs}
               width={hs * 2} height={hs * 2}
               rx={1 / zoom}
-              fill="white" stroke="#3b82f6" strokeWidth={sw}
+              fill={palette.handleFill} stroke={selectionStroke} strokeWidth={sw}
               style={{ cursor: HANDLE_CURSORS[type] }}
-              onMouseDown={e => startHandleDrag(e, type)}
+              onPointerDown={e => startHandleDrag(e, type)}
             />
           ))}
         </>
@@ -378,3 +464,5 @@ export function ElementNode({
     </g>
   );
 }
+
+export const ElementNode = memo(ElementNodeImpl);

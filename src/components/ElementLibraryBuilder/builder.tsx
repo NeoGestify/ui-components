@@ -123,7 +123,7 @@ export const ElementLibraryBuilder: React.FC = () => {
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-  const handleFieldChange = (field: keyof ElementTypeDef, value: any) => {
+  const handleFieldChange = (field: keyof ElementTypeDef, value: ElementTypeDef[keyof ElementTypeDef]) => {
     setCurrentElement((prev) => ({ ...prev, [field]: value }));
   };
 

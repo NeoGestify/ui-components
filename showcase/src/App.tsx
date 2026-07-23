@@ -302,10 +302,10 @@ function App() {
 
           {lastMap && (
             <details className="mt-4">
-              <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
+              <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200">
                 Ver JSON del mapa ({lastMap.floors[0]?.area.width ?? 0} × {lastMap.floors[0]?.area.height ?? 0} px)
               </summary>
-              <pre className="mt-2 p-3 dark:bg-gray-100 bg-gray-900 rounded text-xs overflow-auto max-h-48">
+              <pre className="mt-2 p-3 bg-gray-900 dark:bg-gray-950 text-gray-100 dark:text-gray-200 border border-gray-700 dark:border-gray-800 rounded text-xs overflow-auto max-h-48">
                 {JSON.stringify(lastMap, null, 2)}
               </pre>
             </details>

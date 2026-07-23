@@ -1,7 +1,8 @@
 import { useRef, useCallback } from 'react';
-import type { RefObject, MouseEvent as ReactMouseEvent } from 'react';
+import type { RefObject, PointerEvent as ReactPointerEvent, SyntheticEvent } from 'react';
 import type { FloorArea } from '../types';
 import type { PanZoomState } from '../hooks/usePanZoom';
+import type { VenuePalette } from '../theme';
 import { useDrag } from '../hooks/useDrag';
 
 type PanZoomRef = { current: PanZoomState };
@@ -23,6 +24,8 @@ const HANDLE_CURSORS: Record<HandleType, string> = {
 
 const MIN_SIZE = 50;
 const HANDLE_PX = 8;
+/** Ancho (px de pantalla) de la banda del borde que sirve para mover la planta. */
+const EDGE_GRAB_PX = 12;
 
 // ─── Props ────────────────────────────────────────────────────────────────────
 
@@ -30,10 +33,14 @@ interface ArtboardProps {
   area: FloorArea;
   onResize: (area: FloorArea) => void;
   onMove?: (dx: number, dy: number) => void;
+  onMoveCommit?: () => void;
   onResizeCommit?: (area: FloorArea) => void;
   svgRef: RefObject<SVGSVGElement | null>;
   panZoomRef: PanZoomRef;
   zoom: number;
+  palette: VenuePalette;
+  /** Prefijo único por instancia para los ids de `<filter>`. */
+  uid: string;
   readOnly?: boolean;
 }
 
@@ -95,29 +102,33 @@ function applyHandleDelta(
   return { ...area, x: nx, y: ny, width: nw, height: nh };
 }
 
-// ─── PolygonArtboard ──────────────────────────────────────────────────────────
+// ─── Shadow filter ────────────────────────────────────────────────────────────
 
-interface PolygonArtboardProps {
-  area: FloorArea;
-  onResize: (area: FloorArea) => void;
-  onMove?: (dx: number, dy: number) => void;
-  onResizeCommit?: (area: FloorArea) => void;
-  svgRef: RefObject<SVGSVGElement | null>;
-  panZoomRef: PanZoomRef;
-  zoom: number;
-  readOnly?: boolean;
+function ShadowDef({ id, zoom, opacity }: { id: string; zoom: number; opacity: number }) {
+  return (
+    <defs>
+      <filter id={id} x="-8%" y="-8%" width="116%" height="116%">
+        <feDropShadow dx={0} dy={3 / zoom} stdDeviation={6 / zoom} floodOpacity={opacity} />
+      </filter>
+    </defs>
+  );
 }
+
+// ─── PolygonArtboard ──────────────────────────────────────────────────────────
 
 function PolygonArtboard({
   area,
   onResize,
   onMove,
+  onMoveCommit,
   onResizeCommit,
   svgRef,
   panZoomRef,
   zoom,
+  palette,
+  uid,
   readOnly = false,
-}: PolygonArtboardProps) {
+}: ArtboardProps) {
   const pts = area.points ?? [];
   const areaRef = useRef(area);
   areaRef.current = area;
@@ -125,7 +136,7 @@ function PolygonArtboard({
   const activeVertex = useRef<number | null>(null);
   const vertexStart = useRef({ vx: 0, vy: 0, mx: 0, my: 0 });
 
-  const { handleMouseDown: handleVertexDown } = useDrag(svgRef, panZoomRef, {
+  const { handlePointerDown: handleVertexDown } = useDrag(svgRef, panZoomRef, {
     onDragStart: (mx, my) => {
       const idx = activeVertex.current;
       if (idx === null) return;
@@ -145,28 +156,33 @@ function PolygonArtboard({
       const newArea: FloorArea = { ...areaRef.current, points: newPts };
       onResize(newArea);
     },
-    onDragEnd: () => {
-      onResizeCommit?.(areaRef.current);
+    onDragEnd: (_x, _y, moved) => {
+      // Sin movimiento no hay nada que registrar en el historial: un clic
+      // simple no debe generar una entrada de deshacer.
+      if (moved) onResizeCommit?.(areaRef.current);
       activeVertex.current = null;
     },
   });
 
   const startVertexDrag = useCallback(
-    (e: ReactMouseEvent, idx: number) => {
+    (e: ReactPointerEvent, idx: number) => {
       activeVertex.current = idx;
       handleVertexDown(e);
     },
     [handleVertexDown],
   );
 
-  const { handleMouseDown: handleBodyDown } = useDrag(svgRef, panZoomRef, {
+  const { handlePointerDown: handleBodyDown } = useDrag(svgRef, panZoomRef, {
     onDragMove: (dx, dy) => {
       onMove?.(dx, dy);
+    },
+    onDragEnd: (_x, _y, moved) => {
+      if (moved) onMoveCommit?.();
     },
   });
 
   const handleDeleteVertex = useCallback(
-    (e: ReactMouseEvent, idx: number) => {
+    (e: SyntheticEvent, idx: number) => {
       e.stopPropagation();
       const currentPts = areaRef.current.points ?? [];
       if (currentPts.length <= 3) return;
@@ -179,7 +195,7 @@ function PolygonArtboard({
   );
 
   const handleAddVertex = useCallback(
-    (e: ReactMouseEvent, insertAfterIdx: number) => {
+    (e: SyntheticEvent, insertAfterIdx: number) => {
       e.stopPropagation();
       const currentPts = areaRef.current.points ?? [];
       const a = currentPts[insertAfterIdx];
@@ -203,33 +219,43 @@ function PolygonArtboard({
   const hs = HANDLE_PX / zoom;
   const sw = 1.5 / zoom;
   const dash = `${6 / zoom},${3 / zoom}`;
+  const shadowId = `${uid}-artboard-shadow`;
 
   return (
     <g>
-      <defs>
-        <filter id="vme-artboard-shadow" x="-4%" y="-4%" width="108%" height="108%">
-          <feDropShadow dx={0} dy={3 / zoom} stdDeviation={6 / zoom} floodOpacity={0.12} />
-        </filter>
-      </defs>
+      <ShadowDef id={shadowId} zoom={zoom} opacity={palette.artboardShadowOpacity} />
 
-      {/* Shadow polygon */}
+      {/* Superficie de la planta */}
       <polygon
         points={pointsStr}
-        fill="#fafaf9"
+        fill={palette.artboardFill}
         stroke="none"
-        filter="url(#vme-artboard-shadow)"
+        filter={`url(#${shadowId})`}
+        style={{ pointerEvents: 'none' }}
       />
 
-      {/* Body drag target (dashed border) */}
+      {/* Borde visible */}
       <polygon
         points={pointsStr}
-        fill="transparent"
-        stroke="#94a3b8"
+        fill="none"
+        stroke={palette.artboardStroke}
         strokeWidth={sw}
         strokeDasharray={dash}
-        style={{ cursor: readOnly ? 'default' : 'move' }}
-        onMouseDown={readOnly ? undefined : handleBodyDown}
+        style={{ pointerEvents: 'none' }}
       />
+
+      {/* Banda de agarre: SOLO el borde mueve la planta, así el interior
+          queda libre para el lazo de selección. */}
+      {!readOnly && (
+        <polygon
+          points={pointsStr}
+          fill="none"
+          stroke="transparent"
+          strokeWidth={EDGE_GRAB_PX / zoom}
+          style={{ cursor: 'move', pointerEvents: 'stroke' }}
+          onPointerDown={handleBodyDown}
+        />
+      )}
 
       {!readOnly && (
         <>
@@ -245,12 +271,14 @@ function PolygonArtboard({
                 y={my - hs * 0.75}
                 width={hs * 1.5}
                 height={hs * 1.5}
-                fill="white"
-                stroke="#94a3b8"
+                fill={palette.handleFill}
+                stroke={palette.artboardStroke}
                 strokeWidth={sw}
                 style={{ cursor: 'copy', transform: `rotate(45deg)`, transformOrigin: `${mx}px ${my}px` }}
-                onClick={e => handleAddVertex(e, i)}
-              />
+                onPointerDown={e => handleAddVertex(e, i)}
+              >
+                <title>Añadir vértice</title>
+              </rect>
             );
           })}
 
@@ -263,13 +291,15 @@ function PolygonArtboard({
               width={hs * 2}
               height={hs * 2}
               rx={1 / zoom}
-              fill="white"
-              stroke="#3b82f6"
+              fill={palette.handleFill}
+              stroke={palette.accent}
               strokeWidth={sw}
               style={{ cursor: 'move' }}
-              onMouseDown={e => startVertexDrag(e, i)}
+              onPointerDown={e => startVertexDrag(e, i)}
               onDoubleClick={e => handleDeleteVertex(e, i)}
-            />
+            >
+              <title>Arrastrar para mover · doble clic para eliminar</title>
+            </rect>
           ))}
         </>
       )}
@@ -284,38 +314,44 @@ function RectArtboard({
   area,
   onResize,
   onMove,
+  onMoveCommit,
   onResizeCommit,
   svgRef,
   panZoomRef,
   zoom,
+  palette,
+  uid,
   readOnly = false,
 }: ArtboardProps) {
   const activeHandle = useRef<HandleType | null>(null);
   const areaRef = useRef(area);
   areaRef.current = area;
 
-  const { handleMouseDown: handleHandleDown } = useDrag(svgRef, panZoomRef, {
+  const { handlePointerDown: handleHandleDown } = useDrag(svgRef, panZoomRef, {
     onDragMove: (dx, dy) => {
       if (!activeHandle.current) return;
       onResize(applyHandleDelta(areaRef.current, activeHandle.current, dx, dy));
     },
-    onDragEnd: () => {
-      onResizeCommit?.(areaRef.current);
+    onDragEnd: (_x, _y, moved) => {
+      if (moved) onResizeCommit?.(areaRef.current);
       activeHandle.current = null;
     },
   });
 
   const startHandleDrag = useCallback(
-    (e: ReactMouseEvent, type: HandleType) => {
+    (e: ReactPointerEvent, type: HandleType) => {
       activeHandle.current = type;
       handleHandleDown(e);
     },
     [handleHandleDown],
   );
 
-  const { handleMouseDown: handleBodyDown } = useDrag(svgRef, panZoomRef, {
+  const { handlePointerDown: handleBodyDown } = useDrag(svgRef, panZoomRef, {
     onDragMove: (dx, dy) => {
       onMove?.(dx, dy);
+    },
+    onDragEnd: (_x, _y, moved) => {
+      if (moved) onMoveCommit?.();
     },
   });
 
@@ -327,6 +363,7 @@ function RectArtboard({
   const hs = HANDLE_PX / zoom;
   const sw = 1.5 / zoom;
   const dash = `${6 / zoom},${3 / zoom}`;
+  const shadowId = `${uid}-artboard-shadow`;
 
   const handles: Array<{ type: HandleType; cx: number; cy: number }> = [
     { type: 'nw', cx: ax,        cy: ay },
@@ -341,39 +378,47 @@ function RectArtboard({
 
   return (
     <g>
-      <defs>
-        <filter id="vme-artboard-shadow" x="-4%" y="-4%" width="108%" height="108%">
-          <feDropShadow
-            dx={0}
-            dy={3 / zoom}
-            stdDeviation={6 / zoom}
-            floodOpacity={0.12}
-          />
-        </filter>
-      </defs>
+      <ShadowDef id={shadowId} zoom={zoom} opacity={palette.artboardShadowOpacity} />
 
+      {/* Superficie de la planta */}
       <rect
         x={ax}
         y={ay}
         width={aw}
         height={ah}
-        fill="#fafaf9"
+        fill={palette.artboardFill}
         stroke="none"
-        filter="url(#vme-artboard-shadow)"
+        filter={`url(#${shadowId})`}
+        style={{ pointerEvents: 'none' }}
       />
 
+      {/* Borde visible */}
       <rect
         x={ax}
         y={ay}
         width={aw}
         height={ah}
-        fill="transparent"
-        stroke="#94a3b8"
+        fill="none"
+        stroke={palette.artboardStroke}
         strokeWidth={sw}
         strokeDasharray={dash}
-        style={{ cursor: readOnly ? 'default' : 'move' }}
-        onMouseDown={readOnly ? undefined : handleBodyDown}
+        style={{ pointerEvents: 'none' }}
       />
+
+      {/* Banda de agarre en el borde — el interior queda libre para el lazo. */}
+      {!readOnly && (
+        <rect
+          x={ax}
+          y={ay}
+          width={aw}
+          height={ah}
+          fill="none"
+          stroke="transparent"
+          strokeWidth={EDGE_GRAB_PX / zoom}
+          style={{ cursor: 'move', pointerEvents: 'stroke' }}
+          onPointerDown={handleBodyDown}
+        />
+      )}
 
       {!readOnly &&
         handles.map(({ type, cx, cy }) => (
@@ -384,11 +429,11 @@ function RectArtboard({
             width={hs * 2}
             height={hs * 2}
             rx={1 / zoom}
-            fill="white"
-            stroke="#3b82f6"
+            fill={palette.handleFill}
+            stroke={palette.accent}
             strokeWidth={sw}
             style={{ cursor: HANDLE_CURSORS[type] }}
-            onMouseDown={e => startHandleDrag(e, type)}
+            onPointerDown={e => startHandleDrag(e, type)}
           />
         ))}
     </g>

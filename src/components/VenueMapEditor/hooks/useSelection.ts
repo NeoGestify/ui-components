@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
  * Selection state for map elements.
  *
  * - `select(id, multi)` : select an element; if `multi`, toggle it
- * - `selectSet(ids)`    : replace selection with a set of ids
+ * - `selectSet(ids, additive)` : replace (o amplía) la selección con un conjunto
  * - `clear()`           : deselect everything
  * - `isSelected(id)`    : check membership
  */
@@ -25,8 +25,9 @@ export function useSelection() {
     });
   }, []);
 
-  const selectSet = useCallback((ids: string[]) => {
-    setSelectedIds(new Set(ids));
+  /** `additive` conserva la selección previa (lazo con Ctrl/Shift). */
+  const selectSet = useCallback((ids: string[], additive = false) => {
+    setSelectedIds(prev => (additive ? new Set([...prev, ...ids]) : new Set(ids)));
   }, []);
 
   const clear = useCallback(() => {

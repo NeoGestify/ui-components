@@ -53,7 +53,7 @@ export function FloorTabs({
   }, [commitEdit, cancelEdit]);
 
   return (
-    <div className="flex items-center gap-1 px-2 py-1 border-b border-slate-200 bg-slate-50 text-xs overflow-x-auto">
+    <div className="flex items-center gap-1 px-2 py-1 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs overflow-x-auto shrink-0">
       {sorted.map(floor => {
         const isActive = floor.id === activeFloorId;
         const idx = sorted.indexOf(floor);
@@ -66,14 +66,14 @@ export function FloorTabs({
             className={[
               'flex items-center gap-0.5 px-2 py-1 rounded-t border transition-colors shrink-0',
               isActive
-                ? 'bg-white border-slate-300 text-slate-800 font-medium'
-                : 'border-transparent text-slate-500 hover:text-slate-700 cursor-pointer',
+                ? 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 font-medium'
+                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer',
             ].join(' ')}
             onClick={() => !isActive && onSelect(floor.id)}
           >
             {!readOnly && isActive && canMoveLeft && (
               <button
-                className="text-slate-400 hover:text-slate-700 px-0.5 leading-none"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 px-0.5 leading-none"
                 onClick={e => { e.stopPropagation(); onReorder(floor.id, 'left'); }}
                 title="Mover a la izquierda"
               >
@@ -89,7 +89,7 @@ export function FloorTabs({
                 onBlur={commitEdit}
                 onKeyDown={handleKeyDown}
                 onClick={e => e.stopPropagation()}
-                className="w-24 border border-blue-400 rounded px-1 text-xs outline-none"
+                className="w-24 border border-blue-400 rounded px-1 text-xs outline-none bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100"
               />
             ) : (
               <span
@@ -102,7 +102,7 @@ export function FloorTabs({
 
             {!readOnly && isActive && canMoveRight && (
               <button
-                className="text-slate-400 hover:text-slate-700 px-0.5 leading-none"
+                className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 px-0.5 leading-none"
                 onClick={e => { e.stopPropagation(); onReorder(floor.id, 'right'); }}
                 title="Mover a la derecha"
               >
@@ -112,7 +112,7 @@ export function FloorTabs({
 
             {!readOnly && floors.length > 1 && (
               <button
-                className="text-slate-400 hover:text-red-500 px-0.5 leading-none"
+                className="text-slate-400 dark:text-slate-500 hover:text-red-500 px-0.5 leading-none"
                 onClick={e => { e.stopPropagation(); onDelete(floor.id); }}
                 title="Eliminar planta"
               >
@@ -125,7 +125,7 @@ export function FloorTabs({
 
       {!readOnly && (
         <button
-          className="flex items-center justify-center w-6 h-6 rounded border border-dashed border-slate-300 text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-colors shrink-0"
+          className="flex items-center justify-center w-6 h-6 rounded border border-dashed border-slate-300 dark:border-slate-600 text-slate-400 dark:text-slate-500 hover:border-blue-400 hover:text-blue-500 transition-colors shrink-0"
           onClick={onAdd}
           title="Añadir planta"
         >

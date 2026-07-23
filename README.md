@@ -768,6 +768,22 @@ function Main() {
 }
 ```
 
+El provider aplica al `<html>`: la clase `.dark`, el atributo `data-theme` y la
+propiedad CSS **`color-scheme`**. Esta última es la que hace que los controles
+nativos (la lista desplegable de un `<select>`, el calendario de un `<input
+type="date">`, las barras de desplazamiento) se pinten en oscuro; sin ella el
+desplegable se abría con los colores claros del sistema —y en Chrome sobre
+Windows/Linux, con texto blanco sobre fondo blanco.
+
+Es seguro en SSR: no toca `localStorage` durante el render, así que no rompe la
+hidratación en Next.js. Además sincroniza el tema entre pestañas abiertas.
+
+| Prop | Tipo | Default | Descripción |
+|------|------|---------|-------------|
+| `defaultTheme` | `'light' \| 'dark'` | `'light'` | Tema del primer render (y de SSR) |
+| `enableSystem` | `boolean` | `true` | Sin tema guardado, usa `prefers-color-scheme` |
+| `storageKey` | `string` | `'theme'` | Clave de `localStorage` |
+
 ### 2. Usar el ThemeToggle
 
 ```tsx
@@ -897,6 +913,38 @@ function App() {
 | `elementStatus` | `ElementStatus[]` | — | Estados visuales por elemento |
 | `onElementClick` | `(el: MapElement) => void` | — | Click genérico |
 | `onElementTypeClick` | `Record<string, (el: MapElement) => void>` | — | Click por tipo |
+| `theme` | `'auto' \| 'light' \| 'dark'` | `'auto'` | Tema del editor (ver abajo) |
+| `className` | `string` | — | Clases extra para el contenedor raíz |
+
+### Tema claro / oscuro
+
+El editor completo — barra, pestañas, panel de propiedades y **lienzo SVG** —
+sigue el tema activo.
+
+Con `theme="auto"` (por defecto) se detecta el tema del documento y se reacciona
+a los cambios en vivo, en este orden:
+
+1. Clase `.dark` en `<html>` (lo que aplica el `ThemeProvider` de esta librería).
+2. Atributo `data-theme="dark"`.
+3. `prefers-color-scheme` del sistema.
+
+```tsx
+// Sigue al tema de la página
+<VenueMapEditor initialMap={mapa} />
+
+// Fuerza oscuro aunque la página esté en claro
+<VenueMapEditor initialMap={mapa} theme="dark" />
+```
+
+Los colores del lienzo (fondo, rejilla, planta, paredes, selección) se exponen
+por si necesitas pintar controles propios a juego:
+
+```tsx
+import { useVenueTheme, VENUE_PALETTES } from 'neogestify-ui-components';
+
+const theme = useVenueTheme('auto');      // 'light' | 'dark'
+const palette = VENUE_PALETTES[theme];    // { canvasBg, gridMinor, accent, ... }
+```
 
 ### Modo Viewer
 
@@ -1096,7 +1144,23 @@ El campo `svgPath` acepta el atributo `d` de cualquier `<path>` SVG estándar. E
 
 El campo `svgMarkup` acepta un **SVG completo** como string. El sistema extrae el `viewBox` del tag `<svg>` y renderiza los elementos internos escalados.
 
-> **Seguridad:** el markup se sanitiza automáticamente eliminando `<script>`, `on*` event handlers, `javascript:` URIs y tags peligrosos.
+El markup se respeta tal cual: en reposo el editor **no impone ningún trazo**,
+así que la ilustración se ve exactamente como se diseñó, sin contornos añadidos.
+Al **seleccionar** el elemento sí se hereda un trazo en color de acento, como
+resalte. Además hereda siempre del tipo:
+
+- **`fill`** → `color` del tipo (o el color de estado en modo viewer), aplicado
+  solo a las formas que no declaren su propio `fill`.
+- **`color`** → `strokeColor` del tipo, para que el markup pueda usar
+  `currentColor` allí donde quiera ese color.
+
+Si quieres contorno, decláralo en el propio markup (`stroke="currentColor"`,
+`stroke-width="4"`…). En las formas primitivas (`rect`, `circle`, `arrow`,
+`path`) `strokeColor` sí se aplica como borde.
+
+> **Seguridad:** el markup se sanitiza reconstruyendo el árbol DOM contra una
+> lista blanca de etiquetas SVG; se descartan `<script>`, `<foreignObject>`,
+> manejadores `on*`, URLs `javascript:` y referencias externas.
 
 ```json
 {
@@ -1195,16 +1259,32 @@ const handleClick = (el: MapElement) => {
 |-------|-------------|---------|
 | `V` | Seleccionar | Mover, redimensionar y rotar elementos. Arrastra el fondo del piso para moverlo. |
 | `H` | Desplazar | Pan del canvas con click izquierdo. |
-| `W` | Pared | Click fija el inicio; siguiente click termina el segmento (encadenado). Click derecho cancela. |
+| `W` | Pared | Click fija el inicio; siguiente click termina el segmento y encadena el siguiente desde ese mismo nodo. Click derecho o `Esc` cancela. |
 | `P` | Colocar | Click en el piso coloca el elemento seleccionado en la paleta. |
 | `E` | Borrar | Click sobre un elemento o pared los elimina. |
-| `Esc` | — | Vuelve a Seleccionar. |
-| `Ctrl+Z / Y` | — | Deshacer / Rehacer. |
+| `Esc` | — | Vuelve a Seleccionar y limpia la selección. |
+| `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | — | Deshacer / Rehacer. |
 | `Ctrl+D` | — | Duplicar selección. |
-| `Del / Backspace` | — | Eliminar selección. |
-| `+ / -` | — | Zoom in / out. |
-| Rueda ratón | — | Zoom centrado en el cursor. |
+| `Ctrl+A` | — | Seleccionar todos los elementos de la planta. |
+| `Del / Backspace` | — | Eliminar la selección (elementos o pared). |
+| `↑ ↓ ← →` | — | Desplazar la selección 1 px (con `Mayús`, un paso de rejilla). |
+| `+ / -` | — | Zoom in / out, centrado en la vista. |
+| `Ctrl+0` | — | Ajustar la vista al plano. |
+| Rueda ratón | — | Zoom centrado en el cursor (respeta la sensibilidad del trackpad). |
 | Click medio + drag | — | Pan del canvas en cualquier modo. |
+| Táctil / lápiz | — | Todos los gestos funcionan con dedo y stylus. |
+
+> Los atajos solo actúan cuando el foco está **dentro** del editor, así que
+> varios editores (o un formulario al lado) pueden convivir en la misma página
+> sin robarse las teclas.
+
+### Selección
+
+- **Click** sobre un elemento lo selecciona; con `Ctrl`/`Cmd`/`Mayús` se añade o quita.
+- **Lazo**: arrastra sobre el piso para seleccionar por área (con `Ctrl` suma a la selección).
+  El interior de la planta está libre para el lazo; para **mover la planta** se
+  arrastra su **borde**.
+- **Click** sobre una pared la selecciona y abre su panel (material y grosor).
 
 ### Gestión de plantas
 

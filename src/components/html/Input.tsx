@@ -1,4 +1,4 @@
-import { type InputHTMLAttributes, type FC, type ReactNode } from 'react';
+import { useId, type InputHTMLAttributes, type FC, type ReactNode } from 'react';
 import { CloseIcon } from '../icons/icons';
 
 type InputVariant = 'default' | 'outline' | 'filled' | 'minimal';
@@ -48,7 +48,8 @@ export const Input: FC<InputProps> = ({
   type,
   ...props
 }) => {
-  const inputId = id || `input-${Math.random().toString(36).substring(2, 9)}`;
+  const autoId = useId();
+  const inputId = id || `input-${autoId}`;
 
   const errorCls = error
     ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400 focus:border-red-500'
@@ -57,7 +58,9 @@ export const Input: FC<InputProps> = ({
   const showClear = clearable && !props.disabled && props.value !== undefined && props.value !== '';
   const hasRightSlot = (icon && iconSide === 'right') || showClear;
 
-  const baseCls = 'appearance-none relative block w-full placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 focus:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200';
+  // `color-scheme` alinea los widgets nativos (calendario de date/datetime,
+  // flechas de number, autocompletado) con el tema activo.
+  const baseCls = 'appearance-none relative block w-full [color-scheme:light] dark:[color-scheme:dark] placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 focus:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200';
 
   const inputCls = [
     baseCls,
@@ -73,7 +76,7 @@ export const Input: FC<InputProps> = ({
 
   // ── Checkbox / Radio ──────────────────────────────────────────────────────
   const toggleCls = [
-    `h-4 w-4 ${type === 'radio' ? 'rounded-full' : 'rounded'} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800`,
+    `h-4 w-4 ${type === 'radio' ? 'rounded-full' : 'rounded'} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 [color-scheme:light] dark:[color-scheme:dark] accent-indigo-600 dark:accent-indigo-400`,
     'text-indigo-600 dark:text-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400',
     'focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900',
     'disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer',

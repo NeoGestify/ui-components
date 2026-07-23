@@ -13,7 +13,9 @@ import type {
   ElementLibrary,
   DomainConfig,
 } from './types';
+import type { ElementTypeDef } from './types';
 import { useLibraryStorage } from './hooks/useLibraryStorage';
+import { useVenueTheme, VENUE_PALETTES } from './theme';
 import { Toolbar } from './components/Toolbar';
 import type { PaletteGroup } from './components/Toolbar';
 import { EditorCanvas } from './components/EditorCanvas';
@@ -165,6 +167,10 @@ function polygonToRect(area: FloorArea): FloorArea {
   };
 }
 
+const DEFAULT_WALL_THICKNESS = 8;
+/** Distancia (unidades de lienzo) por debajo de la cual dos nodos son el mismo. */
+const NODE_MERGE_DIST = 0.5;
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export function VenueMapEditor({
@@ -183,7 +189,11 @@ export function VenueMapEditor({
   elementStatus,
   onElementClick,
   onElementTypeClick,
+  theme: themeSetting = 'auto',
+  className,
 }: VenueMapEditorProps) {
+  const theme = useVenueTheme(themeSetting);
+  const palette = VENUE_PALETTES[theme];
   // Normalise: domainConfigs takes precedence; fall back to legacy domainConfig
   const effectiveConfigs = useMemo<DomainConfig[]>(() => {
     if (domainConfigs && domainConfigs.length > 0) return domainConfigs;
@@ -196,10 +206,15 @@ export function VenueMapEditor({
   //    map renders so all element type definitions are available immediately.
   const [persistedLibs, setPersistedLibs] = useLibraryStorage(libraryStorageKey);
 
-  const { map, canUndo, canRedo, push, replace, undo, redo } = useHistory(
+  const { map, canUndo, canRedo, push, replace, commit, undo: undoHistory, redo: redoHistory } = useHistory(
     initialMapRef.current,
   );
   const { selectedIds, select, selectSet, clear: clearSelection } = useSelection();
+
+  // Deshacer/rehacer invalidan cualquier base de arrastre pendiente.
+  const liveBaseRef = useRef<VenueMap | null>(null);
+  const undo = useCallback(() => { liveBaseRef.current = null; undoHistory(); }, [undoHistory]);
+  const redo = useCallback(() => { liveBaseRef.current = null; redoHistory(); }, [redoHistory]);
 
   const [activeFloorId, setActiveFloorId] = useState<string>(
     () => initialMapRef.current.floors[0]?.id ?? '',
@@ -208,9 +223,16 @@ export function VenueMapEditor({
   const [showGrid, setShowGrid] = useState(showGridProp);
   const [zoom, setZoom] = useState(1);
   const [activePlaceTypeId, setActivePlaceTypeId] = useState<string | null>(null);
+  const [selectedWallId, setSelectedWallId] = useState<string | null>(null);
+
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const zoomByRef = useRef<(factor: number) => void>(() => undefined);
   const resetViewRef = useRef<() => void>(() => undefined);
+  // Registradores estables: si fuesen funciones en línea, el efecto de registro
+  // del lienzo se re-ejecutaría en cada render.
+  const registerZoomBy = useCallback((fn: (factor: number) => void) => { zoomByRef.current = fn; }, []);
+  const registerResetView = useCallback((fn: () => void) => { resetViewRef.current = fn; }, []);
   const importInputRef = useRef<HTMLInputElement>(null);
   const libraryInputRef = useRef<HTMLInputElement>(null);
 
@@ -223,8 +245,11 @@ export function VenueMapEditor({
 
   // ── elementTypeDefs: all domain configs + all libraries ───────────────────
   //    Priority: domainConfigs first (base wins), then library types.
-  const buildTypeDefs = useCallback(() => {
-    const m = new Map<string, import('./types').ElementTypeDef>();
+  //    Antes era un ref actualizado en un efecto: el lienzo se renderizaba con
+  //    el mapa de tipos anterior cuando cambiaba `domainConfigs` sin que
+  //    cambiase el mapa. Como valor derivado, siempre va sincronizado.
+  const elementTypeDefs = useMemo(() => {
+    const m = new Map<string, ElementTypeDef>();
     for (const cfg of effectiveConfigs) {
       for (const t of cfg.elementTypes) {
         if (!m.has(t.id)) m.set(t.id, t);
@@ -237,11 +262,6 @@ export function VenueMapEditor({
     }
     return m;
   }, [effectiveConfigs, effectiveLibs]);
-
-  const elementTypeDefs = useRef(buildTypeDefs());
-  useEffect(() => {
-    elementTypeDefs.current = buildTypeDefs();
-  }, [buildTypeDefs]);
 
   // ── Palette groups: all domain configs + all library groups ───────────────
   const paletteGroups = useMemo<PaletteGroup[]>(() => {
@@ -273,10 +293,16 @@ export function VenueMapEditor({
   const lastEmittedMap = useRef<VenueMap | undefined>(undefined);
   const prevInitial = useRef(initialMap);
 
+  // `onChange` se guarda en un ref: si el consumidor pasa una función en línea
+  // (`onChange={m => setMap(m)}`), su identidad cambia en cada render y el
+  // efecto se dispararía en bucle infinito al re-renderizar el padre.
+  const onChangeRef = useRef(onChange);
+  onChangeRef.current = onChange;
+
   useEffect(() => {
     lastEmittedMap.current = map;
-    onChange?.(map);
-  }, [map, onChange]);
+    onChangeRef.current?.(map);
+  }, [map]);
 
   useEffect(() => {
     if (!initialMap) return;
@@ -289,11 +315,46 @@ export function VenueMapEditor({
 
   const activeFloor = map.floors.find(f => f.id === activeFloorId) ?? map.floors[0];
 
-  const replaceFloor = useCallback(
-    (floor: Floor) => replace(updateFloor(map, floor)),
+  // Al cambiar de planta, la selección anterior apunta a elementos que ya no
+  // están en pantalla: se descarta.
+  useEffect(() => {
+    clearSelection();
+    setSelectedWallId(null);
+  }, [activeFloorId, clearSelection]);
+
+  // ── Edición en vivo (arrastres) ──────────────────────────────────────────
+  // `replaceLive` guarda una única vez el mapa previo al gesto; `commitLive`
+  // lo apila como punto de deshacer. Sin esta base, deshacer tras arrastrar
+  // devolvía al último frame del arrastre en lugar de a la posición original.
+  const replaceLive = useCallback(
+    (next: VenueMap) => {
+      if (!liveBaseRef.current) liveBaseRef.current = map;
+      replace(next);
+    },
     [map, replace],
   );
 
+  const commitLive = useCallback(
+    (next: VenueMap) => {
+      const before = liveBaseRef.current ?? map;
+      liveBaseRef.current = null;
+      commit(before, next);
+    },
+    [map, commit],
+  );
+
+  const replaceFloor = useCallback(
+    (floor: Floor) => replaceLive(updateFloor(map, floor)),
+    [map, replaceLive],
+  );
+
+  /** Confirma un gesto en vivo sobre una planta. */
+  const commitFloor = useCallback(
+    (floor: Floor) => commitLive(updateFloor(map, floor)),
+    [map, commitLive],
+  );
+
+  /** Cambio atómico (no proviene de un arrastre). */
   const pushFloor = useCallback(
     (floor: Floor) => push(updateFloor(map, floor)),
     [map, push],
@@ -307,8 +368,8 @@ export function VenueMapEditor({
 
   // ── Area resize commit (push to history) ─────────────────────────────────
   const handleAreaResizeCommit = useCallback(
-    (updatedFloor: Floor) => pushFloor(updatedFloor),
-    [pushFloor],
+    (updatedFloor: Floor) => commitFloor(updatedFloor),
+    [commitFloor],
   );
 
   // ── Area move (body drag) ────────────────────────────────────────────────
@@ -328,6 +389,14 @@ export function VenueMapEditor({
     },
     [activeFloor, replaceFloor],
   );
+
+  // ── Area move commit ─────────────────────────────────────────────────────
+  // El arrastre de la planta usa `replace` (sin historial) para no generar una
+  // entrada por frame; al soltar se confirma el estado final con `push`, que
+  // antes no ocurría: mover una planta no se podía deshacer.
+  const handleAreaMoveCommit = useCallback(() => {
+    commitLive(map);
+  }, [map, commitLive]);
 
   // ── Area shape toggle ────────────────────────────────────────────────────
   const handleToggleAreaShape = useCallback(() => {
@@ -465,31 +534,40 @@ export function VenueMapEditor({
 
   // ── Wall operations ──────────────────────────────────────────────────────
 
-  const DEFAULT_WALL_THICKNESS = 8;
 
   const handleAddWall = useCallback(
     (x1: number, y1: number, x2: number, y2: number,
-     snapStartId: string | null, snapEndId: string | null) => {
-      if (!activeFloor) return;
+     snapStartId: string | null, snapEndId: string | null): string | undefined => {
+      if (!activeFloor) return undefined;
       const nodes: WallNode[] = [...activeFloor.wallNodes];
 
-      let nodeAId: string;
-      if (snapStartId) {
-        nodeAId = snapStartId;
-      } else {
-        const n: WallNode = { id: genId(), x: x1, y: y1 };
+      /**
+       * Reutiliza un nodo existente en la misma posición (o crea uno nuevo).
+       * Sin esto, encadenar paredes o volver sobre un punto ya usado generaba
+       * nodos duplicados: las uniones no se ingletaban y al borrar una pared
+       * quedaban nodos huérfanos.
+       */
+      const nodeAt = (x: number, y: number, snapId: string | null): string => {
+        if (snapId) return snapId;
+        const existing = nodes.find(n => Math.hypot(n.x - x, n.y - y) < NODE_MERGE_DIST);
+        if (existing) return existing.id;
+        const n: WallNode = { id: genId(), x, y };
         nodes.push(n);
-        nodeAId = n.id;
-      }
+        return n.id;
+      };
 
-      let nodeBId: string;
-      if (snapEndId) {
-        nodeBId = snapEndId;
-      } else {
-        const n: WallNode = { id: genId(), x: x2, y: y2 };
-        nodes.push(n);
-        nodeBId = n.id;
-      }
+      const nodeAId = nodeAt(x1, y1, snapStartId);
+      const nodeBId = nodeAt(x2, y2, snapEndId);
+
+      // Una pared que empieza y acaba en el mismo nodo no tiene geometría.
+      if (nodeAId === nodeBId) return nodeBId;
+
+      // Evita duplicar una pared ya existente entre los mismos dos nodos.
+      const alreadyExists = activeFloor.walls.some(w =>
+        (w.nodeAId === nodeAId && w.nodeBId === nodeBId) ||
+        (w.nodeAId === nodeBId && w.nodeBId === nodeAId),
+      );
+      if (alreadyExists) return nodeBId;
 
       const newWall: Wall = {
         id: genId(),
@@ -500,17 +578,30 @@ export function VenueMapEditor({
       };
 
       pushFloor({ ...activeFloor, wallNodes: nodes, walls: [...activeFloor.walls, newWall] });
+      return nodeBId;
     },
-    [activeFloor, pushFloor, DEFAULT_WALL_THICKNESS],
+    [activeFloor, pushFloor],
   );
 
   const handleDeleteWall = useCallback(
     (wallId: string) => {
       if (!activeFloor) return;
+      setSelectedWallId(prev => (prev === wallId ? null : prev));
       const remainingWalls = activeFloor.walls.filter(w => w.id !== wallId);
       const usedNodeIds = new Set(remainingWalls.flatMap(w => [w.nodeAId, w.nodeBId]));
       const remainingNodes = activeFloor.wallNodes.filter(n => usedNodeIds.has(n.id));
       pushFloor({ ...activeFloor, walls: remainingWalls, wallNodes: remainingNodes });
+    },
+    [activeFloor, pushFloor],
+  );
+
+  const handleChangeWall = useCallback(
+    (wallId: string, patch: Partial<Pick<Wall, 'thickness' | 'material'>>) => {
+      if (!activeFloor) return;
+      pushFloor({
+        ...activeFloor,
+        walls: activeFloor.walls.map(w => (w.id === wallId ? { ...w, ...patch } : w)),
+      });
     },
     [activeFloor, pushFloor],
   );
@@ -537,12 +628,12 @@ export function VenueMapEditor({
       const el = activeFloor.elements.find(e => e.id === id);
       if (!el) return;
       const { x: cx, y: cy } = clampToFloor(x, y, el.width, el.height, activeFloor.area);
-      pushFloor({
+      commitFloor({
         ...activeFloor,
         elements: activeFloor.elements.map(e => e.id === id ? { ...e, x: cx, y: cy } : e),
       });
     },
-    [activeFloor, pushFloor],
+    [activeFloor, commitFloor],
   );
 
   const handleResizeElement = useCallback(
@@ -561,14 +652,14 @@ export function VenueMapEditor({
   const handleResizeCommit = useCallback(
     (id: string, x: number, y: number, w: number, h: number) => {
       if (!activeFloor) return;
-      pushFloor({
+      commitFloor({
         ...activeFloor,
         elements: activeFloor.elements.map(el =>
           el.id === id ? { ...el, x, y, width: w, height: h } : el,
         ),
       });
     },
-    [activeFloor, pushFloor],
+    [activeFloor, commitFloor],
   );
 
   const handleRotateElement = useCallback(
@@ -587,14 +678,14 @@ export function VenueMapEditor({
   const handleRotateCommit = useCallback(
     (id: string, rotation: number) => {
       if (!activeFloor) return;
-      pushFloor({
+      commitFloor({
         ...activeFloor,
         elements: activeFloor.elements.map(el =>
           el.id === id ? { ...el, rotation } : el,
         ),
       });
     },
-    [activeFloor, pushFloor],
+    [activeFloor, commitFloor],
   );
 
   const handleDeleteElement = useCallback(
@@ -628,7 +719,12 @@ export function VenueMapEditor({
       const idSet = new Set(ids);
       const copies: MapElement[] = activeFloor.elements
         .filter(el => idSet.has(el.id))
-        .map(el => ({ ...el, id: genId(), x: el.x + 20, y: el.y + 20 }));
+        .map(el => {
+          // La copia se desplaza 20 px, pero recortada al área: si no, duplicar
+          // un elemento pegado al borde lo dejaba fuera de la planta.
+          const { x, y } = clampToFloor(el.x + 20, el.y + 20, el.width, el.height, activeFloor.area);
+          return { ...el, id: genId(), x, y };
+        });
       const newFloor = { ...activeFloor, elements: [...activeFloor.elements, ...copies] };
       pushFloor(newFloor);
       selectSet(copies.map(c => c.id));
@@ -639,7 +735,7 @@ export function VenueMapEditor({
   const handlePlaceElement = useCallback(
     (canvasX: number, canvasY: number) => {
       if (!activeFloor || !activePlaceTypeId) return;
-      const typeDef = elementTypeDefs.current.get(activePlaceTypeId);
+      const typeDef = elementTypeDefs.get(activePlaceTypeId);
       if (!typeDef) return;
 
       const { area } = activeFloor;
@@ -672,7 +768,7 @@ export function VenueMapEditor({
       pushFloor({ ...activeFloor, elements: [...activeFloor.elements, newEl] });
       select(newEl.id, false);
     },
-    [activeFloor, activePlaceTypeId, pushFloor, select],
+    [activeFloor, activePlaceTypeId, elementTypeDefs, pushFloor, select],
   );
 
   const handleChangeLabel = useCallback(
@@ -702,6 +798,21 @@ export function VenueMapEditor({
   );
 
   // ── Viewer element click (type-specific handler → generic fallback) ─────
+  const handleSelectWall = useCallback((id: string | null) => {
+    setSelectedWallId(id);
+    if (id) clearSelection();
+  }, [clearSelection]);
+
+  const handleSelectElement = useCallback((id: string, multi: boolean) => {
+    setSelectedWallId(null);
+    select(id, multi);
+  }, [select]);
+
+  const handleSelectSet = useCallback((ids: string[], additive: boolean) => {
+    setSelectedWallId(null);
+    selectSet(ids, additive);
+  }, [selectSet]);
+
   const handleViewerElementClick = useCallback(
     (id: string) => {
       const el = activeFloor?.elements.find(e => e.id === id);
@@ -720,38 +831,97 @@ export function VenueMapEditor({
 
   // ── Status map ───────────────────────────────────────────────────────────
   const statusMap = useMemo(() => {
-    const m = new Map<string, string>();
-    (elementStatus ?? []).forEach(s => {
-      if (s.status === 'occupied') m.set(s.elementId, '#fca5a5');
-      else if (s.status === 'reserved') m.set(s.elementId, '#fde68a');
-      else if (s.status === 'disabled') m.set(s.elementId, '#d1d5db');
+    const fills: Record<string, string | undefined> = theme === 'dark'
+      ? { occupied: '#b91c1c', reserved: '#a16207', disabled: '#475569' }
+      : { occupied: '#fca5a5', reserved: '#fde68a', disabled: '#d1d5db' };
+    const m = new Map<string, { fill?: string; tooltip?: string }>();
+    (elementStatus ?? []).forEach(st => {
+      m.set(st.elementId, { fill: fills[st.status], tooltip: st.tooltip });
     });
     return m;
-  }, [elementStatus]);
+  }, [elementStatus, theme]);
 
   // ── Selected elements ────────────────────────────────────────────────────
   const selectedElements = activeFloor
     ? activeFloor.elements.filter(el => selectedIds.has(el.id))
     : [];
 
+  // ── Fixed / read-only derived state ─────────────────────────────────────
+  const effectiveReadOnly = readOnly || fixed;
+  const effectiveTool: ToolMode = fixed ? 'PAN' : tool;
+
+  // ── Nudge con flechas ────────────────────────────────────────────────────
+  const nudgeSelection = useCallback((dx: number, dy: number) => {
+    if (!activeFloor || selectedIds.size === 0) return;
+    pushFloor({
+      ...activeFloor,
+      elements: activeFloor.elements.map(el => {
+        if (!selectedIds.has(el.id)) return el;
+        const { x, y } = clampToFloor(el.x + dx, el.y + dy, el.width, el.height, activeFloor.area);
+        return { ...el, x, y };
+      }),
+    });
+  }, [activeFloor, selectedIds, pushFloor]);
+
   // ── Keyboard shortcuts ───────────────────────────────────────────────────
+  // Los atajos se escuchan en el contenedor, no en `window`: antes cualquier
+  // editor montado en la página capturaba V/H/W/P/E, Supr y Ctrl+Z aunque el
+  // foco estuviese en otro sitio (por ejemplo en un formulario al lado).
   useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return;
+
     const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement).tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      const target = e.target as HTMLElement | null;
+      // Nunca interceptar mientras se escribe.
+      if (target) {
+        const tag = target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable) return;
+      }
 
       const ctrl = e.ctrlKey || e.metaKey;
 
-      if (ctrl && e.key === 'z') { e.preventDefault(); undo(); return; }
+      // En modo lectura/visor solo se permite navegar la vista.
+      if (effectiveReadOnly) {
+        if (e.key === '+' || e.key === '=') { e.preventDefault(); zoomByRef.current(1.2); }
+        else if (e.key === '-' || e.key === '_') { e.preventDefault(); zoomByRef.current(1 / 1.2); }
+        else if (e.key === '0' && ctrl) { e.preventDefault(); resetViewRef.current(); }
+        return;
+      }
+
+      if (ctrl && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault();
+        if (e.shiftKey) redo(); else undo();
+        return;
+      }
       if (ctrl && (e.key === 'y' || e.key === 'Y')) { e.preventDefault(); redo(); return; }
       if (ctrl && (e.key === 'd' || e.key === 'D')) {
         e.preventDefault();
         if (selectedIds.size > 0) handleDuplicateElements([...selectedIds]);
         return;
       }
+      if (ctrl && (e.key === 'a' || e.key === 'A')) {
+        e.preventDefault();
+        if (activeFloor) handleSelectSet(activeFloor.elements.map(el => el.id), false);
+        return;
+      }
+      if (ctrl && e.key === '0') { e.preventDefault(); resetViewRef.current(); return; }
 
       if (e.key === 'Delete' || e.key === 'Backspace') {
+        e.preventDefault();
         if (selectedIds.size > 0) handleDeleteElements([...selectedIds]);
+        else if (selectedWallId) handleDeleteWall(selectedWallId);
+        return;
+      }
+
+      // Flechas: desplazan la selección (Mayús = paso grande).
+      if (e.key.startsWith('Arrow') && selectedIds.size > 0) {
+        e.preventDefault();
+        const step = e.shiftKey ? gridSize : 1;
+        if (e.key === 'ArrowUp')    nudgeSelection(0, -step);
+        if (e.key === 'ArrowDown')  nudgeSelection(0,  step);
+        if (e.key === 'ArrowLeft')  nudgeSelection(-step, 0);
+        if (e.key === 'ArrowRight') nudgeSelection( step, 0);
         return;
       }
 
@@ -761,36 +931,57 @@ export function VenueMapEditor({
         case 'w': case 'W': setTool('WALL'); break;
         case 'p': case 'P': setTool('PLACE'); break;
         case 'e': case 'E': setTool('ERASE'); break;
-        case 'Escape': setTool('SELECT'); break;
+        case 'Escape': setTool('SELECT'); clearSelection(); setSelectedWallId(null); break;
         case '+': case '=': zoomByRef.current(1.2); break;
         case '-': case '_': zoomByRef.current(1 / 1.2); break;
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [undo, redo, selectedIds, handleDuplicateElements, handleDeleteElements]);
 
-  // ── Fixed / read-only derived state ─────────────────────────────────────
-  const effectiveReadOnly = readOnly || fixed;
-  const effectiveTool: ToolMode = fixed ? 'PAN' : tool;
+    node.addEventListener('keydown', onKey);
+    return () => node.removeEventListener('keydown', onKey);
+  }, [undo, redo, selectedIds, selectedWallId, activeFloor, gridSize, effectiveReadOnly,
+      handleDuplicateElements, handleDeleteElements, handleDeleteWall, handleSelectSet,
+      nudgeSelection, clearSelection]);
 
   // ── Container style ──────────────────────────────────────────────────────
+  // El borde y el fondo se resuelven desde la paleta en vez de estar fijados a
+  // colores claros: el editor completo (no solo el lienzo) sigue al tema.
   const containerStyle: CSSProperties = {
     width,
     height,
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    border: '1px solid #e2e8f0',
+    border: `1px solid ${theme === 'dark' ? '#334155' : '#e2e8f0'}`,
     borderRadius: '0.5rem',
-    background: '#fff',
+    background: theme === 'dark' ? '#0f172a' : '#fff',
+    color: theme === 'dark' ? '#e2e8f0' : '#0f172a',
+    colorScheme: theme,
+    outline: 'none',
     fontFamily: 'system-ui, sans-serif',
   };
 
   const activeAreaShape: AreaShape | undefined = activeFloor?.area.shape;
+  const selectedWall = activeFloor?.walls.find(w => w.id === selectedWallId) ?? null;
 
   return (
-    <div style={containerStyle}>
+    <div
+      ref={containerRef}
+      // La clase `dark` se aplica al propio contenedor para que las variantes
+      // `dark:` de Tailwind también funcionen cuando el tema se fuerza por
+      // prop y el `<html>` de la página está en claro.
+      className={[theme === 'dark' ? 'dark' : '', className ?? ''].filter(Boolean).join(' ')}
+      style={containerStyle}
+      // `tabIndex` permite que el contenedor reciba el foco y con él los
+      // atajos de teclado, sin robárselos al resto de la página.
+      tabIndex={-1}
+      role="application"
+      aria-label="Editor de mapa"
+      // En fase de captura: los arrastres del lienzo llaman a
+      // `preventDefault()`, que anula el enfoque automático del navegador y
+      // dejaría los atajos de teclado sin escuchar a nadie.
+      onPointerDownCapture={() => containerRef.current?.focus({ preventScroll: true })}
+    >
       {/* Hidden file inputs */}
       <input
         ref={importInputRef}
@@ -866,14 +1057,18 @@ export function VenueMapEditor({
               showGrid={showGrid}
               readOnly={effectiveReadOnly}
               snapEnabled={snapEnabled}
-              elementTypeDefs={elementTypeDefs.current}
+              elementTypeDefs={elementTypeDefs}
               selectedIds={selectedIds}
+              palette={palette}
               statusMap={statusMap}
+              selectedWallId={selectedWallId}
+              onSelectWall={handleSelectWall}
               onAreaResize={handleAreaResize}
               onAreaMove={handleAreaMove}
+              onAreaMoveCommit={handleAreaMoveCommit}
               onAreaResizeCommit={handleAreaResizeCommit}
-              onSelectElement={select}
-              onSelectSet={selectSet}
+              onSelectElement={handleSelectElement}
+              onSelectSet={handleSelectSet}
               onClearSelection={clearSelection}
               onMoveElement={handleMoveElement}
               onMoveCommit={handleMoveCommit}
@@ -887,17 +1082,20 @@ export function VenueMapEditor({
               onDeleteWall={handleDeleteWall}
               onViewerElementClick={hasViewerHandlers ? handleViewerElementClick : undefined}
               onZoomChange={setZoom}
-              onRegisterZoomBy={fn => { zoomByRef.current = fn; }}
-              onRegisterResetView={fn => { resetViewRef.current = fn; }}
+              onRegisterZoomBy={registerZoomBy}
+              onRegisterResetView={registerResetView}
             />
           )}
         </div>
 
         {/* Properties panel */}
-        {!effectiveReadOnly && selectedElements.length > 0 && (
+        {!effectiveReadOnly && (selectedElements.length > 0 || selectedWall) && (
           <PropertiesPanel
             elements={selectedElements}
-            typeDefs={elementTypeDefs.current}
+            typeDefs={elementTypeDefs}
+            wall={selectedWall}
+            onChangeWall={handleChangeWall}
+            onDeleteWall={handleDeleteWall}
             onChangeLabel={handleChangeLabel}
             onChangeGeometry={handleChangeGeometry}
             onDelete={handleDeleteElements}

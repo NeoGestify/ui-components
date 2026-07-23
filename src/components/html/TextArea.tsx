@@ -1,4 +1,4 @@
-import { type TextareaHTMLAttributes, type FC, type ReactNode, useRef, useEffect } from 'react';
+import { type TextareaHTMLAttributes, type FC, type ReactNode, useRef, useEffect, useId } from 'react';
 
 type TextAreaVariant = 'default' | 'outline' | 'filled' | 'minimal';
 type TextAreaSize = 'small' | 'medium' | 'large';
@@ -49,7 +49,8 @@ export const TextArea: FC<TextAreaProps> = ({
   onInput: propsOnInput,
   ...props
 }) => {
-  const textAreaId = id || `textarea-${Math.random().toString(36).substring(2, 9)}`;
+  const autoId = useId();
+  const textAreaId = id || `textarea-${autoId}`;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const adjustHeight = () => {

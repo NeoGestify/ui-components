@@ -555,10 +555,11 @@ export function IconCursor({ className }: Props) {
 
 export function IconHand({ className }: Props) {
     return (
-        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-            <path d="M8 1a1 1 0 011 1v4.586l1.293-1.293a1 1 0 111.414 1.414L8 10.414 4.293 6.707a1 1 0 111.414-1.414L7 6.586V2a1 1 0 011-1z" />
-            <path d="M3 8a1 1 0 011-1h.5V4.5a1 1 0 012 0V7h1V3.5a1 1 0 012 0V7h1V4.5a1 1 0 012 0V9a5 5 0 01-5 5H6A3 3 0 013 11V8z" />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 16 16">
+            <path d="M0 0h16v16H0z" fill="none" />
+            <path fill="currentColor" d="M11 0a1 1 0 0 1 1 1v5.5a.5.5 0 0 0 1 0V3a1 1 0 1 1 2 0v8a4 4 0 0 1-4 4H5.872a.5.5 0 0 1-.167-.03a1.5 1.5 0 0 1-.766-.41l-3.5-3.5a1.5 1.5 0 1 1 2.122-2.12L4 9.378V2a1 1 0 1 1 2 0v3.5a.5.5 0 0 0 1 0V1a1 1 0 1 1 2 0v4.5a.5.5 0 0 0 1 0V1a1 1 0 0 1 1-1" />
         </svg>
+
     );
 }
 
@@ -601,41 +602,45 @@ export function IconReset({ className }: Props) {
 
 export function IconUndo({ className }: Props) {
     return (
-        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-            <path d="M2.5 5.5A.5.5 0 013 5h5a5 5 0 110 10H3a.5.5 0 010-1h5a4 4 0 100-8H3.707l1.647 1.646a.5.5 0 01-.708.708l-2.5-2.5a.5.5 0 010-.708l2.5-2.5a.5.5 0 01.708.708L3.207 5H3a.5.5 0 01-.5-.5z" />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" d="M7 19v-2h7.1q1.575 0 2.738-1T18 13.5T16.838 11T14.1 10H7.8l2.6 2.6L9 14L4 9l5-5l1.4 1.4L7.8 8h6.3q2.425 0 4.163 1.575T20 13.5t-1.737 3.925T14.1 19z" />
         </svg>
     );
 }
 
 export function IconRedo({ className }: Props) {
     return (
-        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-            <path d="M13.5 5.5A.5.5 0 0113 5H8a4 4 0 100 8h5a.5.5 0 010 1H8A5 5 0 118 5h4.293l-1.647-1.646a.5.5 0 01.708-.708l2.5 2.5a.5.5 0 010 .708l-2.5 2.5a.5.5 0 01-.708-.708L12.793 6H13a.5.5 0 01.5.5z" />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" d="M9.9 19q-2.425 0-4.163-1.575T4 13.5t1.738-3.925T9.9 8h6.3l-2.6-2.6L15 4l5 5l-5 5l-1.4-1.4l2.6-2.6H9.9q-1.575 0-2.738 1T6 13.5T7.163 16T9.9 17H17v2z" />
         </svg>
     );
 }
 
 export function IconPlace({ className }: Props) {
     return (
-        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-            <path d="M2 2a.5.5 0 01.5-.5h2a.5.5 0 010 1H3v1.5a.5.5 0 01-1 0V2zm11 0a.5.5 0 00-.5-.5h-2a.5.5 0 000 1H12v1.5a.5.5 0 001 0V2zM2 14a.5.5 0 00.5.5h2a.5.5 0 000-1H3v-1.5a.5.5 0 00-1 0V14zm11 0a.5.5 0 01-.5.5h-2a.5.5 0 010-1H12v-1.5a.5.5 0 011 0V14zM8 4.5a.5.5 0 000 1V7H6.5a.5.5 0 000 1H8v1.5a.5.5 0 001 0V8h1.5a.5.5 0 000-1H9V5.5a.5.5 0 00-1 0z" />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" d="M5.616 20q-.672 0-1.144-.472T4 18.385v-8.77q0-.67.472-1.143Q4.944 8 5.616 8H8.73v1H5.616q-.27 0-.443.173T5 9.616v8.769q0 .269.173.442t.443.173h12.769q.269 0 .442-.173t.173-.442v-8.77q0-.269-.173-.442T18.385 9h-3.116V8h3.115q.672 0 1.144.472T20 9.616v8.769q0 .67-.472 1.143q-.472.472-1.143.472zM12 15.308L8.692 12l.708-.708l2.1 2.095V1.5h1v11.887l2.1-2.095l.708.708z" />
         </svg>
     );
 }
 
 export function IconErase({ className }: Props) {
     return (
-        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-            <path d="M8.086 2.207a2 2 0 012.828 0l2.879 2.878a2 2 0 010 2.83l-7.513 7.51A2 2 0 014.872 16H2.4a1 1 0 01-.966-.741L.8 13.2a2 2 0 01.5-1.946l7.786-9.047zM7.586 5L5 7.586 8.414 11 11 8.414 7.586 5zM6 12L4 10l-1.5 1.5a1 1 0 000 1.414l.587.587A1 1 0 003.793 15H5l1-1-1-1 1-1z" />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" fill-rule="evenodd" d="M3.5 12.9a2 2 0 0 0 0 2.828l3.858 3.858H4.086a1 1 0 1 0 0 2h16a1 1 0 0 0 0-2h-9.13l9.515-9.515a2 2 0 0 0 0-2.828L16.228 3a2 2 0 0 0-2.829 0zm4.326-1.498l-2.912 2.912l4.243 4.242l2.911-2.911zM9.24 9.988l4.243 4.243l5.573-5.574l-4.242-4.243z" clip-rule="evenodd" />
         </svg>
     );
 }
 
 export function IconDuplicate({ className }: Props) {
     return (
-        <svg viewBox="0 0 16 16" className={className} fill="currentColor">
-            <path d="M4 2a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2H4zm0 1h8a1 1 0 011 1v8a1 1 0 01-1 1H4a1 1 0 01-1-1V4a1 1 0 011-1z" />
-            <path d="M2 5H1a1 1 0 00-1 1v8a1 1 0 001 1h8a1 1 0 001-1v-1H9v1H1V6h1V5z" />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 15.5H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h9.5a1 1 0 0 1 1 1v1m-6 14H19a1 1 0 0 0 1-1V9.5a1 1 0 0 0-1-1H9.5a1 1 0 0 0-1 1V19a1 1 0 0 0 1 1" />
         </svg>
     );
 }
@@ -691,24 +696,27 @@ export function IconLayers({ className }: Props) {
 
 export function ChevronDownIcon({ className }: Props) {
     return (
-        <svg viewBox="0 0 16 16" className={className} fill="currentColor" aria-hidden>
-            <path d="M4.516 7.548c.436-.446 1.043-.481 1.576 0L8 9.747l1.908-2.199c.533-.481 1.14-.446 1.576 0 .436.445.408 1.197 0 1.615-.408.418-2.695 2.977-2.695 2.977-.27.282-.64.423-1.01.423s-.74-.14-1.01-.423c0 0-2.287-2.559-2.695-2.977-.408-.418-.436-1.17 0-1.615z" />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" d="M7.41 8.58L12 13.17l4.59-4.59L18 10l-6 6l-6-6z" />
         </svg>
     );
 }
 
 export function SortAscIcon({ className }: Props) {
     return (
-        <svg viewBox="0 0 12 12" className={className} fill="currentColor" aria-hidden>
-            <path d="M6 2.5l4 5H2l4-5z" />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" d="m19 3l4 5h-3v12h-2V8h-3zm-5 15v2H3v-2zm0-7v2H3v-2zm-2-7v2H3V4z" />
         </svg>
     );
 }
 
 export function SortDescIcon({ className }: Props) {
     return (
-        <svg viewBox="0 0 12 12" className={className} fill="currentColor" aria-hidden>
-            <path d="M6 9.5L2 4.5h8L6 9.5z" />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" d="M20 4v12h3l-4 5l-4-5h3V4zm-8 14v2H3v-2zm2-7v2H3v-2zm0-7v2H3V4z" />
         </svg>
     );
 }

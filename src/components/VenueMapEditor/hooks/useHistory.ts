@@ -38,6 +38,22 @@ export function useHistory(initial: VenueMap) {
     setHistory(h => ({ ...h, present: next }));
   }, []);
 
+  /**
+   * Cierra una edición en vivo (arrastre): apila `before` — el estado
+   * ANTERIOR al inicio del gesto — y deja `next` como presente.
+   *
+   * Es distinto de `push(next)`: durante el arrastre `replace` ya machacó el
+   * presente decenas de veces, así que `push` habría apilado el último frame
+   * del propio arrastre y deshacer solo retrocedía unos píxeles.
+   */
+  const commit = useCallback((before: VenueMap, next: VenueMap) => {
+    setHistory(h => ({
+      past: [...h.past.slice(-(MAX_HISTORY - 1)), before],
+      present: next,
+      future: [],
+    }));
+  }, []);
+
   const undo = useCallback(() => {
     setHistory(h => {
       if (h.past.length === 0) return h;
@@ -68,6 +84,7 @@ export function useHistory(initial: VenueMap) {
     canRedo: history.future.length > 0,
     push,
     replace,
+    commit,
     undo,
     redo,
   };
