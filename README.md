@@ -1,20 +1,20 @@
 # UI Components
 
-Biblioteca de componentes UI reutilizables con React, Tailwind CSS y SweetAlert2.
+Reusable UI component library built with React, Tailwind CSS and SweetAlert2.
 
-## Características
+## Features
 
-- Componentes HTML preestilizados (Button, Input, TextArea, Form, Select, Table, Modal, Loading)
-- Colección de iconos SVG (50+ iconos)
-- Alertas preconfiguradas con SweetAlert2 + componente InfoAlert
-- Sistema de tema (light/dark) con Context Provider
-- Editor de mapas interactivo (VenueMapEditor/VenueMapViewer)
-- Constructor de librerías de elementos (ElementLibraryBuilder)
-- Soporte para modo claro/oscuro
-- TypeScript incluido
-- Compatible con Tailwind CSS 4.x
+- Pre-styled HTML components (Button, Input, TextArea, Form, Select, Table, Modal, Loading)
+- SVG icon collection (80+ icons)
+- Preconfigured SweetAlert2 alerts + InfoAlert component
+- Theme system (light/dark) with a Context Provider
+- Interactive venue map editor (VenueMapEditor/VenueMapViewer)
+- Element library builder (ElementLibraryBuilder)
+- Light/dark mode support
+- TypeScript included
+- Compatible with Tailwind CSS 4.x
 
-## Instalación
+## Installation
 
 ### NPM
 ```bash
@@ -26,21 +26,21 @@ npm i neogestify-ui-components
 bun add neogestify-ui-components
 ```
 
-## Configuración
+## Setup
 
-### 1. Asegúrate de tener Tailwind CSS configurado en tu proyecto
+### 1. Make sure Tailwind CSS is set up in your project
 
 ```bash
 bun add -D tailwindcss
 ```
 
-Tu proyecto debe tener Tailwind configurado ya que los componentes solo usan clases de Tailwind (no incluyen CSS compilado).
+Your project must have Tailwind configured, since the components only use Tailwind classes (no compiled CSS is shipped).
 
-### 2. Configura Tailwind para escanear los componentes de la biblioteca
+### 2. Configure Tailwind to scan the library's source
 
-**⚠️ IMPORTANTE:** Esta librería requiere que configures Tailwind para escanear sus archivos fuente.
+**⚠️ IMPORTANT:** This library requires Tailwind to scan its source files.
 
-En tu archivo CSS principal (por ejemplo `src/index.css`):
+In your main CSS file (e.g. `src/index.css`):
 
 ```css
 @import "tailwindcss";
@@ -48,18 +48,18 @@ En tu archivo CSS principal (por ejemplo `src/index.css`):
 @source "../node_modules/neogestify-ui-components/src";
 
 @theme {
-    /* Configuración de dark mode para Tailwind v4 */
+    /* Tailwind v4 dark mode configuration */
 }
 
 @variant dark (&:where(.dark, .dark *)) {
-    /* Variante dark mode */
+    /* dark mode variant */
 }
 ```
 
-**Agrega este script a tu index.html**
+**Add this script to your index.html**
 ```html
 <script>
-      // Prevenir flash de contenido sin estilo (FOUC)
+      // Prevent flash of unstyled content (FOUC)
       const theme = localStorage.getItem('theme') || 'light';
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
@@ -69,15 +69,15 @@ En tu archivo CSS principal (por ejemplo `src/index.css`):
 </script>
 ```
 
-### 3. Instala las dependencias peer
+### 3. Install the peer dependencies
 
 ```bash
 bun add react react-dom sweetalert2 sweetalert2-react-content
 ```
 
-## Uso
+## Usage
 
-Importa todo desde un solo punto:
+Import everything from a single entry point:
 
 ```tsx
 import {
@@ -89,11 +89,11 @@ import {
   Table,
   Modal,
   Loading,
-  // Iconos
+  // Icons
   HomeIcon,
   SaveIcon,
   DeleteIcon,
-  // Alertas
+  // Alerts
   AlertaExito,
   AlertaError,
   AlertaAdvertencia,
@@ -113,25 +113,28 @@ import {
 } from 'neogestify-ui-components';
 ```
 
+> **Note:** the alert functions keep their original Spanish names (`AlertaExito`,
+> `AlertaError`, …) as part of the public API.
+
 ---
 
-## Componentes HTML
+## HTML Components
 
 ### Button
 
-Variantes: `primary`, `secondary`, `danger`, `success`, `warning`, `outline`, `ghost`, `icon`, `nav`, `link`, `toggle`, `custom`
+Variants: `primary`, `secondary`, `danger`, `success`, `warning`, `outline`, `ghost`, `icon`, `nav`, `link`, `toggle`, `custom`
 
 ```tsx
-<Button variant="primary" size="lg" isLoading loadingText="Guardando...">
-  Guardar
+<Button variant="primary" size="lg" isLoading loadingText="Saving...">
+  Save
 </Button>
 
 <Button variant="ghost" leftIcon={<SaveIcon className="w-4 h-4" />}>
-  Exportar
+  Export
 </Button>
 
 <Button variant="primary" fullWidth shape="pill">
-  Continuar
+  Continue
 </Button>
 
 <Button variant="toggle" isActive={active} onClick={toggle}>
@@ -140,83 +143,86 @@ Variantes: `primary`, `secondary`, `danger`, `success`, `warning`, `outline`, `g
 ```
 
 Props:
-- `variant`: Variante del botón (`primary` | `secondary` | `icon` | `danger` | `success` | `outline` | `ghost` | `nav` | `custom` | `link` | `warning` | `toggle`)
-- `size`: Tamaño (`'sm'` | `'md'` | `'lg'`). Default: `'md'`
-- `shape`: Forma del borde (`'rounded'` | `'pill'` | `'square'`). Default: `'rounded'` (`'pill'` para `icon`)
-- `leftIcon`: Icono antes del texto (ReactNode)
-- `rightIcon`: Icono después del texto (ReactNode)
-- `fullWidth`: Ocupa el 100% del ancho (boolean)
-- `isLoading`: Muestra estado de carga (boolean)
-- `loadingText`: Texto durante carga
-- `isActive`: Estado activo para variant `toggle` o `nav` (boolean)
-- `disabled`: Deshabilita el botón
-- `type`: Tipo HTML (`button`, `submit`, `reset`)
-- `className`: Clases adicionales
-- `children`: Contenido del botón
+- `variant`: Button variant (`primary` | `secondary` | `icon` | `danger` | `success` | `outline` | `ghost` | `nav` | `custom` | `link` | `warning` | `toggle`)
+- `size`: Size (`'sm'` | `'md'` | `'lg'`). Default: `'md'`
+- `shape`: Border shape (`'rounded'` | `'pill'` | `'square'`). Default: `'rounded'` (`'pill'` for `icon`)
+- `leftIcon`: Icon before the text (ReactNode)
+- `rightIcon`: Icon after the text (ReactNode)
+- `fullWidth`: Takes 100% width (boolean)
+- `isLoading`: Shows a loading state (boolean)
+- `loadingText`: Text shown while loading
+- `isActive`: Active state for the `toggle` or `nav` variant (boolean)
+- `disabled`: Disables the button
+- `type`: HTML type (`button`, `submit`, `reset`)
+- `className`: Extra classes
+- `children`: Button content
 
 ---
 
 ### Input
 
-Soporta tipos: `text`, `email`, `password`, `number`, `checkbox`, `radio`, `date`, `tel`, `url`, `file`
+Supports types: `text`, `email`, `password`, `number`, `checkbox`, `radio`, `date`, `tel`, `url`, `file`
 
 ```tsx
 <Input
   label="Email"
   type="email"
   required
-  error="Email inválido"
-  helperText="Ingresa tu correo electrónico"
+  error="Invalid email"
+  helperText="Enter your email address"
 />
 
-{/* Variantes visuales */}
-<Input label="Nombre" variant="filled" size="lg" />
-<Input label="Buscar" variant="minimal" />
+{/* Visual variants */}
+<Input label="Name" variant="filled" size="lg" />
+<Input label="Search" variant="minimal" />
 
-{/* Con icono */}
+{/* With icon */}
 <Input
-  label="Buscar"
+  label="Search"
   icon={<SearchIcon className="w-4 h-4" />}
   iconSide="left"
 />
 
-{/* Addons de texto (prefix / suffix) */}
-<Input label="Precio" prefix="$" suffix="USD" />
-<Input label="Sitio web" prefix="https://" suffix=".com" />
+{/* Text addons (prefix / suffix) */}
+<Input label="Price" prefix="$" suffix="USD" />
+<Input label="Website" prefix="https://" suffix=".com" />
 
 {/* Clearable */}
 <Input
-  label="Filtrar"
-  value={filtro}
-  onChange={e => setFiltro(e.target.value)}
+  label="Filter"
+  value={filter}
+  onChange={e => setFilter(e.target.value)}
   clearable
-  onClear={() => setFiltro('')}
+  onClear={() => setFilter('')}
 />
 
 {/* Checkbox */}
-<Input type="checkbox" label="Acepto términos" />
+<Input type="checkbox" label="I accept the terms" />
 ```
 
 Props:
-- `label`: Etiqueta del campo (string | ReactNode)
-- `type`: Tipo de input HTML (`text`, `email`, `password`, `number`, `checkbox`, `radio`, `date`, `tel`, `url`, `file`)
-- `variant`: Variante visual (`'default'` | `'outline'` | `'filled'` | `'minimal'`). Default: `'default'`
-- `size`: Tamaño (`'sm'` | `'md'` | `'lg'`). Default: `'md'`
-- `prefix`: Addon pegado al borde izquierdo (ReactNode)
-- `suffix`: Addon pegado al borde derecho (ReactNode)
-- `clearable`: Muestra botón `×` para limpiar cuando hay valor (boolean)
-- `onClear`: Callback al hacer click en el botón limpiar
+- `label`: Field label (string | ReactNode)
+- `type`: HTML input type (`text`, `email`, `password`, `number`, `checkbox`, `radio`, `date`, `tel`, `url`, `file`)
+- `variant`: Visual variant (`'default'` | `'outline'` | `'filled'` | `'minimal'`). Default: `'default'`
+- `size`: Size (`'sm'` | `'md'` | `'lg'`). Default: `'md'`
+- `prefix`: Addon attached to the left edge (ReactNode)
+- `suffix`: Addon attached to the right edge (ReactNode)
+- `clearable`: Shows a `×` button to clear when there is a value (boolean)
+- `onClear`: Callback when the clear button is clicked
 - `placeholder`: Placeholder
-- `value`: Valor controlado
-- `onChange`: Handler de cambio
-- `error`: Mensaje de error (string)
-- `helperText`: Texto de ayuda
-- `icon`: Icono a mostrar (ReactNode)
-- `iconSide`: Lado del icono (`'left'` | `'right'`)
-- `required`: Muestra asterisco `*` en el label (boolean)
-- `disabled`: Deshabilitado
-- `className`: Clases adicionales
-- `id`: ID del input (auto-generado si no se provee)
+- `value`: Controlled value
+- `onChange`: Change handler
+- `error`: Error message (string)
+- `helperText`: Helper text
+- `icon`: Icon to display (ReactNode)
+- `iconSide`: Icon side (`'left'` | `'right'`)
+- `required`: Shows a `*` on the label (boolean)
+- `disabled`: Disabled
+- `className`: Extra classes
+- `id`: Input ID (auto-generated if omitted)
+
+> Native widgets (the date picker calendar, number spinners) follow the active
+> theme via `color-scheme`, so they no longer render light-on-light in dark mode.
 
 ---
 
@@ -224,14 +230,14 @@ Props:
 
 ```tsx
 <TextArea
-  label="Descripción"
-  placeholder="Escribe una descripción..."
+  label="Description"
+  placeholder="Write a description..."
   variant="outline"
   size="large"
   autoResize
 />
 
-{/* Con contador de caracteres */}
+{/* With character counter */}
 <TextArea
   label="Bio"
   value={bio}
@@ -241,69 +247,69 @@ Props:
   variant="filled"
 />
 
-{/* Sin redimensión */}
-<TextArea label="Notas" resize="none" rows={4} />
+{/* No resize */}
+<TextArea label="Notes" resize="none" rows={4} />
 ```
 
 Props:
-- `label`: Etiqueta (string | ReactNode)
+- `label`: Label (string | ReactNode)
 - `placeholder`: Placeholder
-- `value`: Valor controlado
-- `onChange`: Handler de cambio
-- `rows`: Número de filas (heredado de HTML)
-- `variant`: Variante visual (`'default'` | `'outline'` | `'filled'` | `'minimal'`)
-- `size`: Tamaño (`'small'` | `'medium'` | `'large'`)
-- `autoResize`: Crece automáticamente al escribir (boolean)
-- `showCount`: Muestra contador de caracteres. Con `maxLength` muestra `12 / 200` (boolean)
-- `resize`: Control de redimensión (`'vertical'` | `'horizontal'` | `'both'` | `'none'`). Default: `'vertical'`
-- `required`: Muestra asterisco `*` en el label (boolean)
-- `error`: Mensaje de error
-- `helperText`: Texto de ayuda
-- `disabled`: Deshabilitado
-- `className`: Clases adicionales
-- `id`: ID del textarea (auto-generado si no se provee)
+- `value`: Controlled value
+- `onChange`: Change handler
+- `rows`: Number of rows (inherited from HTML)
+- `variant`: Visual variant (`'default'` | `'outline'` | `'filled'` | `'minimal'`)
+- `size`: Size (`'small'` | `'medium'` | `'large'`)
+- `autoResize`: Grows automatically as you type (boolean)
+- `showCount`: Shows a character counter. With `maxLength` shows `12 / 200` (boolean)
+- `resize`: Resize control (`'vertical'` | `'horizontal'` | `'both'` | `'none'`). Default: `'vertical'`
+- `required`: Shows a `*` on the label (boolean)
+- `error`: Error message
+- `helperText`: Helper text
+- `disabled`: Disabled
+- `className`: Extra classes
+- `id`: Textarea ID (auto-generated if omitted)
 
 ---
 
 ### Form
 
 ```tsx
-{/* Variante card con borde y sombra reales */}
+{/* Card variant with real border and shadow */}
 <Form onSubmit={handleSubmit} variant="card">
-  <Input label="Nombre" placeholder="Tu nombre" />
+  <Input label="Name" placeholder="Your name" />
   <Input label="Email" type="email" />
-  <Button variant="primary" type="submit">Enviar</Button>
+  <Button variant="primary" type="submit">Submit</Button>
 </Form>
 
-{/* Grid de 2 columnas */}
+{/* 2-column grid */}
 <Form variant="card" columns={2}>
-  <Input label="Nombre" />
-  <Input label="Apellido" />
+  <Input label="First name" />
+  <Input label="Last name" />
   <Input label="Email" type="email" />
-  <Input label="Teléfono" type="tel" />
-  <Button variant="primary" type="submit" fullWidth>Registrar</Button>
+  <Input label="Phone" type="tel" />
+  <Button variant="primary" type="submit" fullWidth>Register</Button>
 </Form>
 
-{/* Grid de 3 columnas */}
+{/* 3-column grid */}
 <Form columns={3}>
-  <Input label="Calle" />
-  <Input label="Ciudad" />
-  <Input label="País" />
+  <Input label="Street" />
+  <Input label="City" />
+  <Input label="Country" />
 </Form>
 
 <Form variant="inline">
-  <Input label="Buscar" placeholder="..." />
-  <Button variant="secondary">Buscar</Button>
+  <Input label="Search" placeholder="..." />
+  <Button variant="secondary">Search</Button>
 </Form>
 ```
 
 Props:
-- `onSubmit`: Handler del submit
-- `variant`: Variante del layout (`'default'` | `'modal'` | `'card'` | `'inline'` | `'compact'`)
-  - `card`: Ahora incluye fondo blanco/oscuro, borde y sombra reales
-- `columns`: Número de columnas del grid CSS (cualquier entero ≥ 2 activa el layout de grid con `gap` de `1rem`; con `1` se comporta como `default`)
-- `className`: Clases adicionales
-- Hereda props de `<form>` (method, action, etc.)
+- `onSubmit`: Submit handler
+- `variant`: Layout variant (`'default'` | `'modal'` | `'card'` | `'inline'` | `'compact'`)
+  - `card`: includes a white/dark background, real border and shadow
+- `columns`: Number of CSS grid columns (any integer ≥ 2 enables the grid layout with a `1rem` gap; `1` behaves like `default`)
+- `className`: Extra classes
+- Inherits `<form>` props (method, action, etc.)
 
 ---
 
@@ -311,49 +317,53 @@ Props:
 
 ```tsx
 <Select
-  label="Categoría"
-  placeholder="Selecciona..."
+  label="Category"
+  placeholder="Select..."
   required
   options={[
-    { value: '1', label: 'Opción 1' },
-    { value: '2', label: 'Opción 2', disabled: true },
-    { value: '3', label: 'Opción 3', selected: true },
+    { value: '1', label: 'Option 1' },
+    { value: '2', label: 'Option 2', disabled: true },
+    { value: '3', label: 'Option 3', selected: true },
   ]}
-  error="Debes seleccionar una categoría"
+  error="You must select a category"
 />
 
-{/* Variantes visuales */}
-<Select label="País" variant="outline" size="lg" />
-<Select label="Estado" variant="filled" />
-<Select label="Tipo" variant="minimal" />
+{/* Visual variants */}
+<Select label="Country" variant="outline" size="lg" />
+<Select label="Status" variant="filled" />
+<Select label="Type" variant="minimal" />
 
-{/* Con icono izquierdo */}
+{/* With left icon */}
 <Select
-  label="Categoría"
+  label="Category"
   icon={<CategorieIcon className="w-4 h-4" />}
-  options={opciones}
+  options={options}
 />
 ```
 
 Props:
-- `label`: Etiqueta (string | ReactNode)
+- `label`: Label (string | ReactNode)
 - `placeholder`: Placeholder
-- `options`: Array de opciones:
-  - `value`: Valor de la opción (string | number)
-  - `label`: Texto a mostrar
-  - `disabled`: Deshabilita la opción (boolean)
-  - `selected`: Pre-selecciona la opción en modo no controlado (boolean)
-- `variant`: Variante visual (`'default'` | `'outline'` | `'filled'` | `'minimal'` | `'custom'`). `'small'` sigue siendo válido por compatibilidad (equivale a `size='sm'`)
-- `size`: Tamaño (`'sm'` | `'md'` | `'lg'`). Default: `'md'`
-- `icon`: Icono en el lado izquierdo (ReactNode)
-- `value`: Valor seleccionado (controlado)
-- `onChange`: Handler de cambio
-- `error`: Estado de error. Si es `string` muestra el mensaje; si es `true` solo aplica estilos de error
-- `helperText`: Texto de ayuda (se muestra si no hay `error` string)
-- `required`: Muestra asterisco `*` en el label (boolean)
-- `disabled`: Deshabilita el select
-- `className`: Clases adicionales
-- `id`: ID del select (auto-generado si no se provee)
+- `options`: Array of options:
+  - `value`: Option value (string | number)
+  - `label`: Display text
+  - `disabled`: Disables the option (boolean)
+  - `selected`: Pre-selects the option in uncontrolled mode (boolean)
+- `variant`: Visual variant (`'default'` | `'outline'` | `'filled'` | `'minimal'` | `'custom'`). `'small'` is still accepted for backward compatibility (equivalent to `size='sm'`)
+- `size`: Size (`'sm'` | `'md'` | `'lg'`). Default: `'md'`
+- `icon`: Icon on the left side (ReactNode)
+- `value`: Selected value (controlled)
+- `onChange`: Change handler
+- `error`: Error state. A `string` shows the message; `true` only applies error styles
+- `helperText`: Helper text (shown when there is no `error` string)
+- `required`: Shows a `*` on the label (boolean)
+- `disabled`: Disables the select
+- `className`: Extra classes
+- `id`: Select ID (auto-generated if omitted)
+
+> The native dropdown list follows the active theme via `color-scheme`, so it no
+> longer opens with the system's light colors (or white-on-white on Chrome for
+> Windows/Linux) when the app is in dark mode.
 
 ---
 
@@ -363,105 +373,105 @@ Props:
 <Table
   columns={[
     { header: 'ID', align: 'center', width: 60 },
-    { header: 'Nombre', className: 'font-bold', sticky: true },
+    { header: 'Name', className: 'font-bold', sticky: true },
     { header: 'Email' },
-    { header: 'Ventas', key: 'ventas', sortable: true, align: 'right' },
+    { header: 'Sales', key: 'sales', sortable: true, align: 'right' },
   ]}
   rows={[
-    ['1', 'Juan', 'juan@ejemplo.com', '$1,200'],
-    ['2', 'María', 'maria@ejemplo.com', '$3,400'],
+    ['1', 'John', 'john@example.com', '$1,200'],
+    ['2', 'Mary', 'mary@example.com', '$3,400'],
   ]}
   variant="striped"
   size="sm"
   rounded
   shadow
-  onRowClick={(index) => console.log('Click fila', index)}
-  sortState={{ key: 'ventas', direction: 'desc' }}
-  onSort={(key) => console.log('Ordenar por', key)}
+  onRowClick={(index) => console.log('Row click', index)}
+  sortState={{ key: 'sales', direction: 'desc' }}
+  onSort={(key) => console.log('Sort by', key)}
 />
 ```
 
-#### Variantes
+#### Variants
 
-| Variante | Descripción |
+| Variant | Description |
 |----------|-------------|
-| `default` | Fondo blanco con divisores horizontales y hover gris |
-| `striped` | Filas alternas gris/blanco con hover azul |
-| `bordered` | Bordes en todas las celdas |
-| `minimal` | Sin fondos, solo línea inferior en header y celdas |
-| `ghost` | Sin fondos, borde inferior doble en header, divisores sutiles |
-| `card` | Header con fondo suave, divisores finos entre filas |
-| `accent` | Header azul (`bg-blue-600`) con texto blanco |
-| `dark` | Header oscuro (`bg-gray-800`) con texto claro |
-| `custom` | Sin estilos predefinidos, control total vía clases |
+| `default` | White background with horizontal dividers and gray hover |
+| `striped` | Alternating gray/white rows with blue hover |
+| `bordered` | Borders on every cell |
+| `minimal` | No backgrounds, just a bottom line on header and cells |
+| `ghost` | No backgrounds, double bottom border on header, subtle dividers |
+| `card` | Header with a soft background, thin dividers between rows |
+| `accent` | Blue header (`bg-blue-600`) with white text |
+| `dark` | Dark header (`bg-gray-800`) with light text |
+| `custom` | No predefined styles, full control via classes |
 
 #### ColumnDef
 
 ```tsx
 interface ColumnDef {
-  header: ReactNode;           // Contenido del encabezado
-  className?: string;          // Clase para th y td de esta columna
+  header: ReactNode;           // Header content
+  className?: string;          // Class for this column's th and td
   align?: 'left' | 'center' | 'right';
-  width?: string | number;     // Ancho fijo (px, %, rem…)
-  minWidth?: string | number;  // Ancho mínimo
-  sticky?: boolean;            // Fija la columna a la izquierda en scroll horizontal
-  thStyle?: CSSProperties;     // Estilos inline solo para <th>
-  tdStyle?: CSSProperties;     // Estilos inline solo para <td>
-  sortable?: boolean;          // Muestra indicador de ordenación (requiere key)
-  key?: string;                // Clave usada en sortState y onSort
+  width?: string | number;     // Fixed width (px, %, rem…)
+  minWidth?: string | number;  // Minimum width
+  sticky?: boolean;            // Pins the column to the left on horizontal scroll
+  thStyle?: CSSProperties;     // Inline styles for <th> only
+  tdStyle?: CSSProperties;     // Inline styles for <td> only
+  sortable?: boolean;          // Shows a sort indicator (requires key)
+  key?: string;                // Key used in sortState and onSort
 }
 ```
 
 #### Props
 
-- `columns`: Array de `ColumnDef` o strings/ReactNode simples
-- `rows`: Datos del cuerpo (`ReactNode[][]`)
-- `variant`: Variante visual (ver tabla arriba). Default: `'default'`
-- `size`: Tamaño de padding (`'sm'` | `'md'` | `'lg'`). Default: `'md'`
-- `className`: Clases adicionales para el wrapper `<div>`
-- `tableClassName`: Clases adicionales para el `<table>`
-- `thClassName`: Clases adicionales para cada `<th>`
-- `tdClassName`: Clases adicionales para cada `<td>`
-- `trClassName`: Clases por fila (`string` | `(rowIndex: number) => string`)
-- `emptyState`: Contenido cuando no hay datos (ReactNode)
-- `onRowClick`: Callback al hacer click en una fila (`(rowIndex) => void`)
-- `hideHeader`: Oculta el `<thead>` (boolean)
-- `style`: Estilos inline para el `<table>`
-- `stickyHeader`: Fija el `<thead>` al hacer scroll vertical (boolean)
-- `caption`: Caption accesible renderizado en `<caption>`
-- `footerRows`: Filas del `<tfoot>` (`ReactNode[][]`)
-- `loading`: Muestra esqueleto animado en lugar de filas (boolean)
-- `loadingRows`: Número de filas esqueleto cuando `loading=true`. Default: `4`
-- `getRowStyle`: Estilo inline por fila (`(rowIndex: number) => CSSProperties`)
-- `rounded`: Agrega `rounded-lg` al wrapper (boolean)
-- `shadow`: Agrega sombra al wrapper (boolean)
-- `hoverable`: Desactiva el efecto hover si es `false`. Default: `true`
-- `sortState`: Estado de ordenación activo (`{ key: string, direction: 'asc' | 'desc' }`)
-- `onSort`: Callback al hacer click en un `<th>` sortable (`(key: string) => void`)
+- `columns`: Array of `ColumnDef` or plain strings/ReactNode
+- `rows`: Body data (`ReactNode[][]`)
+- `variant`: Visual variant (see table above). Default: `'default'`
+- `size`: Padding size (`'sm'` | `'md'` | `'lg'`). Default: `'md'`
+- `className`: Extra classes for the wrapper `<div>`
+- `tableClassName`: Extra classes for the `<table>`
+- `thClassName`: Extra classes for each `<th>`
+- `tdClassName`: Extra classes for each `<td>`
+- `trClassName`: Classes per row (`string` | `(rowIndex: number) => string`)
+- `emptyState`: Content shown when there is no data (ReactNode)
+- `onRowClick`: Callback when a row is clicked (`(rowIndex) => void`)
+- `hideHeader`: Hides the `<thead>` (boolean)
+- `style`: Inline styles for the `<table>`
+- `stickyHeader`: Pins the `<thead>` on vertical scroll (boolean)
+- `caption`: Accessible caption rendered in `<caption>`
+- `footerRows`: `<tfoot>` rows (`ReactNode[][]`)
+- `loading`: Shows an animated skeleton instead of rows (boolean)
+- `loadingRows`: Number of skeleton rows when `loading=true`. Default: `4`
+- `getRowStyle`: Inline style per row (`(rowIndex: number) => CSSProperties`)
+- `rounded`: Adds `rounded-lg` to the wrapper (boolean)
+- `shadow`: Adds a shadow to the wrapper (boolean)
+- `hoverable`: Disables the hover effect when `false`. Default: `true`
+- `sortState`: Active sort state (`{ key: string, direction: 'asc' | 'desc' }`)
+- `onSort`: Callback when a sortable `<th>` is clicked (`(key: string) => void`)
 
-#### Ejemplos adicionales
+#### Additional examples
 
 ```tsx
-{/* Con loading skeleton */}
-<Table columns={['Nombre', 'Email', 'Rol']} rows={[]} loading loadingRows={5} />
+{/* With loading skeleton */}
+<Table columns={['Name', 'Email', 'Role']} rows={[]} loading loadingRows={5} />
 
-{/* Con footer de totales */}
+{/* With totals footer */}
 <Table
-  columns={['Producto', 'Cantidad', 'Total']}
-  rows={[['Teclado', '2', '$60'], ['Mouse', '3', '$45']]}
+  columns={['Product', 'Quantity', 'Total']}
+  rows={[['Keyboard', '2', '$60'], ['Mouse', '3', '$45']]}
   footerRows={[['', 'Total', '$105']]}
   variant="card"
   rounded
   shadow
 />
 
-{/* Header fijo + columna sticky + sort */}
+{/* Sticky header + sticky column + sort */}
 <Table
   columns={[
     { header: '#', sticky: true, width: 50 },
-    { header: 'Nombre', sticky: true },
-    { header: 'Fecha', key: 'fecha', sortable: true },
-    { header: 'Monto', key: 'monto', sortable: true, align: 'right' },
+    { header: 'Name', sticky: true },
+    { header: 'Date', key: 'date', sortable: true },
+    { header: 'Amount', key: 'amount', sortable: true, align: 'right' },
   ]}
   rows={data}
   stickyHeader
@@ -469,9 +479,9 @@ interface ColumnDef {
   onSort={(key) => setSort(prev => ({ key, direction: prev?.key === key && prev.direction === 'asc' ? 'desc' : 'asc' }))}
 />
 
-{/* Filas coloreadas dinámicamente */}
+{/* Dynamically colored rows */}
 <Table
-  columns={['Estado', 'Mensaje']}
+  columns={['Level', 'Message']}
   rows={logs.map(l => [l.level, l.message])}
   getRowStyle={(i) => logs[i].level === 'error' ? { background: '#fef2f2' } : {}}
   variant="minimal"
@@ -487,7 +497,7 @@ const modalRef = useRef<ModalRef>(null);
 
 <Modal
   ref={modalRef}
-  title="Confirmar acción"
+  title="Confirm action"
   size="md"
   variant="danger"
   closeOnBackdrop
@@ -496,20 +506,20 @@ const modalRef = useRef<ModalRef>(null);
   footer={
     <>
       <Button variant="secondary" onClick={() => modalRef.current?.handleClose()}>
-        Cancelar
+        Cancel
       </Button>
       <Button variant="danger" onClick={handleConfirm}>
-        Eliminar
+        Delete
       </Button>
     </>
   }
 >
-  <p>¿Estás seguro de que deseas continuar?</p>
+  <p>Are you sure you want to continue?</p>
 </Modal>
 
-{/* Con title como ReactNode */}
+{/* With title as ReactNode */}
 <Modal
-  title={<span className="flex items-center gap-2"><InfoIcon className="w-5 h-5" /> Información</span>}
+  title={<span className="flex items-center gap-2"><InfoIcon className="w-5 h-5" /> Information</span>}
   size="lg"
   onClose={onClose}
 >
@@ -517,18 +527,18 @@ const modalRef = useRef<ModalRef>(null);
 </Modal>
 ```
 
-#### Variantes de header
+#### Header variants
 
-| Variante | Descripción |
+| Variant | Description |
 |----------|-------------|
-| `default` | Header gris neutro |
-| `danger` | Header rojo para acciones destructivas |
-| `success` | Header verde para confirmaciones positivas |
-| `warning` | Header amarillo para advertencias |
+| `default` | Neutral gray header |
+| `danger` | Red header for destructive actions |
+| `success` | Green header for positive confirmations |
+| `warning` | Yellow header for warnings |
 
-#### Tamaños
+#### Sizes
 
-| Size | Ancho máximo |
+| Size | Max width |
 |------|-------------|
 | `sm` | `max-w-sm` |
 | `md` | `max-w-md` |
@@ -537,27 +547,27 @@ const modalRef = useRef<ModalRef>(null);
 | `full` | `95vw` |
 
 Props:
-- `title`: Título del modal (string | ReactNode)
-- `children`: Contenido
-- `footer`: Contenido del pie
-- `onClose`: Handler al cerrar
-- `size`: Tamaño predefinido (`'sm'` | `'md'` | `'lg'` | `'xl'` | `'full'`)
-- `maxWidth`: Clase de ancho personalizada (deprecated, usar `size`)
-- `variant`: Estilo del header (`'default'` | `'danger'` | `'success'` | `'warning'`)
-- `closeOnBackdrop`: Cierra al hacer click fuera del modal (boolean, default: `false`)
-- `closeOnEsc`: Cierra al presionar Escape (boolean, default: `false`)
-- `showCloseButton`: Muestra botón de cerrar (boolean, default: `true`)
-- `zIndex`: Z-index del modal (number, default: `50`)
+- `title`: Modal title (string | ReactNode)
+- `children`: Content
+- `footer`: Footer content
+- `onClose`: Close handler
+- `size`: Predefined size (`'sm'` | `'md'` | `'lg'` | `'xl'` | `'full'`)
+- `maxWidth`: Custom width class (deprecated, use `size`)
+- `variant`: Header style (`'default'` | `'danger'` | `'success'` | `'warning'`)
+- `closeOnBackdrop`: Close when clicking outside the modal (boolean, default: `false`)
+- `closeOnEsc`: Close when pressing Escape (boolean, default: `false`)
+- `showCloseButton`: Shows a close button (boolean, default: `true`)
+- `zIndex`: Modal z-index (number, default: `50`)
 
-Métodos del ref (`ModalRef`):
-- `handleClose()`: Cierra el modal con animación
+Ref methods (`ModalRef`):
+- `handleClose()`: Closes the modal with an animation
 
 ---
 
 ### Loading
 
 ```tsx
-<Loading variant="spinner" size="large" color="primary" label="Cargando..." />
+<Loading variant="spinner" size="large" color="primary" label="Loading..." />
 
 <Loading variant="dots" size="medium" color="white" />
 <Loading variant="pulse" size="small" color="success" />
@@ -565,30 +575,30 @@ Métodos del ref (`ModalRef`):
 <Loading variant="ring" color="warning" />
 <Loading variant="cube" size="large" />
 
-{/* Overlay sobre el contenedor (el padre debe tener position: relative) */}
+{/* Overlay over the container (the parent must be position: relative) */}
 <div className="relative h-48">
-  <MiContenido />
-  {cargando && <Loading overlay variant="ring" color="primary" />}
+  <MyContent />
+  {loading && <Loading overlay variant="ring" color="primary" />}
 </div>
 
-{/* Overlay de página completa */}
-{cargando && <Loading fullPage label="Procesando..." />}
+{/* Full-page overlay */}
+{loading && <Loading fullPage label="Processing..." />}
 ```
 
 Props:
-- `variant`: Variante del loader (`'spinner'` | `'dots'` | `'pulse'` | `'bars'` | `'ring'` | `'cube'`)
-- `size`: Tamaño (`'small'` | `'medium'` | `'large'` | `'xl'`)
+- `variant`: Loader variant (`'spinner'` | `'dots'` | `'pulse'` | `'bars'` | `'ring'` | `'cube'`)
+- `size`: Size (`'small'` | `'medium'` | `'large'` | `'xl'`)
 - `color`: Color (`'primary'` | `'white'` | `'gray'` | `'success'` | `'danger'` | `'warning'`)
-- `label`: Texto debajo del icono
-- `overlay`: Cubre el contenedor más cercano con `position: relative` con fondo semitransparente (boolean)
-- `fullPage`: Overlay `fixed` que cubre toda la pantalla (`z-50`) (boolean)
-- `className`: Clases adicionales
+- `label`: Text below the icon
+- `overlay`: Covers the nearest `position: relative` container with a semi-transparent background (boolean)
+- `fullPage`: `fixed` overlay covering the whole screen (`z-50`) (boolean)
+- `className`: Extra classes
 
 ---
 
-## Iconos SVG
+## SVG Icons
 
-La biblioteca incluye más de 80 iconos SVG:
+The library ships more than 80 SVG icons:
 
 ```tsx
 import {
@@ -603,10 +613,10 @@ import {
   CheckIcon,
   ArrowLeftIcon,
   ArrowRightIcon,
-  // ... y muchos más
+  // ... and many more
 } from 'neogestify-ui-components';
 
-function MiComponente() {
+function MyComponent() {
   return (
     <div>
       <HomeIcon className="w-6 h-6 text-blue-500" />
@@ -616,7 +626,7 @@ function MiComponente() {
 }
 ```
 
-**Lista completa de iconos:**
+**Full icon list:**
 
 - SpinnerIcon, AnimateSpin, GearIcon, CheckIcon, BackIcon
 - NotFoundIcon, BoxIcon, ChartIcon, UsersIcon, DocumentIcon
@@ -639,7 +649,7 @@ function MiComponente() {
 
 ---
 
-## Alertas (SweetAlert2)
+## Alerts (SweetAlert2)
 
 ```tsx
 import {
@@ -649,70 +659,70 @@ import {
   AlertaConfirmacion,
   AlertaToast,
   AlertaInfo,
-  Alerta, // función genérica
+  Alerta, // generic function
 } from 'neogestify-ui-components';
 
-function MiComponente() {
-  const handleGuardar = async () => {
-    await guardarDatos();
-    AlertaExito('¡Guardado!', 'Los datos se guardaron correctamente');
+function MyComponent() {
+  const handleSave = async () => {
+    await saveData();
+    AlertaExito('Saved!', 'The data was saved successfully');
   };
 
   const handleError = () => {
-    AlertaError('Error', 'No se pudieron guardar los datos');
+    AlertaError('Error', 'The data could not be saved');
   };
 
-  const handleAdvertencia = () => {
+  const handleWarning = () => {
     AlertaAdvertencia(
-      '¿Estás seguro?',
-      'Esta acción no se puede deshacer',
-      async () => { await eliminarDatos(); }
+      'Are you sure?',
+      'This action cannot be undone',
+      async () => { await deleteData(); }
     );
   };
 
-  const handleConfirmacion = () => {
+  const handleConfirm = () => {
     AlertaConfirmacion(
-      '¿Continuar?',
-      '¿Deseas proceder con la acción?',
-      () => { console.log('Confirmado'); },
-      () => { console.log('Cancelado'); }
+      'Continue?',
+      'Do you want to proceed with the action?',
+      () => { console.log('Confirmed'); },
+      () => { console.log('Cancelled'); }
     );
   };
 
   const handleToast = () => {
-    AlertaToast('Éxito', 'Operación completada', 'success', 3000, 'top-end');
+    AlertaToast('Success', 'Operation completed', 'success', 3000, 'top-end');
   };
 
   return (
-    <Button variant="danger" onClick={handleAdvertencia}>
-      Eliminar
+    <Button variant="danger" onClick={handleWarning}>
+      Delete
     </Button>
   );
 }
 ```
 
-### Funciones disponibles
+### Available functions
 
-| Función | Descripción |
+| Function | Description |
 |---------|-------------|
-| `Alerta(options)` | Función genérica con todas las opciones |
-| `AlertaExito(title, text, onConfirm?, options?)` | Alerta de éxito |
-| `AlertaError(title, text, onConfirm?, options?)` | Alerta de error |
-| `AlertaInfo(title, text, onConfirm?, options?)` | Alerta informativa |
-| `AlertaAdvertencia(title, text, onConfirm?, onCancel?, options?)` | Alerta de advertencia |
-| `AlertaConfirmacion(title, text, onConfirm?, onCancel?, options?)` | Alerta de confirmación |
-| `AlertaToast(title, text, icon?, timer?, position?)` | Notificación toast |
+| `Alerta(options)` | Generic function with all options |
+| `AlertaExito(title, text, onConfirm?, options?)` | Success alert |
+| `AlertaError(title, text, onConfirm?, options?)` | Error alert |
+| `AlertaInfo(title, text, onConfirm?, options?)` | Info alert |
+| `AlertaAdvertencia(title, text, onConfirm?, onCancel?, options?)` | Warning alert |
+| `AlertaConfirmacion(title, text, onConfirm?, onCancel?, options?)` | Confirmation alert |
+| `AlertaToast(title, text, icon?, timer?, position?)` | Toast notification |
 
-### Opciones de Alerta genérica
+### Generic Alerta options
 
 ```tsx
 Alerta({
-  title: 'Título',
-  text: 'Descripción',
+  title: 'Title',
+  text: 'Description',
   icon: 'success' | 'error' | 'warning' | 'info' | 'question',
-  confirmButtonText: 'Aceptar',
+  confirmButtonText: 'OK',
   showCancelButton: true,
-  cancelButtonText: 'Cancelar',
+  cancelButtonText: 'Cancel',
   showDenyButton: true,
   denyButtonText: 'No',
   onConfirm: () => {},
@@ -726,37 +736,37 @@ Alerta({
   input: 'text' | 'email' | 'password' | 'number' | 'textarea' | 'select',
   inputLabel: 'Label',
   inputPlaceholder: 'Placeholder',
-  inputValue: 'Valor inicial',
+  inputValue: 'Initial value',
   inputValidator: (value) => null | 'Error message',
 });
 ```
 
 ---
 
-## InfoAlert (Componente)
+## InfoAlert (Component)
 
-Botón con ícono de interrogación que dispara un popup informativo con SweetAlert2 al hacer click:
+A button with a question-mark icon that opens an informational SweetAlert2 popup when clicked:
 
 ```tsx
 import { InfoAlert } from 'neogestify-ui-components';
 
-<InfoAlert title="Info" text="Este es un mensaje informativo" />
+<InfoAlert title="Info" text="This is an informational message" />
 ```
 
 Props:
-- `title`: Título del popup (string, requerido)
-- `text`: Mensaje del popup (string, requerido)
+- `title`: Popup title (string, required)
+- `text`: Popup message (string, required)
 
 ---
 
-## Sistema de Tema
+## Theme System
 
-### 1. Configurar el ThemeProvider
+### 1. Set up the ThemeProvider
 
-Envuelve tu aplicación con el `ThemeProvider`:
+Wrap your app with `ThemeProvider`:
 
 ```tsx
-// main.tsx o App.tsx
+// main.tsx or App.tsx
 import { ThemeProvider } from 'neogestify-ui-components';
 
 function Main() {
@@ -768,23 +778,23 @@ function Main() {
 }
 ```
 
-El provider aplica al `<html>`: la clase `.dark`, el atributo `data-theme` y la
-propiedad CSS **`color-scheme`**. Esta última es la que hace que los controles
-nativos (la lista desplegable de un `<select>`, el calendario de un `<input
-type="date">`, las barras de desplazamiento) se pinten en oscuro; sin ella el
-desplegable se abría con los colores claros del sistema —y en Chrome sobre
-Windows/Linux, con texto blanco sobre fondo blanco.
+The provider applies three things to `<html>`: the `.dark` class, the
+`data-theme` attribute and the CSS **`color-scheme`** property. The last one is
+what makes *native* controls (a `<select>`'s dropdown list, an `<input
+type="date">`'s calendar, scrollbars) render in dark; without it the dropdown
+opened with the system's light colors — and on Chrome for Windows/Linux, as
+white text on a white background.
 
-Es seguro en SSR: no toca `localStorage` durante el render, así que no rompe la
-hidratación en Next.js. Además sincroniza el tema entre pestañas abiertas.
+It is SSR-safe: it doesn't touch `localStorage` during render, so it won't break
+hydration in Next.js. It also syncs the theme across open tabs.
 
-| Prop | Tipo | Default | Descripción |
+| Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `defaultTheme` | `'light' \| 'dark'` | `'light'` | Tema del primer render (y de SSR) |
-| `enableSystem` | `boolean` | `true` | Sin tema guardado, usa `prefers-color-scheme` |
-| `storageKey` | `string` | `'theme'` | Clave de `localStorage` |
+| `defaultTheme` | `'light' \| 'dark'` | `'light'` | Theme for the first render (and SSR) |
+| `enableSystem` | `boolean` | `true` | With no stored theme, use `prefers-color-scheme` |
+| `storageKey` | `string` | `'theme'` | `localStorage` key |
 
-### 2. Usar el ThemeToggle
+### 2. Use the ThemeToggle
 
 ```tsx
 import { ThemeToggle } from 'neogestify-ui-components';
@@ -798,34 +808,37 @@ function Header() {
 }
 ```
 
-### 3. Usar el hook useTheme
+### 3. Use the useTheme hook
 
 ```tsx
 import { useTheme } from 'neogestify-ui-components';
 
-function MiComponente() {
+function MyComponent() {
   const { theme, toggleTheme, setTheme } = useTheme();
 
   return (
     <div>
-      <p>Tema actual: {theme}</p>
-      <button onClick={toggleTheme}>Cambiar tema</button>
-      <button onClick={() => setTheme('dark')}>Modo oscuro</button>
-      <button onClick={() => setTheme('light')}>Modo claro</button>
+      <p>Current theme: {theme}</p>
+      <button onClick={toggleTheme}>Toggle theme</button>
+      <button onClick={() => setTheme('dark')}>Dark mode</button>
+      <button onClick={() => setTheme('light')}>Light mode</button>
     </div>
   );
 }
 ```
 
-El tema se guarda automáticamente en `localStorage` y se aplica al cargar la página.
+The theme is saved to `localStorage` automatically and applied on page load.
 
 ---
 
 ## VenueMapEditor
 
-Editor de mapas de recintos interactivo basado en SVG puro. Permite diseñar la planta de cualquier espacio (restaurantes, parqueaderos, estadios, oficinas, eventos, etc.) con herramientas de dibujo de paredes, colocación de objetos, múltiples plantas y sistema de librerías de elementos personalizados.
+Interactive venue map editor built on pure SVG. It lets you design the floor
+plan of any space (restaurants, parking lots, stadiums, offices, events, etc.)
+with wall-drawing tools, object placement, multiple floors and a custom element
+library system.
 
-### Importación
+### Import
 
 ```tsx
 import {
@@ -840,27 +853,28 @@ import type {
 } from 'neogestify-ui-components';
 ```
 
-### Uso básico
+### Basic usage
 
-El componente funciona sin ninguna prop — crea un mapa vacío con una planta por defecto:
+The component works with no props — it creates an empty map with a default floor:
 
 ```tsx
 <VenueMapEditor />
 ```
 
-Con configuración mínima:
+With minimal configuration:
 
 ```tsx
 <VenueMapEditor
   width="100%"
   height="700px"
-  onChange={(map) => console.log('Mapa actualizado:', map)}
+  onChange={(map) => console.log('Map updated:', map)}
 />
 ```
 
-### Cargar y guardar un mapa desde código
+### Loading and saving a map from code
 
-El prop `initialMap` acepta un `VenueMap`. Cuando el valor cambia por referencia, el editor reinicia su historial al nuevo mapa.
+The `initialMap` prop accepts a `VenueMap`. When the value changes by reference,
+the editor resets its history to the new map.
 
 ```tsx
 import { useState, useEffect } from 'react';
@@ -896,48 +910,86 @@ function App() {
 
 ### Props
 
-| Prop | Tipo | Default | Descripción |
+| Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `initialMap` | `VenueMap` | mapa vacío | Mapa inicial |
-| `onChange` | `(map: VenueMap) => void` | — | Callback en cada cambio |
-| `domainConfigs` | `DomainConfig[]` | `[]` | Catálogos de tipos predefinidos |
-| `domainConfig` | `DomainConfig` | — | **Obsoleto** — usa `domainConfigs` |
-| `libraryStorageKey` | `string` | `'venueMapEditor:libraries'` | Clave de localStorage |
-| `width` | `string \| number` | `'100%'` | Ancho |
-| `height` | `string \| number` | `'600px'` | Alto |
-| `gridSize` | `number` | `20` | Tamaño de cuadrícula |
-| `showGrid` | `boolean` | `true` | Mostrar cuadrícula |
-| `snapToGrid` | `boolean` | `false` | Snap a cuadrícula |
-| `readOnly` | `boolean` | `false` | Modo lectura (edición deshabilitada) |
-| `fixed` | `boolean` | `false` | Modo lectura + oculta toolbar |
-| `elementStatus` | `ElementStatus[]` | — | Estados visuales por elemento |
-| `onElementClick` | `(el: MapElement) => void` | — | Click genérico |
-| `onElementTypeClick` | `Record<string, (el: MapElement) => void>` | — | Click por tipo |
-| `theme` | `'auto' \| 'light' \| 'dark'` | `'auto'` | Tema del editor (ver abajo) |
-| `className` | `string` | — | Clases extra para el contenedor raíz |
+| `initialMap` | `VenueMap` | empty map | Initial map |
+| `onChange` | `(map: VenueMap) => void` | — | Callback on every change |
+| `domainConfigs` | `DomainConfig[]` | `[]` | Built-in type catalogs |
+| `domainConfig` | `DomainConfig` | — | **Deprecated** — use `domainConfigs` |
+| `libraryStorageKey` | `string` | `'venueMapEditor:libraries'` | localStorage key |
+| `width` | `string \| number` | `'100%'` | Width |
+| `height` | `string \| number` | `'600px'` | Height |
+| `gridSize` | `number` | `20` | Grid size |
+| `showGrid` | `boolean` | `true` | Show the grid |
+| `snapToGrid` | `boolean` | `false` | Snap to grid |
+| `readOnly` | `boolean` | `false` | Read-only mode (editing disabled) |
+| `fixed` | `boolean` | `false` | Read-only + hides the toolbar |
+| `containment` | `'full' \| 'center' \| 'none'` | `'full'` | Map collision — how elements are kept inside the floor (see below) |
+| `elementStatus` | `ElementStatus[]` | — | Visual statuses per element |
+| `onElementClick` | `(el: MapElement) => void` | — | Generic click |
+| `onElementTypeClick` | `Record<string, (el: MapElement) => void>` | — | Click per type |
+| `theme` | `'auto' \| 'light' \| 'dark'` | `'auto'` | Editor theme (see below) |
+| `className` | `string` | — | Extra classes for the root container |
 
-### Tema claro / oscuro
+### Collision with the map (`containment`)
 
-El editor completo — barra, pestañas, panel de propiedades y **lienzo SVG** —
-sigue el tema activo.
+Elements are kept inside the **floor area** — the collision is against the map,
+not between elements (elements may overlap each other freely). The check is
+**rotation-aware**: it uses the element's real footprint, not its unrotated box,
+so a rotated element can't poke a corner outside the floor.
 
-Con `theme="auto"` (por defecto) se detecta el tema del documento y se reacciona
-a los cambios en vivo, en este orden:
-
-1. Clase `.dark` en `<html>` (lo que aplica el `ThemeProvider` de esta librería).
-2. Atributo `data-theme="dark"`.
-3. `prefers-color-scheme` del sistema.
+| Mode | Behavior |
+|------|----------|
+| `'full'` (default) | The element's whole footprint stays inside the floor. Not even a corner can leave. |
+| `'center'` | Only the element's center must stay inside; it may overhang the edges (useful for point-like icons). |
+| `'none'` | No containment; elements can be placed anywhere. |
 
 ```tsx
-// Sigue al tema de la página
-<VenueMapEditor initialMap={mapa} />
+// Keep the whole element inside the floor (default)
+<VenueMapEditor containment="full" />
 
-// Fuerza oscuro aunque la página esté en claro
-<VenueMapEditor initialMap={mapa} theme="dark" />
+// Allow elements to overhang the edge
+<VenueMapEditor containment="center" />
 ```
 
-Los colores del lienzo (fondo, rejilla, planta, paredes, selección) se exponen
-por si necesitas pintar controles propios a juego:
+Containment applies to every position change: dragging, arrow-key nudging,
+placing, duplicating, rotating and typing coordinates into the properties panel.
+On a rectangular floor the fit is exact; on a polygon floor the element is pushed
+back onto the perimeter (exact for convex shapes, best-effort for concave ones).
+
+The geometry helpers are exported for advanced use:
+
+```tsx
+import {
+  containToFloor,     // clamp an element to a floor area
+  elementFootprint,   // rotation-aware AABB of an element
+  elementCorners,     // the four rotated corners
+  pointInPolygon,
+} from 'neogestify-ui-components';
+```
+
+### Light / dark theme
+
+The whole editor — toolbar, tabs, properties panel and the **SVG canvas** —
+follows the active theme.
+
+With `theme="auto"` (default) it detects the document's theme and reacts to live
+changes, in this order:
+
+1. `.dark` class on `<html>` (what this library's `ThemeProvider` applies).
+2. `data-theme="dark"` attribute.
+3. The system's `prefers-color-scheme`.
+
+```tsx
+// Follows the page theme
+<VenueMapEditor initialMap={map} />
+
+// Force dark even if the page is light
+<VenueMapEditor initialMap={map} theme="dark" />
+```
+
+The canvas colors (background, grid, floor, walls, selection) are exposed in case
+you need to paint your own matching controls:
 
 ```tsx
 import { useVenueTheme, VENUE_PALETTES } from 'neogestify-ui-components';
@@ -946,63 +998,63 @@ const theme = useVenueTheme('auto');      // 'light' | 'dark'
 const palette = VENUE_PALETTES[theme];    // { canvasBg, gridMinor, accent, ... }
 ```
 
-### Modo Viewer
+### Viewer mode
 
-`VenueMapViewer` es un alias de `VenueMapEditor` con `fixed={true}`:
+`VenueMapViewer` is an alias of `VenueMapEditor` with `fixed={true}`:
 
 ```tsx
 import { VenueMapViewer } from 'neogestify-ui-components';
 import type { ElementStatus } from 'neogestify-ui-components';
 
-const estados: ElementStatus[] = [
-  { elementId: 'mesa-1', status: 'occupied' },
-  { elementId: 'mesa-2', status: 'free' },
-  { elementId: 'mesa-3', status: 'reserved' },
+const statuses: ElementStatus[] = [
+  { elementId: 'table-1', status: 'occupied' },
+  { elementId: 'table-2', status: 'free' },
+  { elementId: 'table-3', status: 'reserved' },
 ];
 
 <VenueMapViewer
   initialMap={myMap}
-  elementStatus={estados}
+  elementStatus={statuses}
   onElementTypeClick={{
-    TABLE_ROUND: (el) => abrirReserva(el.id),
-    TABLE_RECT: (el) => abrirReserva(el.id),
+    TABLE_ROUND: (el) => openReservation(el.id),
+    TABLE_RECT: (el) => openReservation(el.id),
   }}
 />
 ```
 
-### Múltiples catálogos (domainConfigs)
+### Multiple catalogs (domainConfigs)
 
 ```tsx
-const mobiliario: DomainConfig = {
+const furniture: DomainConfig = {
   id: 'furniture',
-  name: 'Mobiliario',
+  name: 'Furniture',
   elementTypes: [
-    { id: 'CHAIR', label: 'Silla', shape: 'circle', defaultWidth: 30, defaultHeight: 30, color: '#fef3c7', strokeColor: '#d97706' },
-    { id: 'TABLE_RECT', label: 'Mesa rect.', shape: 'rect', defaultWidth: 100, defaultHeight: 60, color: '#fef3c7', strokeColor: '#d97706' },
+    { id: 'CHAIR', label: 'Chair', shape: 'circle', defaultWidth: 30, defaultHeight: 30, color: '#fef3c7', strokeColor: '#d97706' },
+    { id: 'TABLE_RECT', label: 'Rect. table', shape: 'rect', defaultWidth: 100, defaultHeight: 60, color: '#fef3c7', strokeColor: '#d97706' },
   ],
 };
 
-const iluminacion: DomainConfig = {
+const lighting: DomainConfig = {
   id: 'lighting',
-  name: 'Iluminación',
+  name: 'Lighting',
   elementTypes: [
-    { id: 'SPOT_LIGHT', label: 'Foco', shape: 'circle', defaultWidth: 40, defaultHeight: 40, color: '#fef9c3', strokeColor: '#ca8a04' },
+    { id: 'SPOT_LIGHT', label: 'Spotlight', shape: 'circle', defaultWidth: 40, defaultHeight: 40, color: '#fef9c3', strokeColor: '#ca8a04' },
   ],
 };
 
-<VenueMapEditor domainConfigs={[mobiliario, iluminacion]} />
+<VenueMapEditor domainConfigs={[furniture, lighting]} />
 ```
 
-### Formato JSON de librería
+### Library JSON format
 
 ```json
 {
-  "grupoDeMesas": {
-    "name": "Mesas de restaurante",
+  "tableGroup": {
+    "name": "Restaurant tables",
     "objects": [
       {
         "id": "TABLE_ROUND_2",
-        "label": "Mesa 2 pers.",
+        "label": "Table for 2",
         "shape": "circle",
         "defaultWidth": 60,
         "defaultHeight": 60,
@@ -1011,7 +1063,7 @@ const iluminacion: DomainConfig = {
       },
       {
         "id": "TABLE_RECT_4",
-        "label": "Mesa 4 pers.",
+        "label": "Table for 4",
         "shape": "rect",
         "defaultWidth": 110,
         "defaultHeight": 70,
@@ -1023,21 +1075,22 @@ const iluminacion: DomainConfig = {
 }
 ```
 
-### Formas personalizadas
+### Custom shapes
 
-| `shape` | Descripción |
+| `shape` | Description |
 |---------|-------------|
-| `rect` | Rectángulo |
-| `circle` | Elipse/círculo |
-| `arrow` | Flecha |
-| `path` | SVG path personalizado |
-| `svg` | SVG completo inline |
+| `rect` | Rectangle |
+| `circle` | Ellipse/circle |
+| `arrow` | Arrow |
+| `path` | Custom SVG path |
+| `svg` | Full inline SVG |
+| `image` | Raster image (base64 or URL) |
 
-**Shape `path`:**
+**`path` shape:**
 ```json
 {
   "id": "STAR",
-  "label": "Estrella",
+  "label": "Star",
   "shape": "path",
   "svgPath": "M50 5 L61 35 ...",
   "viewBox": "0 0 100 100",
@@ -1048,11 +1101,11 @@ const iluminacion: DomainConfig = {
 }
 ```
 
-**Shape `svg`:**
+**`svg` shape:**
 ```json
 {
   "id": "CAR",
-  "label": "Carro",
+  "label": "Car",
   "shape": "svg",
   "svgMarkup": "<svg viewBox=\"0 0 100 100\"><rect .../></svg>",
   "defaultWidth": 80,
@@ -1062,61 +1115,64 @@ const iluminacion: DomainConfig = {
 }
 ```
 
-### Colores de estado
+### Status colors
 
 | `status` | Color |
 |----------|-------|
-| `free` | Verde claro |
-| `occupied` | Rojo claro |
-| `reserved` | Amarillo |
-| `disabled` | Gris |
+| `free` | Light green |
+| `occupied` | Light red |
+| `reserved` | Yellow |
+| `disabled` | Gray |
 
-### Persistencia de librerías
+### Library persistence
 
-Las librerías importadas se guardan en `localStorage` bajo la clave `libraryStorageKey` (por defecto `'venueMapEditor:libraries'`). Al recargar la página se restauran automáticamente.
+Imported libraries are saved to `localStorage` under the `libraryStorageKey` key
+(default `'venueMapEditor:libraries'`). They are restored automatically on
+reload.
 
-**Merge inteligente al importar:** si un grupo con el mismo `id` ya existe, se añaden únicamente los elementos cuyo `id` no esté duplicado. Los elementos existentes nunca se sobrescriben.
+**Smart merge on import:** if a group with the same `id` already exists, only the
+elements whose `id` is not already present are added. Existing elements are never
+overwritten.
 
 ```tsx
-// Cambiar la clave de almacenamiento (útil con múltiples editores)
-<VenueMapEditor libraryStorageKey="mi-proyecto:libs" />
+// Change the storage key (useful with multiple editors)
+<VenueMapEditor libraryStorageKey="my-project:libs" />
 
-// Deshabilitar persistencia
+// Disable persistence
 <VenueMapEditor libraryStorageKey="" />
 ```
 
-### Propiedades de cada objeto
+### Per-object properties
 
-| Campo | Tipo | Requerido | Descripción |
+| Field | Type | Required | Description |
 |-------|------|-----------|-------------|
-| `id` | `string` | ✓ | Identificador único del tipo |
-| `label` | `string` | ✓ | Nombre visible en la paleta |
-| `shape` | `"rect" \| "circle" \| "arrow" \| "path" \| "svg" \| "image"` | ✓ | Forma del objeto |
-| `defaultWidth` | `number` | ✓ | Ancho inicial (unidades de canvas) |
-| `defaultHeight` | `number` | ✓ | Alto inicial |
-| `color` | `string` | ✓ | Color de relleno (#hex, rgb(), hsl()) |
-| `strokeColor` | `string` | ✓ | Color del borde |
-| `svgPath` | `string` | solo para `shape:"path"` | Atributo `d` del path SVG |
-| `svgMarkup` | `string` | solo para `shape:"svg"` | Markup SVG completo |
-| `imageSrc` | `string` | solo para `shape:"image"` | Imagen en data URI base64 (o URL http(s)) |
-| `preserveAspectRatio` | `string` | — | Ajuste de la imagen en su caja (`"xMidYMid meet"` por defecto) |
-| `viewBox` | `string` | — | Espacio de coordenadas del path |
-| `fillRule` | `"nonzero" \| "evenodd"` | — | Regla de relleno SVG |
+| `id` | `string` | ✓ | Unique type identifier |
+| `label` | `string` | ✓ | Name shown in the palette |
+| `shape` | `"rect" \| "circle" \| "arrow" \| "path" \| "svg" \| "image"` | ✓ | Object shape |
+| `defaultWidth` | `number` | ✓ | Initial width (canvas units) |
+| `defaultHeight` | `number` | ✓ | Initial height |
+| `color` | `string` | ✓ | Fill color (#hex, rgb(), hsl()) |
+| `strokeColor` | `string` | ✓ | Border color |
+| `svgPath` | `string` | `shape:"path"` only | The SVG path's `d` attribute |
+| `svgMarkup` | `string` | `shape:"svg"` only | Full SVG markup |
+| `imageSrc` | `string` | `shape:"image"` only | Image as a base64 data URI (or http(s) URL) |
+| `preserveAspectRatio` | `string` | — | How the image fits its box (`"xMidYMid meet"` by default) |
+| `viewBox` | `string` | — | Coordinate space of the path |
+| `fillRule` | `"nonzero" \| "evenodd"` | — | SVG fill rule |
 
-> **Hitbox de piso:** para formas personalizadas que no llenan su bounding box (estrellas, logos), la detección de bordes usa un cuadrado de lado `min(width, height)` centrado en el elemento.
+### `path` shape in detail
 
-### Shape `path` detallado
-
-El campo `svgPath` acepta el atributo `d` de cualquier `<path>` SVG estándar. El sistema escala la figura para que ocupe exactamente el bounding box `width × height`.
+The `svgPath` field accepts the `d` attribute of any standard SVG `<path>`. The
+system scales the figure so it fills the `width × height` bounding box exactly.
 
 ```json
 {
-  "especiales": {
-    "name": "Especiales",
+  "special": {
+    "name": "Special",
     "objects": [
       {
         "id": "STAR",
-        "label": "Estrella",
+        "label": "Star",
         "shape": "path",
         "viewBox": "0 0 100 100",
         "svgPath": "M50 5 L61 35 L95 35 L68 57 L79 91 L50 70 L21 91 L32 57 L5 35 L39 35 Z",
@@ -1127,7 +1183,7 @@ El campo `svgPath` acepta el atributo `d` de cualquier `<path>` SVG estándar. E
       },
       {
         "id": "GEAR",
-        "label": "Engranaje",
+        "label": "Gear",
         "shape": "path",
         "viewBox": "0 0 100 100",
         "fillRule": "evenodd",
@@ -1142,18 +1198,18 @@ El campo `svgPath` acepta el atributo `d` de cualquier `<path>` SVG estándar. E
 }
 ```
 
-### Shape `image` detallado (imágenes base64)
+### `image` shape in detail (base64 images)
 
-Para usar una imagen real (PNG, JPG, WEBP, GIF, AVIF) como elemento del mapa:
+To use a real image (PNG, JPG, WEBP, GIF, AVIF) as a map element:
 
 ```json
 {
-  "mobiliario": {
-    "name": "Fotos",
+  "furniture": {
+    "name": "Photos",
     "objects": [
       {
-        "id": "SOFA_FOTO",
-        "label": "Sofá",
+        "id": "SOFA_PHOTO",
+        "label": "Sofa",
         "shape": "image",
         "imageSrc": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
         "preserveAspectRatio": "xMidYMid meet",
@@ -1167,62 +1223,63 @@ Para usar una imagen real (PNG, JPG, WEBP, GIF, AVIF) como elemento del mapa:
 }
 ```
 
-| Campo | Descripción |
+| Field | Description |
 |-------|-------------|
-| `imageSrc` | **Data URI en base64** (recomendado) o URL `http(s)` |
-| `preserveAspectRatio` | `'xMidYMid meet'` contener (por defecto) · `'xMidYMid slice'` cubrir recortando · `'none'` estirar |
+| `imageSrc` | **base64 data URI** (recommended) or `http(s)` URL |
+| `preserveAspectRatio` | `'xMidYMid meet'` contain (default) · `'xMidYMid slice'` cover (crops) · `'none'` stretch |
 
-**Por qué base64:** el data URI viaja dentro del JSON de la librería y del mapa
-exportado, así que el mapa se ve igual en cualquier equipo sin depender de un
-servidor de imágenes. El coste es el tamaño: base64 ocupa ~33 % más que el
-archivo original y se duplica en cada mapa que use la librería. Para iconos
-sencillos sale mucho más barato `shape: 'svg'`.
+**Why base64:** the data URI travels inside the library JSON and the exported
+map, so the map looks the same on any machine without relying on an image server.
+The cost is size: base64 is ~33% larger than the original file and is duplicated
+in every map that uses the library. For simple icons `shape: 'svg'` is far
+cheaper.
 
-> **Seguridad:** solo se aceptan `data:image/*` (excepto SVG, que puede contener
-> scripts — para vectores está `shape: 'svg'`, que sí se sanea) y URLs
-> `http(s)`. Cualquier otro esquema se descarta.
+> **Security:** only `data:image/*` (except SVG, which can contain scripts — use
+> `shape: 'svg'` for vectors, which is sanitized) and `http(s)` URLs are
+> accepted. Any other scheme is discarded.
 
-Comportamiento en el editor:
+Editor behavior:
 
-- La imagen se dibuja dentro de la caja del elemento y se puede mover, redimensionar y rotar como cualquier otro.
-- Al **seleccionarla** se resalta con un rectángulo de acento (un `<image>` no admite trazo propio).
-- Los **colores de estado** del modo viewer se aplican como una capa translúcida encima, ya que un bitmap no se puede teñir.
-- Si `imageSrc` falta o no pasa la validación, se dibuja un recuadro punteado con el aviso "Imagen no disponible" en vez de un hueco invisible.
+- The image is drawn inside the element's box and can be moved, resized and rotated like any other element.
+- When **selected** it is highlighted with an accent rectangle (an `<image>` doesn't accept a stroke of its own).
+- Viewer **status colors** are applied as a translucent layer on top, since a bitmap can't be tinted.
+- If `imageSrc` is missing or fails validation, a dashed box with an "Image unavailable" note is drawn instead of an invisible gap.
 
-En el **ElementLibraryBuilder** elige el shape `Image (base64)`: al seleccionar
-un archivo se convierte solo, muestra la vista previa, los KB incrustados y avisa
-si la imagen es demasiado pesada.
+In the **ElementLibraryBuilder** pick the `Image (base64)` shape: selecting a
+file converts it automatically, shows the preview, the embedded KB, and warns if
+the image is too heavy.
 
-### Shape `svg` detallado
+### `svg` shape in detail
 
-El campo `svgMarkup` acepta un **SVG completo** como string. El sistema extrae el `viewBox` del tag `<svg>` y renderiza los elementos internos escalados.
+The `svgMarkup` field accepts a **complete SVG** as a string. The system extracts
+the `viewBox` from the `<svg>` tag and renders the inner elements scaled.
 
-El markup se respeta tal cual: en reposo el editor **no impone ningún trazo**,
-así que la ilustración se ve exactamente como se diseñó, sin contornos añadidos.
-Al **seleccionar** el elemento sí se hereda un trazo en color de acento, como
-resalte. Además hereda siempre del tipo:
+The markup is respected as-is: at rest the editor **imposes no stroke**, so the
+illustration looks exactly as designed, with no added outlines. When the element
+is **selected**, an accent-colored stroke is inherited as a highlight. It always
+inherits from the type:
 
-- **`fill`** → `color` del tipo (o el color de estado en modo viewer), aplicado
-  solo a las formas que no declaren su propio `fill`.
-- **`color`** → `strokeColor` del tipo, para que el markup pueda usar
-  `currentColor` allí donde quiera ese color.
+- **`fill`** → the type's `color` (or the status color in viewer mode), applied
+  only to shapes that don't declare their own `fill`.
+- **`color`** → the type's `strokeColor`, so the markup can use `currentColor`
+  wherever it wants that color.
 
-Si quieres contorno, decláralo en el propio markup (`stroke="currentColor"`,
-`stroke-width="4"`…). En las formas primitivas (`rect`, `circle`, `arrow`,
-`path`) `strokeColor` sí se aplica como borde.
+If you want an outline, declare it in the markup itself (`stroke="currentColor"`,
+`stroke-width="4"`…). On primitive shapes (`rect`, `circle`, `arrow`, `path`)
+`strokeColor` is applied as a border.
 
-> **Seguridad:** el markup se sanitiza reconstruyendo el árbol DOM contra una
-> lista blanca de etiquetas SVG; se descartan `<script>`, `<foreignObject>`,
-> manejadores `on*`, URLs `javascript:` y referencias externas.
+> **Security:** the markup is sanitized by rebuilding the DOM tree against an SVG
+> tag allowlist; `<script>`, `<foreignObject>`, `on*` handlers, `javascript:`
+> URLs and external references are dropped.
 
 ```json
 {
-  "iconos": {
-    "name": "Iconos SVG",
+  "icons": {
+    "name": "SVG icons",
     "objects": [
       {
         "id": "CAR",
-        "label": "Carro",
+        "label": "Car",
         "shape": "svg",
         "svgMarkup": "<svg viewBox=\"0 0 100 100\"><rect x=\"10\" y=\"40\" width=\"80\" height=\"35\" rx=\"5\" fill=\"currentColor\"/><circle cx=\"28\" cy=\"75\" r=\"9\" fill=\"currentColor\"/></svg>",
         "defaultWidth": 80,
@@ -1235,142 +1292,145 @@ Si quieres contorno, decláralo en el propio markup (`stroke="currentColor"`,
 }
 ```
 
-### Varios grupos en un archivo JSON
+### Multiple groups in one JSON file
 
-Un mismo archivo puede tener tantos grupos como necesites. Cada grupo aparece como una **pestaña separada** en la paleta.
+A single file can hold as many groups as you need. Each group appears as a
+**separate tab** in the palette.
 
 ```json
 {
-  "sillas":     { "name": "Sillas y asientos", "objects": [ ... ] },
-  "servicio":   { "name": "Zona de servicio",  "objects": [ ... ] },
-  "decoracion": { "name": "Decoración",         "objects": [ ... ] }
+  "chairs":  { "name": "Chairs & seats", "objects": [ ... ] },
+  "service": { "name": "Service area",   "objects": [ ... ] },
+  "decor":   { "name": "Decoration",     "objects": [ ... ] }
 }
 ```
 
-### Librería de ejemplo — Parqueadero
+### Example library — Parking lot
 
 ```json
 {
   "spots": {
-    "name": "Espacios",
+    "name": "Spots",
     "objects": [
-      { "id": "SPOT",        "label": "Normal",       "shape": "rect",   "defaultWidth": 60,  "defaultHeight": 120, "color": "#dbeafe", "strokeColor": "#3b82f6" },
-      { "id": "SPOT_DISCAP", "label": "Discapacidad", "shape": "rect",   "defaultWidth": 80,  "defaultHeight": 120, "color": "#dcfce7", "strokeColor": "#22c55e" },
-      { "id": "SPOT_EV",     "label": "Carga EV",     "shape": "rect",   "defaultWidth": 65,  "defaultHeight": 120, "color": "#d1fae5", "strokeColor": "#059669" },
-      { "id": "SPOT_MOTO",   "label": "Moto",         "shape": "rect",   "defaultWidth": 35,  "defaultHeight": 75,  "color": "#fef9c3", "strokeColor": "#eab308" }
+      { "id": "SPOT",        "label": "Standard",  "shape": "rect",   "defaultWidth": 60,  "defaultHeight": 120, "color": "#dbeafe", "strokeColor": "#3b82f6" },
+      { "id": "SPOT_DISCAP", "label": "Accessible","shape": "rect",   "defaultWidth": 80,  "defaultHeight": 120, "color": "#dcfce7", "strokeColor": "#22c55e" },
+      { "id": "SPOT_EV",     "label": "EV charge", "shape": "rect",   "defaultWidth": 65,  "defaultHeight": 120, "color": "#d1fae5", "strokeColor": "#059669" },
+      { "id": "SPOT_MOTO",   "label": "Motorcycle","shape": "rect",   "defaultWidth": 35,  "defaultHeight": 75,  "color": "#fef9c3", "strokeColor": "#eab308" }
     ]
   },
-  "circulacion": {
-    "name": "Circulación",
+  "circulation": {
+    "name": "Circulation",
     "objects": [
-      { "id": "ENTRANCE", "label": "Entrada", "shape": "arrow", "defaultWidth": 85, "defaultHeight": 35, "color": "#dcfce7", "strokeColor": "#16a34a" },
-      { "id": "EXIT",     "label": "Salida",  "shape": "arrow", "defaultWidth": 85, "defaultHeight": 35, "color": "#fee2e2", "strokeColor": "#dc2626" },
-      { "id": "LANE",     "label": "Carril",  "shape": "rect",  "defaultWidth": 300,"defaultHeight": 60,  "color": "#f3f4f6", "strokeColor": "#9ca3af" }
+      { "id": "ENTRANCE", "label": "Entrance", "shape": "arrow", "defaultWidth": 85, "defaultHeight": 35, "color": "#dcfce7", "strokeColor": "#16a34a" },
+      { "id": "EXIT",     "label": "Exit",     "shape": "arrow", "defaultWidth": 85, "defaultHeight": 35, "color": "#fee2e2", "strokeColor": "#dc2626" },
+      { "id": "LANE",     "label": "Lane",     "shape": "rect",  "defaultWidth": 300,"defaultHeight": 60,  "color": "#f3f4f6", "strokeColor": "#9ca3af" }
     ]
   }
 }
 ```
 
-### Modelo de datos completo
+### Full data model
 
 ```
 VenueMap
 ├── id: string
 ├── name: string
-├── libraries?: ElementLibrary          ← librerías importadas (embebidas en el mapa)
+├── libraries?: ElementLibrary          ← imported libraries (embedded in the map)
 └── floors: Floor[]
     ├── id: string
     ├── name: string
     ├── order: number
-    ├── area: FloorArea                 ← forma del piso (rect | polygon)
+    ├── area: FloorArea                 ← floor shape (rect | polygon)
     │   ├── shape: 'rect' | 'polygon'
-    │   ├── x?, y?, width?, height?    ← para shape: 'rect'
-    │   └── points?: [number,number][] ← para shape: 'polygon'
-    ├── wallNodes: WallNode[]           ← vértices del grafo de paredes
-    ├── walls: Wall[]                   ← segmentos de pared con grosor y material
+    │   ├── x?, y?, width?, height?    ← for shape: 'rect'
+    │   └── points?: [number,number][] ← for shape: 'polygon'
+    ├── wallNodes: WallNode[]           ← wall graph vertices
+    ├── walls: Wall[]                   ← wall segments with thickness and material
     └── elements: MapElement[]
         ├── id: string
-        ├── type: string               ← id del ElementTypeDef de la librería
+        ├── type: string               ← id of the library's ElementTypeDef
         ├── x, y, width, height: number
-        ├── rotation: number           ← grados
+        ├── rotation: number           ← degrees
         ├── label?: string
-        └── metadata?: Record<string, unknown>  ← datos propios de tu app
+        └── metadata?: Record<string, unknown>  ← your app's own data
 ```
 
-El campo `metadata` está disponible para que cada app guarde datos propios por elemento (ej. ID de reserva, capacidad, propietario).
+The `metadata` field is available for each app to store its own per-element data
+(e.g. reservation ID, capacity, owner).
 
 ```tsx
 const handleClick = (el: MapElement) => {
-  const reservaId = el.metadata?.reservaId as string;
-  abrirModal(reservaId);
+  const reservationId = el.metadata?.reservationId as string;
+  openModal(reservationId);
 };
 ```
 
-### Herramientas del editor
+### Editor tools
 
-| Tecla | Herramienta | Función |
+| Key | Tool | Function |
 |-------|-------------|---------|
-| `V` | Seleccionar | Mover, redimensionar y rotar elementos. Arrastra el fondo del piso para moverlo. |
-| `H` | Desplazar | Pan del canvas con click izquierdo. |
-| `W` | Pared | Click fija el inicio; siguiente click termina el segmento y encadena el siguiente desde ese mismo nodo. Click derecho o `Esc` cancela. |
-| `P` | Colocar | Click en el piso coloca el elemento seleccionado en la paleta. |
-| `E` | Borrar | Click sobre un elemento o pared los elimina. |
-| `Esc` | — | Vuelve a Seleccionar y limpia la selección. |
-| `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | — | Deshacer / Rehacer. |
-| `Ctrl+D` | — | Duplicar selección. |
-| `Ctrl+A` | — | Seleccionar todos los elementos de la planta. |
-| `Del / Backspace` | — | Eliminar la selección (elementos o pared). |
-| `↑ ↓ ← →` | — | Desplazar la selección 1 px (con `Mayús`, un paso de rejilla). |
-| `+ / -` | — | Zoom in / out, centrado en la vista. |
-| `Ctrl+0` | — | Ajustar la vista al plano. |
-| Rueda ratón | — | Zoom centrado en el cursor (respeta la sensibilidad del trackpad). |
-| Click medio + drag | — | Pan del canvas en cualquier modo. |
-| Táctil / lápiz | — | Todos los gestos funcionan con dedo y stylus. |
+| `V` | Select | Move, resize and rotate elements. Drag the floor's **border** to move it. |
+| `H` | Pan | Pan the canvas with the left button. |
+| `W` | Wall | A click sets the start; the next click ends the segment and chains the next one from that same node. Right-click or `Esc` cancels. |
+| `P` | Place | A click on the floor places the element selected in the palette. |
+| `E` | Erase | Clicking an element or wall deletes it. |
+| `Esc` | — | Back to Select and clears the selection. |
+| `Ctrl+Z` / `Ctrl+Shift+Z` / `Ctrl+Y` | — | Undo / Redo. |
+| `Ctrl+D` | — | Duplicate the selection. |
+| `Ctrl+A` | — | Select all elements on the floor. |
+| `Del / Backspace` | — | Delete the selection (elements or wall). |
+| `↑ ↓ ← →` | — | Nudge the selection by 1 px (with `Shift`, one grid step). |
+| `+ / -` | — | Zoom in / out, centered on the view. |
+| `Ctrl+0` | — | Fit the view to the plan. |
+| Mouse wheel | — | Zoom centered on the cursor (respects trackpad sensitivity). |
+| Middle click + drag | — | Pan the canvas in any mode. |
+| Touch / stylus | — | All gestures work with finger and stylus. |
 
-> Los atajos solo actúan cuando el foco está **dentro** del editor, así que
-> varios editores (o un formulario al lado) pueden convivir en la misma página
-> sin robarse las teclas.
+> The shortcuts only fire when focus is **inside** the editor, so several editors
+> (or a form next to it) can coexist on the same page without stealing keys.
 
-### Selección
+### Selection
 
-- **Click** sobre un elemento lo selecciona; con `Ctrl`/`Cmd`/`Mayús` se añade o quita.
-- **Lazo**: arrastra sobre el piso para seleccionar por área (con `Ctrl` suma a la selección).
-  El interior de la planta está libre para el lazo; para **mover la planta** se
-  arrastra su **borde**.
-- **Click** sobre una pared la selecciona y abre su panel (material y grosor).
+- **Click** an element to select it; with `Ctrl`/`Cmd`/`Shift` it is added or removed.
+- **Lasso**: drag over the floor to select by area (with `Ctrl` it adds to the
+  selection). The floor's interior is free for the lasso; to **move the floor**
+  drag its **border**.
+- **Click** a wall to select it and open its panel (material and thickness).
 
-### Gestión de plantas
+### Floor management
 
-La barra de pestañas (visible incluso en viewer) permite:
+The tab bar (visible even in viewer mode) lets you:
 
-- **Click** → cambiar de planta activa
-- **Doble click** en el nombre → renombrar en línea
-- **◀ ▶** → reordenar la planta activa
-- **×** → eliminar la planta (mínimo 1)
-- **+** → añadir nueva planta
+- **Click** → switch the active floor
+- **Double-click** the name → rename inline
+- **◀ ▶** → reorder the active floor
+- **×** → delete the floor (minimum 1)
+- **+** → add a new floor
 
-### Forma del piso (Rect vs Polígono)
+### Floor shape (Rect vs Polygon)
 
-El botón **Rect / Poly** de la barra de herramientas alterna entre:
+The **Rect / Poly** button on the toolbar toggles between:
 
-- **Rect**: rectángulo con 8 handles de redimensión en los bordes y esquinas.
-- **Poly**: polígono libre. Arrastra los vértices (cuadrados azules). Click en el diamante central de una arista añade un vértice. Doble-click en un vértice lo elimina (mínimo 3).
+- **Rect**: a rectangle with 8 resize handles on the edges and corners.
+- **Poly**: a free polygon. Drag the vertices (blue squares). Clicking the center
+  diamond of an edge adds a vertex. Double-clicking a vertex removes it (minimum 3).
 
-Los elementos y paredes siempre se mantienen dentro del piso al moverlos o colocarlos.
+Elements and walls are always kept inside the floor when moved or placed (see
+[Collision with the map](#collision-with-the-map-containment)).
 
-### Exportar / Importar el mapa
+### Export / Import the map
 
-| Botón | Función |
+| Button | Function |
 |-------|---------|
-| ⬇ Exportar mapa | Descarga el estado actual como `.json` (incluye las librerías embebidas para portabilidad). |
-| ⬆ Importar mapa | Carga un `.json` exportado previamente, reemplazando el mapa actual. |
-| ⊞ Cargar librería | Carga un `.json` de elementos. Los grupos se añaden a la paleta como nuevas pestañas. Si el grupo ya existe, sólo se añaden los objetos con `id` nuevo. La librería se persiste automáticamente en `localStorage`. |
+| ⬇ Export map | Downloads the current state as `.json` (includes the embedded libraries for portability). |
+| ⬆ Import map | Loads a previously exported `.json`, replacing the current map. |
+| ⊞ Load library | Loads an elements `.json`. Groups are added to the palette as new tabs. If the group already exists, only objects with a new `id` are added. The library is persisted automatically to `localStorage`. |
 
 ---
 
 ## ElementLibraryBuilder
 
-Interfaz visual para crear librerías de elementos JSON para el VenueMapEditor:
+A visual interface to create JSON element libraries for the VenueMapEditor:
 
 ```tsx
 import { ElementLibraryBuilder } from 'neogestify-ui-components';
@@ -1384,14 +1444,14 @@ function App() {
 }
 ```
 
-Características:
-- Crear/renombrar/eliminar grupos de elementos
-- Añadir/editar/eliminar elementos
-- Configurar forma, tamaño, colores
-- Soporte para shapes: rect, circle, arrow, path, svg
-- Vista previa del JSON generado
-- Descargar como archivo .json
-- Copiar al portapapeles
+Features:
+- Create/rename/delete element groups
+- Add/edit/delete elements
+- Configure shape, size, colors
+- Supports shapes: rect, circle, arrow, path, svg, image (with base64 upload)
+- Preview of the generated JSON
+- Download as a .json file
+- Copy to clipboard
 
 ---
 
@@ -1403,9 +1463,9 @@ bun install
 bun dev
 ```
 
-Abre http://localhost:5173 en tu navegador.
+Open http://localhost:5173 in your browser.
 
-## Desarrollo
+## Development
 
 ### Build
 
@@ -1414,42 +1474,44 @@ bun install
 bun run build
 ```
 
-### Estructura del proyecto
+### Project structure
 
 ```
 ui-components/
 ├── src/
 │   ├── components/
-│   │   ├── html/          # Componentes HTML
-│   │   ├── icons/        # Iconos SVG
-│   │   ├── alerts/       # Alertas SweetAlert2
-│   │   ├── VenueMapEditor/  # Editor de mapas
-│   │   └── ElementLibraryBuilder/ # Constructor de librerías
+│   │   ├── html/          # HTML components
+│   │   ├── icons/        # SVG icons
+│   │   ├── alerts/       # SweetAlert2 alerts
+│   │   ├── VenueMapEditor/  # Map editor
+│   │   └── ElementLibraryBuilder/ # Library builder
 │   ├── context/
-│   │   └── theme/        # Sistema de tema
-│   └── types/            # Tipos TypeScript
+│   │   └── theme/        # Theme system
+│   └── types/            # TypeScript types
 ├── showcase/             # Demo/Showcase
 └── dist/                 # Build output
 ```
 
-## Modo Oscuro
+## Dark Mode
 
-Los componentes soportan modo oscuro automáticamente usando las clases `dark:` de Tailwind. Si usas Tailwind v4, asegúrate de tener la variante configurada en tu CSS principal (ver [Configuración](#configuración)):
+The components support dark mode automatically using Tailwind's `dark:` classes.
+If you use Tailwind v4, make sure the variant is configured in your main CSS (see
+[Setup](#setup)):
 
 ```css
 @variant dark (&:where(.dark, .dark *)) {
-  /* Variante dark mode */
+  /* dark mode variant */
 }
 ```
 
-Para activar el modo oscuro:
+To enable dark mode:
 
 ```tsx
 document.documentElement.classList.add('dark');
 ```
 
-O usa el sistema de tema de la librería (ThemeProvider + ThemeToggle).
+Or use the library's theme system (ThemeProvider + ThemeToggle).
 
-## Licencia
+## License
 
 MIT

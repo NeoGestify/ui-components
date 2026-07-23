@@ -40,3 +40,13 @@ export { snapToGrid, snapPoint, findNearestNode } from './utils/snapUtils';
 export { parseSvgMarkup } from './utils/svgParser';
 export type { ParsedSvgMarkup } from './utils/svgParser';
 export { sanitizeImageSrc, fileToDataUri, IMAGE_ACCEPT } from './utils/imageSrc';
+export {
+  containToFloor,
+  elementCorners,
+  elementFootprint,
+  boundsOf,
+  pointInPolygon,
+  nearestPointOnPolygon,
+  rectsOverlap,
+} from './utils/collision';
+export type { ContainmentMode, Rect, Point } from './utils/collision';

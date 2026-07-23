@@ -6,6 +6,7 @@ import type { VenuePalette } from '../theme';
 import { usePanZoom } from '../hooks/usePanZoom';
 import { findNearestNode, snapPoint } from '../utils/snapUtils';
 import { wallSegmentPath } from '../utils/wallGeometry';
+import { elementFootprint } from '../utils/collision';
 import { GridOverlay } from './GridOverlay';
 import { Artboard } from './Artboard';
 import { WallLayer } from './WallLayer';
@@ -62,25 +63,6 @@ interface LassoRect { x: number; y: number; w: number; h: number }
 
 function rectsIntersect(a: LassoRect, b: LassoRect): boolean {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
-}
-
-/**
- * Caja englobante de un elemento **ya rotado**. Sin esto, el lazo no atrapaba
- * los elementos girados: se comparaba contra la caja sin rotar.
- */
-function rotatedBounds(el: { x: number; y: number; width: number; height: number; rotation: number }): LassoRect {
-  if (!el.rotation) return { x: el.x, y: el.y, w: el.width, h: el.height };
-  const rad = el.rotation * (Math.PI / 180);
-  const cos = Math.abs(Math.cos(rad));
-  const sin = Math.abs(Math.sin(rad));
-  const w = el.width * cos + el.height * sin;
-  const h = el.width * sin + el.height * cos;
-  return {
-    x: el.x + el.width / 2 - w / 2,
-    y: el.y + el.height / 2 - h / 2,
-    w,
-    h,
-  };
 }
 
 // ─── Wall-draw state ──────────────────────────────────────────────────────────
@@ -416,7 +398,12 @@ export function EditorCanvas({
       const minSize = 4 / panZoomRef.current.zoom;
       if (lasso.w > minSize || lasso.h > minSize) {
         const ids = floor.elements
-          .filter(el => rectsIntersect(lasso, rotatedBounds(el)))
+          .filter(el => {
+            // Se usa la huella real (con rotación) del elemento, no su caja sin
+            // girar, para que el lazo atrape también los elementos rotados.
+            const f = elementFootprint(el);
+            return rectsIntersect(lasso, { x: f.x, y: f.y, w: f.width, h: f.height });
+          })
           .map(el => el.id);
         if (ids.length > 0) onSelectSet(ids, start.additive);
         else if (!start.additive) onClearSelection();

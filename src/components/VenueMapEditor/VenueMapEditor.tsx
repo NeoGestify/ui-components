@@ -24,64 +24,9 @@ import { FloorTabs } from './components/FloorTabs';
 import { useHistory } from './hooks/useHistory';
 import { useSelection } from './hooks/useSelection';
 import { genId } from './utils/idGen';
+import { containToFloor, pointInPolygon } from './utils/collision';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function pointInPolygon(px: number, py: number, pts: [number, number][]): boolean {
-  let inside = false;
-  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-    const [xi, yi] = pts[i], [xj, yj] = pts[j];
-    if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) inside = !inside;
-  }
-  return inside;
-}
-
-/** Returns the nearest point on the polygon perimeter to (px, py). */
-function clampPointToPolygon(px: number, py: number, pts: [number, number][]): { x: number; y: number } {
-  let bestDist = Infinity, bx = pts[0][0], by = pts[0][1];
-  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
-    const [ax, ay] = pts[j], [bex, bey] = pts[i];
-    const dx = bex - ax, dy = bey - ay;
-    const len2 = dx * dx + dy * dy;
-    const t = len2 > 0 ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / len2)) : 0;
-    const nx = ax + t * dx, ny = ay + t * dy;
-    const dist = (px - nx) ** 2 + (py - ny) ** 2;
-    if (dist < bestDist) { bestDist = dist; bx = nx; by = ny; }
-  }
-  return { x: bx, y: by };
-}
-
-function clampToFloor(
-  x: number, y: number,
-  w: number, h: number,
-  area: FloorArea,
-): { x: number; y: number } {
-  // Use a square hitbox of side = min(w, h) centered on the element.
-  // Custom shapes (e.g. SVG paths) rarely fill their full bounding box,
-  // so this avoids over-constraining them to the floor bounds.
-  const s = Math.min(w, h);
-  const hs = s / 2;
-  const cx = x + w / 2;
-  const cy = y + h / 2;
-
-  if (area.shape === 'rect') {
-    const ax = area.x ?? 0;
-    const ay = area.y ?? 0;
-    const aw = area.width ?? 0;
-    const ah = area.height ?? 0;
-    const ncx = aw >= s ? Math.max(ax + hs, Math.min(ax + aw - hs, cx)) : ax + aw / 2;
-    const ncy = ah >= s ? Math.max(ay + hs, Math.min(ay + ah - hs, cy)) : ay + ah / 2;
-    return { x: ncx - w / 2, y: ncy - h / 2 };
-  }
-  if (area.shape === 'polygon') {
-    const pts = area.points ?? [];
-    if (pts.length < 3) return { x, y };
-    if (pointInPolygon(cx, cy, pts)) return { x, y };
-    const clamped = clampPointToPolygon(cx, cy, pts);
-    return { x: clamped.x - w / 2, y: clamped.y - h / 2 };
-  }
-  return { x, y };
-}
 
 function createDefaultMap(): VenueMap {
   return {
@@ -191,6 +136,7 @@ export function VenueMapEditor({
   onElementTypeClick,
   theme: themeSetting = 'auto',
   className,
+  containment = 'full',
 }: VenueMapEditorProps) {
   const theme = useVenueTheme(themeSetting);
   const palette = VENUE_PALETTES[theme];
@@ -613,13 +559,13 @@ export function VenueMapEditor({
       if (!activeFloor) return;
       const el = activeFloor.elements.find(e => e.id === id);
       if (!el) return;
-      const { x: cx, y: cy } = clampToFloor(x, y, el.width, el.height, activeFloor.area);
+      const { x: cx, y: cy } = containToFloor(x, y, el.width, el.height, el.rotation, activeFloor.area, containment);
       replaceFloor({
         ...activeFloor,
         elements: activeFloor.elements.map(e => e.id === id ? { ...e, x: cx, y: cy } : e),
       });
     },
-    [activeFloor, replaceFloor],
+    [activeFloor, replaceFloor, containment],
   );
 
   const handleMoveCommit = useCallback(
@@ -627,13 +573,13 @@ export function VenueMapEditor({
       if (!activeFloor) return;
       const el = activeFloor.elements.find(e => e.id === id);
       if (!el) return;
-      const { x: cx, y: cy } = clampToFloor(x, y, el.width, el.height, activeFloor.area);
+      const { x: cx, y: cy } = containToFloor(x, y, el.width, el.height, el.rotation, activeFloor.area, containment);
       commitFloor({
         ...activeFloor,
         elements: activeFloor.elements.map(e => e.id === id ? { ...e, x: cx, y: cy } : e),
       });
     },
-    [activeFloor, commitFloor],
+    [activeFloor, commitFloor, containment],
   );
 
   const handleResizeElement = useCallback(
@@ -680,12 +626,16 @@ export function VenueMapEditor({
       if (!activeFloor) return;
       commitFloor({
         ...activeFloor,
-        elements: activeFloor.elements.map(el =>
-          el.id === id ? { ...el, rotation } : el,
-        ),
+        elements: activeFloor.elements.map(el => {
+          if (el.id !== id) return el;
+          // Al girar, las esquinas pueden salir del suelo: se recontiene con el
+          // nuevo ángulo.
+          const { x, y } = containToFloor(el.x, el.y, el.width, el.height, rotation, activeFloor.area, containment);
+          return { ...el, x, y, rotation };
+        }),
       });
     },
-    [activeFloor, commitFloor],
+    [activeFloor, commitFloor, containment],
   );
 
   const handleDeleteElement = useCallback(
@@ -722,14 +672,14 @@ export function VenueMapEditor({
         .map(el => {
           // La copia se desplaza 20 px, pero recortada al área: si no, duplicar
           // un elemento pegado al borde lo dejaba fuera de la planta.
-          const { x, y } = clampToFloor(el.x + 20, el.y + 20, el.width, el.height, activeFloor.area);
+          const { x, y } = containToFloor(el.x + 20, el.y + 20, el.width, el.height, el.rotation, activeFloor.area, containment);
           return { ...el, id: genId(), x, y };
         });
       const newFloor = { ...activeFloor, elements: [...activeFloor.elements, ...copies] };
       pushFloor(newFloor);
       selectSet(copies.map(c => c.id));
     },
-    [activeFloor, pushFloor, selectSet],
+    [activeFloor, pushFloor, selectSet, containment],
   );
 
   const handlePlaceElement = useCallback(
@@ -748,12 +698,14 @@ export function VenueMapEditor({
         if (pts.length >= 3 && !pointInPolygon(canvasX, canvasY, pts)) return;
       }
 
-      const { x, y } = clampToFloor(
+      const { x, y } = containToFloor(
         canvasX - typeDef.defaultWidth / 2,
         canvasY - typeDef.defaultHeight / 2,
         typeDef.defaultWidth,
         typeDef.defaultHeight,
+        0,
         area,
+        containment,
       );
 
       const newEl: MapElement = {
@@ -768,7 +720,7 @@ export function VenueMapEditor({
       pushFloor({ ...activeFloor, elements: [...activeFloor.elements, newEl] });
       select(newEl.id, false);
     },
-    [activeFloor, activePlaceTypeId, elementTypeDefs, pushFloor, select],
+    [activeFloor, activePlaceTypeId, elementTypeDefs, pushFloor, select, containment],
   );
 
   const handleChangeLabel = useCallback(
@@ -787,14 +739,16 @@ export function VenueMapEditor({
   const handleChangeGeometry = useCallback(
     (id: string, x: number, y: number, w: number, h: number, r: number) => {
       if (!activeFloor) return;
+      // Los valores tecleados en el panel también se contienen al suelo.
+      const { x: cx, y: cy } = containToFloor(x, y, w, h, r, activeFloor.area, containment);
       pushFloor({
         ...activeFloor,
         elements: activeFloor.elements.map(el =>
-          el.id === id ? { ...el, x, y, width: w, height: h, rotation: r } : el,
+          el.id === id ? { ...el, x: cx, y: cy, width: w, height: h, rotation: r } : el,
         ),
       });
     },
-    [activeFloor, pushFloor],
+    [activeFloor, pushFloor, containment],
   );
 
   // ── Viewer element click (type-specific handler → generic fallback) ─────
@@ -857,11 +811,11 @@ export function VenueMapEditor({
       ...activeFloor,
       elements: activeFloor.elements.map(el => {
         if (!selectedIds.has(el.id)) return el;
-        const { x, y } = clampToFloor(el.x + dx, el.y + dy, el.width, el.height, activeFloor.area);
+        const { x, y } = containToFloor(el.x + dx, el.y + dy, el.width, el.height, el.rotation, activeFloor.area, containment);
         return { ...el, x, y };
       }),
     });
-  }, [activeFloor, selectedIds, pushFloor]);
+  }, [activeFloor, selectedIds, pushFloor, containment]);
 
   // ── Keyboard shortcuts ───────────────────────────────────────────────────
   // Los atajos se escuchan en el contenedor, no en `window`: antes cualquier

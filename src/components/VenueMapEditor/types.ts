@@ -240,6 +240,20 @@ export interface VenueMapEditorProps {
   theme?: 'light' | 'dark' | 'auto';
   /** Clases extra para el contenedor raíz. */
   className?: string;
+  /**
+   * Cómo se contienen los elementos dentro del suelo (colisión con el mapa).
+   *
+   * - `'full'` (por defecto): la huella completa del elemento —teniendo en
+   *   cuenta su rotación— permanece dentro del suelo. No se puede sacar ni una
+   *   esquina.
+   * - `'center'`: solo el centro del elemento debe quedar dentro; se permite
+   *   que sobresalga por los bordes (útil para iconos que representan un punto).
+   * - `'none'`: sin contención; los elementos se pueden colocar libremente.
+   *
+   * La contención es siempre contra el **área del suelo**, no entre elementos:
+   * los elementos pueden solaparse entre sí.
+   */
+  containment?: 'full' | 'center' | 'none';
 }
 
 export type VenueMapViewerProps = VenueMapEditorProps;

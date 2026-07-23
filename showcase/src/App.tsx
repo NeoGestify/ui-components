@@ -297,6 +297,7 @@ function App() {
           <VenueMapEditor
             height="520px"
             readOnly={readOnly}
+            containment="full"
             onChange={setLastMap}
           />
 
