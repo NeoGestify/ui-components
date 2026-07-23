@@ -1091,13 +1091,15 @@ Las librerías importadas se guardan en `localStorage` bajo la clave `librarySto
 |-------|------|-----------|-------------|
 | `id` | `string` | ✓ | Identificador único del tipo |
 | `label` | `string` | ✓ | Nombre visible en la paleta |
-| `shape` | `"rect" \| "circle" \| "arrow" \| "path" \| "svg"` | ✓ | Forma del objeto |
+| `shape` | `"rect" \| "circle" \| "arrow" \| "path" \| "svg" \| "image"` | ✓ | Forma del objeto |
 | `defaultWidth` | `number` | ✓ | Ancho inicial (unidades de canvas) |
 | `defaultHeight` | `number` | ✓ | Alto inicial |
 | `color` | `string` | ✓ | Color de relleno (#hex, rgb(), hsl()) |
 | `strokeColor` | `string` | ✓ | Color del borde |
 | `svgPath` | `string` | solo para `shape:"path"` | Atributo `d` del path SVG |
 | `svgMarkup` | `string` | solo para `shape:"svg"` | Markup SVG completo |
+| `imageSrc` | `string` | solo para `shape:"image"` | Imagen en data URI base64 (o URL http(s)) |
+| `preserveAspectRatio` | `string` | — | Ajuste de la imagen en su caja (`"xMidYMid meet"` por defecto) |
 | `viewBox` | `string` | — | Espacio de coordenadas del path |
 | `fillRule` | `"nonzero" \| "evenodd"` | — | Regla de relleno SVG |
 
@@ -1139,6 +1141,57 @@ El campo `svgPath` acepta el atributo `d` de cualquier `<path>` SVG estándar. E
   }
 }
 ```
+
+### Shape `image` detallado (imágenes base64)
+
+Para usar una imagen real (PNG, JPG, WEBP, GIF, AVIF) como elemento del mapa:
+
+```json
+{
+  "mobiliario": {
+    "name": "Fotos",
+    "objects": [
+      {
+        "id": "SOFA_FOTO",
+        "label": "Sofá",
+        "shape": "image",
+        "imageSrc": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
+        "preserveAspectRatio": "xMidYMid meet",
+        "defaultWidth": 120,
+        "defaultHeight": 80,
+        "color": "#ffffff",
+        "strokeColor": "#334155"
+      }
+    ]
+  }
+}
+```
+
+| Campo | Descripción |
+|-------|-------------|
+| `imageSrc` | **Data URI en base64** (recomendado) o URL `http(s)` |
+| `preserveAspectRatio` | `'xMidYMid meet'` contener (por defecto) · `'xMidYMid slice'` cubrir recortando · `'none'` estirar |
+
+**Por qué base64:** el data URI viaja dentro del JSON de la librería y del mapa
+exportado, así que el mapa se ve igual en cualquier equipo sin depender de un
+servidor de imágenes. El coste es el tamaño: base64 ocupa ~33 % más que el
+archivo original y se duplica en cada mapa que use la librería. Para iconos
+sencillos sale mucho más barato `shape: 'svg'`.
+
+> **Seguridad:** solo se aceptan `data:image/*` (excepto SVG, que puede contener
+> scripts — para vectores está `shape: 'svg'`, que sí se sanea) y URLs
+> `http(s)`. Cualquier otro esquema se descarta.
+
+Comportamiento en el editor:
+
+- La imagen se dibuja dentro de la caja del elemento y se puede mover, redimensionar y rotar como cualquier otro.
+- Al **seleccionarla** se resalta con un rectángulo de acento (un `<image>` no admite trazo propio).
+- Los **colores de estado** del modo viewer se aplican como una capa translúcida encima, ya que un bitmap no se puede teñir.
+- Si `imageSrc` falta o no pasa la validación, se dibuja un recuadro punteado con el aviso "Imagen no disponible" en vez de un hueco invisible.
+
+En el **ElementLibraryBuilder** elige el shape `Image (base64)`: al seleccionar
+un archivo se convierte solo, muestra la vista previa, los KB incrustados y avisa
+si la imagen es demasiado pesada.
 
 ### Shape `svg` detallado
 

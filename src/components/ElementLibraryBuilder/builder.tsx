@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { ElementShape, ElementTypeDef, ElementLibrary } from '../VenueMapEditor/types';
 import { Button, Input, Select, TextArea } from '../html';
+import { IMAGE_ACCEPT, fileToDataUri, sanitizeImageSrc } from '../VenueMapEditor/utils/imageSrc';
 
 type InternalGroup = {
   internalId: string;
@@ -24,7 +25,21 @@ const SHAPE_OPTIONS = [
   { value: 'arrow', label: 'Arrow' },
   { value: 'path', label: 'Path' },
   { value: 'svg', label: 'SVG Markup' },
+  { value: 'image', label: 'Image (base64)' },
 ];
+
+/**
+ * Tamaño a partir del cual conviene avisar. Un data URI base64 ocupa ~33 % más
+ * que el archivo original y se copia entero dentro del JSON de la librería y de
+ * cada mapa que la use.
+ */
+const IMAGE_WARN_BYTES = 200 * 1024;
+
+/** Bytes reales que ocupa la carga útil de un data URI base64. */
+function dataUriBytes(src: string): number {
+  const base64 = src.slice(src.indexOf(',') + 1);
+  return Math.floor((base64.length * 3) / 4);
+}
 
 export const ElementLibraryBuilder: React.FC = () => {
   const [groups, setGroups] = useState<InternalGroup[]>([
@@ -36,6 +51,7 @@ export const ElementLibraryBuilder: React.FC = () => {
   const [activeElementIndex, setActiveElementIndex] = useState<number | null>(null);
   const [currentElement, setCurrentElement] = useState<ElementTypeDef>({ ...DEFAULT_ELEMENT, id: 'rect_1', label: 'New Rect' });
   const [downloadFileName, setDownloadFileName] = useState<string>("libraries");
+  const [imageError, setImageError] = useState<string | null>(null);
 
   // ─── Group management ────────────────────────────────────────────────────────
 
@@ -125,6 +141,23 @@ export const ElementLibraryBuilder: React.FC = () => {
 
   const handleFieldChange = (field: keyof ElementTypeDef, value: ElementTypeDef[keyof ElementTypeDef]) => {
     setCurrentElement((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleImageFile = async (file: File | undefined) => {
+    if (!file) return;
+    setImageError(null);
+    try {
+      const dataUri = await fileToDataUri(file);
+      if (!sanitizeImageSrc(dataUri)) {
+        // El SVG en data URI se rechaza a propósito: puede contener scripts.
+        // Para vectores existe el shape 'svg', que sí se sanea.
+        setImageError('Formato no admitido. Usa PNG, JPG, WEBP, GIF o AVIF (para vectores usa el shape "SVG Markup").');
+        return;
+      }
+      handleFieldChange('imageSrc', dataUri);
+    } catch {
+      setImageError('No se pudo leer el archivo.');
+    }
   };
 
   const handleSvgMarkupChange = (value: string) => {
@@ -346,6 +379,63 @@ export const ElementLibraryBuilder: React.FC = () => {
                   rows={6}
                   placeholder={"<svg viewBox='0 0 100 100'><circle cx='50' cy='50' r='50'/></svg>"}
                 />
+              </div>
+            )}
+
+            {currentElement.shape === 'image' && (
+              <div className="flex flex-col gap-4 border dark:border-sky-700/50 p-4 rounded bg-sky-50 dark:bg-sky-900/10">
+                <h4 className="font-semibold text-sm">Imagen (base64)</h4>
+                <p className="text-xs text-sky-800 dark:text-sky-400">
+                  El archivo se incrusta como data URI dentro del JSON, así que la
+                  librería y los mapas que la usen no dependen de ningún servidor.
+                </p>
+
+                <Input
+                  type="file"
+                  label="Archivo de imagen"
+                  accept={IMAGE_ACCEPT}
+                  onChange={(e) => handleImageFile(e.target.files?.[0])}
+                  error={imageError ?? undefined}
+                  helperText="PNG · JPG · WEBP · GIF · AVIF"
+                />
+
+                <Select
+                  label="Ajuste dentro de la caja"
+                  options={[
+                    { value: 'xMidYMid meet', label: 'Contener (mantiene proporción)' },
+                    { value: 'xMidYMid slice', label: 'Cubrir (recorta sobrante)' },
+                    { value: 'none', label: 'Estirar (deforma)' },
+                  ]}
+                  value={currentElement.preserveAspectRatio || 'xMidYMid meet'}
+                  onChange={(e) => handleFieldChange('preserveAspectRatio', e.target.value)}
+                />
+
+                {currentElement.imageSrc && (
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={currentElement.imageSrc}
+                      alt="Vista previa"
+                      className="w-16 h-16 object-contain border dark:border-gray-700 rounded bg-white"
+                    />
+                    <div className="flex flex-col gap-1 text-xs">
+                      <span className="text-gray-500 dark:text-gray-400">
+                        {(dataUriBytes(currentElement.imageSrc) / 1024).toFixed(0)} KB incrustados
+                      </span>
+                      {dataUriBytes(currentElement.imageSrc) > IMAGE_WARN_BYTES && (
+                        <span className="text-amber-600 dark:text-amber-400">
+                          Imagen pesada: agranda el JSON de todos los mapas que la usen.
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        className="text-red-500 text-left"
+                        onClick={() => { handleFieldChange('imageSrc', undefined); setImageError(null); }}
+                      >
+                        Quitar imagen
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

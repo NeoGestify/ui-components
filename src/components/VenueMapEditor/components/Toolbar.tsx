@@ -7,6 +7,7 @@ import {
 } from '../../icons';
 import type { ToolMode, ElementTypeDef, AreaShape } from '../types';
 import { parseSvgMarkup } from '../utils/svgParser';
+import { sanitizeImageSrc } from '../utils/imageSrc';
 
 // ─── ToolButton ───────────────────────────────────────────────────────────────
 
@@ -91,6 +92,10 @@ function TypeChip({ typeDef, active, onClick }: TypeChipProps) {
     () => (typeDef.shape === 'svg' && typeDef.svgMarkup ? parseSvgMarkup(typeDef.svgMarkup) : null),
     [typeDef.shape, typeDef.svgMarkup],
   );
+  const imageHref = useMemo(
+    () => (typeDef.shape === 'image' ? sanitizeImageSrc(typeDef.imageSrc) : null),
+    [typeDef.shape, typeDef.imageSrc],
+  );
 
   return (
     <button
@@ -105,7 +110,14 @@ function TypeChip({ typeDef, active, onClick }: TypeChipProps) {
           : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700',
       ].join(' ')}
     >
-      {preview ? (
+      {imageHref ? (
+        <img
+          src={imageHref}
+          alt=""
+          className="w-3 h-3 shrink-0 object-contain"
+          loading="lazy"
+        />
+      ) : preview ? (
         <svg
           viewBox={preview.viewBox}
           className="w-2.5 h-2.5 shrink-0"

@@ -2,6 +2,7 @@ import { useCallback, useState, useEffect, useMemo } from 'react';
 import type { ChangeEvent, KeyboardEvent } from 'react';
 import type { MapElement, ElementTypeDef, Wall, WallMaterial } from '../types';
 import { parseSvgMarkup } from '../utils/svgParser';
+import { sanitizeImageSrc } from '../utils/imageSrc';
 
 interface PropertiesPanelProps {
   elements: MapElement[];
@@ -185,6 +186,11 @@ export function PropertiesPanel({
     }
   }, [typeDef]);
 
+  const imageHref = useMemo(
+    () => (typeDef?.shape === 'image' ? sanitizeImageSrc(typeDef.imageSrc) : null),
+    [typeDef],
+  );
+
   if (count === 0) {
     return wall ? <WallPanel wall={wall} onChangeWall={onChangeWall} onDeleteWall={onDeleteWall} /> : null;
   }
@@ -234,7 +240,13 @@ export function PropertiesPanel({
         {/* Type badge */}
         {typeDef && (
           <div className="flex items-center gap-2">
-            {preview ? (
+            {imageHref ? (
+              <img
+                src={imageHref}
+                alt=""
+                className="w-3.5 h-3.5 shrink-0 object-contain border border-slate-300 dark:border-slate-600 rounded-sm"
+              />
+            ) : preview ? (
               <svg
                 viewBox={preview.viewBox}
                 className="w-3.5 h-3.5 shrink-0 border border-slate-300 dark:border-slate-600 rounded-sm"
@@ -250,9 +262,9 @@ export function PropertiesPanel({
             <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
               {typeDef.label}
             </span>
-            {typeDef.shape === 'svg' && (
+            {(typeDef.shape === 'svg' || typeDef.shape === 'image') && (
               <span className="text-[9px] uppercase tracking-wide text-slate-400 dark:text-slate-500 font-medium ml-auto">
-                SVG
+                {typeDef.shape === 'svg' ? 'SVG' : 'IMG'}
               </span>
             )}
           </div>

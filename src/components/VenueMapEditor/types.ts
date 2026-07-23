@@ -2,7 +2,7 @@
 
 export type WallMaterial = 'concrete' | 'brick' | 'glass' | 'drywall' | 'wood';
 export type AreaShape = 'rect' | 'polygon';
-export type ElementShape = 'rect' | 'circle' | 'arrow' | 'path' | 'svg';
+export type ElementShape = 'rect' | 'circle' | 'arrow' | 'path' | 'svg' | 'image';
 export type ToolMode = 'SELECT' | 'WALL' | 'PLACE' | 'PAN' | 'ERASE';
 
 // ─── Wall graph ───────────────────────────────────────────────────────────────
@@ -114,6 +114,26 @@ export interface ElementTypeDef {
    * svgMarkup: '<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="5"/><path d="M50 10 L90 90 L10 90 Z"/></svg>'
    */
   svgMarkup?: string;
+  /**
+   * Imagen del elemento para `shape === 'image'`.
+   *
+   * Se recomienda un **data URI en base64** (`data:image/png;base64,…`): así la
+   * imagen viaja dentro del JSON del mapa o de la librería y el mapa sigue
+   * viéndose igual sin depender de ningún servidor.
+   *
+   * También se aceptan URLs `http(s)`. Cualquier otro esquema se descarta —
+   * igual que los `data:image/svg+xml`, que pueden contener scripts.
+   *
+   * @example
+   * imageSrc: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUg...'
+   */
+  imageSrc?: string;
+  /**
+   * Cómo encaja la imagen en la caja del elemento (atributo SVG homónimo).
+   * Por defecto `'xMidYMid meet'`: conserva la proporción y deja margen.
+   * Usa `'none'` para estirarla hasta llenar la caja.
+   */
+  preserveAspectRatio?: string;
 }
 
 export interface DomainConfig {

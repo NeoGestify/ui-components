@@ -6,6 +6,7 @@ import type { VenuePalette } from '../theme';
 import { useDrag } from '../hooks/useDrag';
 import { snapToGrid } from '../utils/snapUtils';
 import { parseSvgMarkup } from '../utils/svgParser';
+import { sanitizeImageSrc } from '../utils/imageSrc';
 
 // ─── Arrow shape ──────────────────────────────────────────────────────────────
 
@@ -313,6 +314,11 @@ function ElementNodeImpl({
     [typeDef.shape, typeDef.svgMarkup],
   );
 
+  const imageHref = useMemo(
+    () => (typeDef.shape === 'image' ? sanitizeImageSrc(typeDef.imageSrc) : null),
+    [typeDef.shape, typeDef.imageSrc],
+  );
+
   const handles: Array<{ type: HandleType; hx: number; hy: number }> = [
     { type: 'nw', hx: x,      hy: y },
     { type: 'n',  hx: x+w/2,  hy: y },
@@ -413,6 +419,56 @@ function ElementNodeImpl({
           />
         );
       })()}
+
+      {typeDef.shape === 'image' && (
+        imageHref ? (
+          <>
+            <image
+              href={imageHref}
+              x={x} y={y} width={w} height={h}
+              preserveAspectRatio={typeDef.preserveAspectRatio ?? 'xMidYMid meet'}
+              {...bodyHandlers}
+            >
+              {tooltip && <title>{tooltip}</title>}
+            </image>
+
+            {/* El color de estado no puede teñir un bitmap: se superpone. */}
+            {statusFill && (
+              <rect
+                x={x} y={y} width={w} height={h}
+                fill={statusFill}
+                fillOpacity={0.45}
+                style={{ pointerEvents: 'none' }}
+              />
+            )}
+
+            {/* `<image>` no admite trazo, así que el resalte de selección es un
+                rectángulo sobre la caja del elemento. */}
+            {isSelected && tool === 'SELECT' && !onViewerClick && (
+              <rect
+                x={x} y={y} width={w} height={h}
+                fill="none"
+                stroke={selectionStroke}
+                strokeWidth={sw * 1.5}
+                style={{ pointerEvents: 'none' }}
+              />
+            )}
+          </>
+        ) : (
+          // `imageSrc` ausente o con un esquema no permitido: marcador visible
+          // en lugar de un hueco invisible imposible de diagnosticar.
+          <rect
+            x={x} y={y} width={w} height={h}
+            fill="none"
+            stroke={isSelected ? selectionStroke : typeDef.strokeColor}
+            strokeWidth={sw}
+            strokeDasharray={`${6 / zoom},${4 / zoom}`}
+            {...bodyHandlers}
+          >
+            <title>Imagen no disponible</title>
+          </rect>
+        )
+      )}
 
       {/* ── Label ── */}
       {label && (

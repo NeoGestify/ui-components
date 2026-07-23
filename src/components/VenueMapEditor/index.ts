@@ -39,3 +39,4 @@ export { genId } from './utils/idGen';
 export { snapToGrid, snapPoint, findNearestNode } from './utils/snapUtils';
 export { parseSvgMarkup } from './utils/svgParser';
 export type { ParsedSvgMarkup } from './utils/svgParser';
+export { sanitizeImageSrc, fileToDataUri, IMAGE_ACCEPT } from './utils/imageSrc';
