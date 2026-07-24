@@ -68,6 +68,12 @@ interface ElementNodeProps {
   coarse?: boolean;
   statusFill?: string;
   statusTooltip?: string;
+  /**
+   * Valor efectivo de `clickable` del elemento. En modo visor solo estos
+   * disparan `onViewerClick`; en edición quedan bloqueados (no se mueven ni
+   * editan, pero sí se pueden seleccionar).
+   */
+  clickable?: boolean;
   /** Todos los callbacks reciben el id para que el padre pueda pasar
    *  referencias estables y `memo` evite re-renderizar el resto del mapa. */
   onSelect: (id: string, multi: boolean) => void;
@@ -97,6 +103,7 @@ function ElementNodeImpl({
   coarse = false,
   statusFill,
   statusTooltip,
+  clickable = false,
   onSelect,
   onMove,
   onMoveCommit,
@@ -119,7 +126,11 @@ function ElementNodeImpl({
   const rotOffset = (coarse ? 34 : 22) / zoom;  // rotate handle distance above bbox
   const fontSize = Math.max(9 / zoom, Math.min(13 / zoom, h * 0.35));
 
-  const isInteractive = tool === 'SELECT' && !onViewerClick;
+  // El lienzo está en modo visor cuando recibe un manejador de clic de visor.
+  // En edición, un elemento `clickable` se edita como cualquier otro; el flag
+  // solo cambia el comportamiento en el visor.
+  const viewerMode = !!onViewerClick;
+  const isInteractive = tool === 'SELECT' && !viewerMode;
 
   /** Marca un arrastre recién terminado para que el `click` posterior no
    *  reinterprete el gesto como una selección (y, con Ctrl, deseleccione). */
@@ -274,7 +285,12 @@ function ElementNodeImpl({
         e.stopPropagation();
         return;
       }
-      if (onViewerClick) { e.stopPropagation(); onViewerClick(id); return; }
+      // Modo visor: solo los elementos `clickable` responden; el resto son
+      // inertes y dejan pasar el gesto (para poder desplazar el mapa).
+      if (viewerMode) {
+        if (clickable) { e.stopPropagation(); onViewerClick?.(id); }
+        return;
+      }
       if (tool === 'ERASE') { e.stopPropagation(); onDelete(id); return; }
       if (tool === 'SELECT') {
         e.stopPropagation();
@@ -283,24 +299,40 @@ function ElementNodeImpl({
       // En PLACE / WALL / PAN el evento sigue su curso hasta el lienzo, para
       // poder colocar un elemento o trazar una pared encima de otro.
     },
-    [id, tool, onDelete, onSelect, onViewerClick],
+    [id, tool, onDelete, onSelect, onViewerClick, viewerMode, clickable],
   );
+
+  // `pointerdown` de un elemento clickable en el visor que no debe llegar al
+  // lienzo: allí el paneo arranca en `pointerdown` y llama a `preventDefault()`,
+  // lo que anula el `click` y el elemento nunca dispararía `onViewerClick`.
+  // Cortando la propagación aquí (sin `preventDefault`) el pan no arranca y el
+  // `click` sí se emite.
+  const blockPointer = useCallback((e: ReactPointerEvent) => { e.stopPropagation(); }, []);
 
   // ── Derived ─────────────────────────────────────────────────────────────────
   const fillColor = statusFill ?? typeDef.color;
-  const bodyCursor = onViewerClick ? 'pointer' : tool === 'ERASE' ? 'crosshair' : tool === 'SELECT' ? 'move' : 'inherit';
+  const bodyCursor = viewerMode
+    ? (clickable ? 'pointer' : 'default')
+    : tool === 'ERASE' ? 'crosshair'
+    : tool === 'SELECT' ? 'move'
+    : 'inherit';
   const selectionStroke = palette.accent;
 
   // Durante PLACE/WALL el cuerpo no debe capturar el puntero: el clic tiene que
-  // llegar al lienzo para colocar o trazar sobre un elemento existente.
+  // llegar al lienzo para colocar o trazar sobre un elemento existente. En el
+  // visor, los elementos NO `clickable` también dejan pasar el puntero para que
+  // se pueda arrastrar el mapa por encima de ellos.
   const passThrough = tool === 'PLACE' || tool === 'WALL' || tool === 'PAN';
+  const inertInViewer = viewerMode && !clickable;
   const bodyStyle: CSSProperties = {
     cursor: bodyCursor,
-    pointerEvents: passThrough && !onViewerClick ? 'none' : 'auto',
+    pointerEvents: (passThrough && !viewerMode) || inertInViewer ? 'none' : 'auto',
   };
 
   const bodyHandlers = {
-    onPointerDown: isInteractive ? handleBodyDown : undefined,
+    onPointerDown: isInteractive
+      ? handleBodyDown
+      : (viewerMode && clickable) ? blockPointer : undefined,
     onClick: handleBodyClick,
     style: bodyStyle,
   };
@@ -449,8 +481,9 @@ function ElementNodeImpl({
             )}
 
             {/* `<image>` no admite trazo, así que el resalte de selección es un
-                rectángulo sobre la caja del elemento. */}
-            {isSelected && tool === 'SELECT' && !onViewerClick && (
+                rectángulo sobre la caja del elemento. Se muestra también en los
+                elementos bloqueados, como única señal de que están seleccionados. */}
+            {isSelected && tool === 'SELECT' && !viewerMode && (
               <rect
                 x={x} y={y} width={w} height={h}
                 fill="none"
@@ -490,8 +523,8 @@ function ElementNodeImpl({
         </text>
       )}
 
-      {/* ── Selection overlays ── */}
-      {isSelected && tool === 'SELECT' && !onViewerClick && (
+      {/* ── Selection overlays (mango de giro + redimensión) ── */}
+      {isSelected && tool === 'SELECT' && !viewerMode && (
         <>
           {/* Rotate line + handle */}
           <line

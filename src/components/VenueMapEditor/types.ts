@@ -35,6 +35,19 @@ export interface MapElement {
   /** Rotation in degrees */
   rotation: number;
   label?: string;
+  /**
+   * Si el elemento responde al clic **en el visor**.
+   *
+   * - En **modo visualización** (`fixed`/`readOnly`) solo los elementos con
+   *   `clickable` disparan `onElementClick` / `onElementTypeClick`.
+   * - En **modo edición** no tiene efecto: el elemento se selecciona, mueve y
+   *   edita como cualquier otro.
+   *
+   * Cuando es `undefined` se hereda el valor por defecto del tipo
+   * (`ElementTypeDef.clickable`); si tampoco está definido, se considera
+   * `false`.
+   */
+  clickable?: boolean;
   metadata?: Record<string, unknown>;
 }
 
@@ -82,6 +95,15 @@ export interface ElementTypeDef {
   strokeColor: string;
   /** Emoji or icon name */
   icon?: string;
+  /**
+   * Valor `clickable` por defecto de los elementos creados a partir de este
+   * tipo. Cada elemento del mapa puede sobrescribirlo (`MapElement.clickable`).
+   *
+   * Cuando se omite equivale a `false`: el objeto no responde al clic en el
+   * visor y se puede editar libremente en el editor. Ponlo a `true` para
+   * definir en la librería objetos interactivos (asientos, puertas, mesas…).
+   */
+  clickable?: boolean;
   /**
    * Raw SVG path `d` attribute for `shape === 'path'`.
    * Define the path in the coordinate space of `viewBox` (default `"0 0 100 100"`).

@@ -12,6 +12,7 @@ import { GridOverlay } from './GridOverlay';
 import { Artboard } from './Artboard';
 import { WallLayer } from './WallLayer';
 import { ElementNode } from './ElementNode';
+import { isClickable } from '../utils/interaction';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -650,6 +651,7 @@ export function EditorCanvas({
               gridSize={gridSize}
               palette={palette}
               coarse={coarse}
+              clickable={isClickable(el, typeDef)}
               statusFill={status?.fill}
               statusTooltip={status?.tooltip}
               onSelect={onSelectElement}

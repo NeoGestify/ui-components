@@ -380,6 +380,24 @@ export const ElementLibraryBuilder: React.FC = () => {
               </div>
             </div>
 
+            <label className="flex items-start gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={!!currentElement.clickable}
+                onChange={(e) => handleFieldChange('clickable', e.target.checked)}
+                className="mt-0.5 accent-indigo-500 [color-scheme:light] dark:[color-scheme:dark]"
+              />
+              <span className="flex flex-col">
+                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                  Clickable by default
+                </span>
+                <span className="text-[11px] text-gray-400 dark:text-gray-500 leading-snug">
+                  Elements of this type respond to clicks in the viewer only (not
+                  in the editor). Each placed element can override this.
+                </span>
+              </span>
+            </label>
+
             {currentElement.shape === 'path' && (
               <div className="flex flex-col gap-4 border dark:border-gray-700 p-4 rounded bg-gray-50 dark:bg-gray-800/50">
                 <h4 className="font-semibold text-sm">Path Config</h4>

@@ -3,6 +3,7 @@ import type { ChangeEvent, KeyboardEvent } from 'react';
 import type { MapElement, ElementTypeDef, Wall, WallMaterial } from '../types';
 import { parseSvgMarkup } from '../utils/svgParser';
 import { sanitizeImageSrc } from '../utils/imageSrc';
+import { isClickable } from '../utils/interaction';
 
 interface PropertiesPanelProps {
   elements: MapElement[];
@@ -13,6 +14,7 @@ interface PropertiesPanelProps {
   onDeleteWall?: (id: string) => void;
   onChangeLabel: (id: string, label: string) => void;
   onChangeGeometry: (id: string, x: number, y: number, w: number, h: number, r: number) => void;
+  onChangeClickable: (id: string, clickable: boolean) => void;
   onDelete: (ids: string[]) => void;
   onDuplicate: (ids: string[]) => void;
   /** Contenedor estrecho: el panel pasa de columna lateral a hoja inferior. */
@@ -215,6 +217,7 @@ export function PropertiesPanel({
   onDeleteWall,
   onChangeLabel,
   onChangeGeometry,
+  onChangeClickable,
   onDelete,
   onDuplicate,
   compact = false,
@@ -365,6 +368,23 @@ export function PropertiesPanel({
             </button>
           </label>
         </div>
+
+        {/* Clickable */}
+        <label className="flex items-start gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={isClickable(el, typeDef)}
+            onChange={e => onChangeClickable(el.id, e.target.checked)}
+            className="mt-0.5 accent-blue-500 [color-scheme:light] dark:[color-scheme:dark]"
+          />
+          <span className="flex flex-col gap-0.5">
+            <span className="text-xs font-medium text-slate-700 dark:text-slate-200">Clickable</span>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500 leading-snug">
+              Responde al clic en el visor. En el editor se edita como cualquier
+              otro elemento.
+            </span>
+          </span>
+        </label>
 
         {/* Metadata (read-only key/value list) */}
         {el.metadata && Object.keys(el.metadata).length > 0 && (

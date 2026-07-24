@@ -1022,6 +1022,24 @@ const statuses: ElementStatus[] = [
 />
 ```
 
+### Clickable elements
+
+Clicks are **only active in viewer mode** (`fixed`/`readOnly`) and only for
+elements that are marked *clickable*. In the editor, clicks always select — they
+never fire `onElementClick`, so interactive elements can be laid out without
+triggering their handlers.
+
+Clickability is resolved per element: `MapElement.clickable`, falling back to
+the type default `ElementTypeDef.clickable`, falling back to `false`.
+
+- **Per type (library default):** set `clickable: true` on an `ElementTypeDef`,
+  or tick *"Clickable by default"* in the `ElementLibraryBuilder`.
+- **Per element:** toggle the *Clickable* checkbox in the editor's Properties
+  panel; this overrides the type default for that one element.
+
+Clickability only affects the **viewer**: in the editor a clickable element is
+moved, resized and edited like any other — the flag has no effect there.
+
 ### Multiple catalogs (domainConfigs)
 
 ```tsx

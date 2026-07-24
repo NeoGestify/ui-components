@@ -1,5 +1,32 @@
-import { AddIcon, AlertaAdvertencia, AlertaConfirmacion, AlertaError, AlertaExito, AlertaToast, Button, CheckIcon, CloseIcon, DeleteIcon, EditIcon, Form, HomeIcon, Input, Modal, ModalRef, SaveIcon, SearchIcon, Select, SpinnerIcon, Table, ThemeToggle, useTheme, VenueMap, VenueMapEditor, ElementLibraryBuilder } from 'neogestify-ui-components';
+import { AddIcon, AlertaAdvertencia, AlertaConfirmacion, AlertaError, AlertaExito, AlertaToast, Button, CheckIcon, CloseIcon, DeleteIcon, EditIcon, Form, HomeIcon, Input, Modal, ModalRef, SaveIcon, SearchIcon, Select, SpinnerIcon, Table, ThemeToggle, useTheme, VenueMap, VenueMapEditor, VenueMapViewer, ElementLibraryBuilder } from 'neogestify-ui-components';
+import type { DomainConfig } from 'neogestify-ui-components';
 import { useState, useRef } from 'react';
+
+// ─── Demo «elemento clickeable» ────────────────────────────────────────────────
+// El tipo INFO trae `clickable: true` por defecto: en el visor responde al clic;
+// el tipo DECOR no, así se ve la diferencia (pulsarlo no hace nada).
+const clickDemoConfig: DomainConfig = {
+  id: 'click-demo',
+  name: 'Demo',
+  elementTypes: [
+    { id: 'INFO', label: 'Púlsame', shape: 'circle', defaultWidth: 90, defaultHeight: 90, color: '#bfdbfe', strokeColor: '#2563eb', clickable: true },
+    { id: 'DECOR', label: 'Decorativo', shape: 'rect', defaultWidth: 110, defaultHeight: 70, color: '#e5e7eb', strokeColor: '#6b7280' },
+  ],
+};
+
+const clickDemoMap: VenueMap = {
+  id: 'click-demo-map',
+  name: 'Demo clickable',
+  floors: [{
+    id: 'f1', name: 'Planta', order: 0,
+    area: { shape: 'rect', x: 0, y: 0, width: 460, height: 280 },
+    wallNodes: [], walls: [],
+    elements: [
+      { id: 'clickable-1', type: 'INFO', x: 70, y: 95, width: 90, height: 90, rotation: 0, label: 'Púlsame' },
+      { id: 'decor-1', type: 'DECOR', x: 290, y: 105, width: 110, height: 70, rotation: 0, label: 'Decorativo' },
+    ],
+  }],
+};
 
 function App() {
   const [showModal, setShowModal] = useState(false);
@@ -298,6 +325,7 @@ function App() {
             height="520px"
             readOnly={readOnly}
             containment="full"
+            domainConfigs={[clickDemoConfig]}
             onChange={setLastMap}
           />
 
@@ -311,6 +339,28 @@ function App() {
               </pre>
             </details>
           )}
+        </section>
+
+        {/* Clickable element demo */}
+        <section className="mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Elemento clickeable (visor)
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+            En modo visor, el círculo azul es <strong>clickeable</strong> y abre un
+            SweetAlert; el rectángulo gris no responde. En el editor, un elemento
+            clickeable queda bloqueado (no se puede mover).
+          </p>
+          <div className="rounded border dark:border-gray-700 overflow-hidden">
+            <VenueMapViewer
+              height="320px"
+              initialMap={clickDemoMap}
+              domainConfigs={[clickDemoConfig]}
+              onElementClick={(el) =>
+                AlertaExito('Elemento clickeable', `Has pulsado: ${el.label ?? el.type}`)
+              }
+            />
+          </div>
         </section>
 
         {/* Alerts Section */}

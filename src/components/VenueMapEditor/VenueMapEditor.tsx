@@ -27,6 +27,7 @@ import { useHistory } from './hooks/useHistory';
 import { useSelection } from './hooks/useSelection';
 import { genId } from './utils/idGen';
 import { containToFloor, pointInPolygon } from './utils/collision';
+import { isClickable } from './utils/interaction';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -757,6 +758,19 @@ export function VenueMapEditor({
     [activeFloor, pushFloor, containment],
   );
 
+  const handleChangeClickable = useCallback(
+    (id: string, clickable: boolean) => {
+      if (!activeFloor) return;
+      pushFloor({
+        ...activeFloor,
+        elements: activeFloor.elements.map(el =>
+          el.id === id ? { ...el, clickable } : el,
+        ),
+      });
+    },
+    [activeFloor, pushFloor],
+  );
+
   // ── Viewer element click (type-specific handler → generic fallback) ─────
   const handleSelectWall = useCallback((id: string | null) => {
     setSelectedWallId(id);
@@ -777,6 +791,9 @@ export function VenueMapEditor({
     (id: string) => {
       const el = activeFloor?.elements.find(e => e.id === id);
       if (!el) return;
+      // El clic solo cuenta si el elemento es clickable (el nodo ya lo filtra;
+      // esto es una segunda barrera por si se invoca desde otro sitio).
+      if (!isClickable(el, elementTypeDefs.get(el.type))) return;
       const typeHandler = onElementTypeClick?.[el.type];
       if (typeHandler) {
         typeHandler(el);
@@ -784,7 +801,7 @@ export function VenueMapEditor({
         onElementClick?.(el);
       }
     },
-    [activeFloor, onElementClick, onElementTypeClick],
+    [activeFloor, elementTypeDefs, onElementClick, onElementTypeClick],
   );
 
   const hasViewerHandlers = !!(onElementClick || onElementTypeClick);
@@ -808,7 +825,10 @@ export function VenueMapEditor({
 
   // ── Fixed / read-only derived state ─────────────────────────────────────
   const effectiveReadOnly = readOnly || fixed;
-  const effectiveTool: ToolMode = fixed ? 'PAN' : tool;
+  // En cualquier modo de solo lectura (readOnly o fixed) la herramienta pasa a
+  // PAN: la barra de herramientas está oculta y, con SELECT, los elementos
+  // seguirían siendo arrastrables pese a que no debe poder modificarse nada.
+  const effectiveTool: ToolMode = effectiveReadOnly ? 'PAN' : tool;
 
   // ── Nudge con flechas ────────────────────────────────────────────────────
   const nudgeSelection = useCallback((dx: number, dy: number) => {
@@ -1049,7 +1069,7 @@ export function VenueMapEditor({
               onPlaceElement={handlePlaceElement}
               onAddWall={handleAddWall}
               onDeleteWall={handleDeleteWall}
-              onViewerElementClick={hasViewerHandlers ? handleViewerElementClick : undefined}
+              onViewerElementClick={effectiveReadOnly && hasViewerHandlers ? handleViewerElementClick : undefined}
               onZoomChange={setZoom}
               onRegisterZoomBy={registerZoomBy}
               onRegisterResetView={registerResetView}
@@ -1068,6 +1088,7 @@ export function VenueMapEditor({
             onDeleteWall={handleDeleteWall}
             onChangeLabel={handleChangeLabel}
             onChangeGeometry={handleChangeGeometry}
+            onChangeClickable={handleChangeClickable}
             onDelete={handleDeleteElements}
             onDuplicate={handleDuplicateElements}
             compact={compact}
