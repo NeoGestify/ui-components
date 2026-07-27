@@ -48,12 +48,20 @@ const CONTROL_CLS =
   'text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 ' +
   '[color-scheme:light] dark:[color-scheme:dark] ' +
   'focus:outline-none focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-500';
+/**
+ * Indicador de foco compartido. `focus-visible` (y no `focus`) para que el
+ * anillo salga al navegar con teclado pero no al pulsar con el ratón.
+ */
+const FOCUS_CLS =
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400';
 const BTN_CLS =
   'w-full text-xs px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 ' +
-  'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors';
+  'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ' +
+  FOCUS_CLS;
 const DANGER_BTN_CLS =
   'w-full text-xs px-3 py-1.5 rounded bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 ' +
-  'text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors';
+  'text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors ' +
+  FOCUS_CLS;
 
 // ─── Small numeric field ──────────────────────────────────────────────────────
 
@@ -137,7 +145,7 @@ function PanelHeader({
           type="button"
           onClick={onClose}
           aria-label="Cerrar panel"
-          className="text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 px-2 -my-1 text-base leading-none"
+          className={`text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 px-2 -my-1 text-base leading-none rounded ${FOCUS_CLS}`}
         >
           ×
         </button>
@@ -198,7 +206,7 @@ function WallPanel({
 
       {onDeleteWall && (
         <div className="px-3 pb-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-          <button onClick={() => onDeleteWall(wall.id)} className={DANGER_BTN_CLS}>
+          <button type="button" onClick={() => onDeleteWall(wall.id)} className={DANGER_BTN_CLS}>
             Eliminar pared
           </button>
         </div>
@@ -267,10 +275,10 @@ export function PropertiesPanel({
           <span className="text-xs text-slate-400 dark:text-slate-500">elementos seleccionados</span>
         </div>
         <div className="px-3 pb-3 flex flex-col gap-2">
-          <button onClick={() => onDuplicate(ids)} className={BTN_CLS}>
+          <button type="button" onClick={() => onDuplicate(ids)} className={BTN_CLS}>
             Duplicar selección
           </button>
-          <button onClick={() => onDelete(ids)} className={DANGER_BTN_CLS}>
+          <button type="button" onClick={() => onDelete(ids)} className={DANGER_BTN_CLS}>
             Eliminar selección
           </button>
         </div>
@@ -361,8 +369,9 @@ export function PropertiesPanel({
           <label className="flex flex-col gap-0.5">
             <span className={FIELD_LABEL_CLS}>&nbsp;</span>
             <button
+              type="button"
               onClick={() => setGeom({ r: 0 })}
-              className="border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+              className={`border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${FOCUS_CLS}`}
             >
               Resetear
             </button>
@@ -402,10 +411,10 @@ export function PropertiesPanel({
 
       {/* Actions */}
       <div className="px-3 pb-3 flex flex-col gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
-        <button onClick={() => onDuplicate([el.id])} className={BTN_CLS}>
+        <button type="button" onClick={() => onDuplicate([el.id])} className={BTN_CLS}>
           Duplicar (Ctrl+D)
         </button>
-        <button onClick={() => onDelete([el.id])} className={DANGER_BTN_CLS}>
+        <button type="button" onClick={() => onDelete([el.id])} className={DANGER_BTN_CLS}>
           Eliminar
         </button>
       </div>

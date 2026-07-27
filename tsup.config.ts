@@ -9,6 +9,7 @@ export default defineConfig({
     'context/theme/index': 'src/context/theme/index.ts',
     'components/VenueMapEditor/index': 'src/components/VenueMapEditor/index.ts',
     'components/ElementLibraryBuilder/index': 'src/components/ElementLibraryBuilder/index.ts',
+    'components/Calendar/index': 'src/components/Calendar/index.ts',
   },
   format: ['cjs', 'esm'],
   dts: true,

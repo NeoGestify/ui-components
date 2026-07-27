@@ -212,13 +212,16 @@ export function SaveIcon({ className }: Props) {
 
 export function CancelIcon({ className }: Props) {
     return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-            />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path stroke-dasharray="60" d="M5.64 5.64c3.51 -3.51 9.21 -3.51 12.73 0c3.51 3.51 3.51 9.21 0 12.73c-3.51 3.51 -9.21 3.51 -12.73 0c-3.51 -3.51 -3.51 -9.21 -0 -12.73Z">
+                    <animate fill="freeze" attributeName="stroke-dashoffset" dur="0.6s" values="60;0" />
+                </path>
+                <path stroke-dasharray="20" stroke-dashoffset="20" d="M6 6l12 12">
+                    <animate fill="freeze" attributeName="stroke-dashoffset" begin="0.6s" dur="0.3s" to="0" />
+                </path>
+            </g>
         </svg>
     )
 }
@@ -282,9 +285,7 @@ export function FilterIcon({ className }: Props) {
 
 export function QuestionIcon({ className }: Props) {
     return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z" /><g fill="none"><path d="m12.593 23.258-.011.002-.071.035-.02.004-.014-.004-.071-.035q-.016-.005-.024.005l-.004.01-.017.428.005.02.01.013.104.074.015.004.012-.004.104-.074.012-.016.004-.017-.017-.427q-.004-.016-.017-.018m.265-.113-.013.002-.185.093-.01.01-.003.011.018.43.005.012.008.007.201.093q.019.005.029-.008l.004-.014-.034-.614q-.005-.018-.02-.022m-.715.002a.02.02 0 0 0-.027.006l-.006.014-.034.614q.001.018.017.024l.015-.002.201-.093.01-.008.004-.011.017-.43-.003-.012-.01-.01z" /><path fill="currentColor" d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2m0 2a8 8 0 1 0 0 16 8 8 0 0 0 0-16m0 12a1 1 0 1 1 0 2 1 1 0 0 1 0-2m0-9.5a3.625 3.625 0 0 1 1.348 6.99.8.8 0 0 0-.305.201c-.044.05-.051.114-.05.18L13 14a1 1 0 0 1-1.993.117L11 14v-.25c0-1.153.93-1.845 1.604-2.116a1.626 1.626 0 1 0-2.229-1.509 1 1 0 1 1-2 0A3.625 3.625 0 0 1 12 6.5" /></g></svg>
     )
 }
 
@@ -307,9 +308,7 @@ export function CalendarIcon({ className }: Props) {
 
 export function InfoIcon({ className }: Props) {
     return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 32 32"><path fill="none" d="M0 0h32v32H0z" /><path fill="currentColor" d="M17 22v-8h-4v2h2v6h-3v2h8v-2zM16 8a1.5 1.5 0 1 0 1.5 1.5A1.5 1.5 0 0 0 16 8" /><path fill="currentColor" d="M16 30a14 14 0 1 1 14-14 14 14 0 0 1-14 14m0-26a12 12 0 1 0 12 12A12 12 0 0 0 16 4" /></svg>
     )
 }
 
@@ -331,9 +330,12 @@ export function SunIcon({ className }: Props) {
 
 export function CamaraIcon({ className }: Props) {
     return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <path d="M13.997 4a2 2 0 0 1 1.76 1.05l.486.9A2 2 0 0 0 18.003 7H20a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h1.997a2 2 0 0 0 1.759-1.048l.489-.904A2 2 0 0 1 10.004 4z" />
+                <circle cx="12" cy="13" r="3" />
+            </g>
         </svg>
     )
 }
@@ -405,9 +407,7 @@ export function ClockIcon({ className }: Props) {
 
 export function CheckCircleIcon({ className }: Props) {
     return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 1024 1024"><path fill="none" d="M0 0h1024v1024H0z" /><path fill="currentColor" d="M512 0C229.232 0 0 229.232 0 512c0 282.784 229.232 512 512 512 282.784 0 512-229.216 512-512C1024 229.232 794.784 0 512 0m0 961.008c-247.024 0-448-201.984-448-449.01 0-247.024 200.976-448 448-448s448 200.977 448 448-200.976 449.01-448 449.01m204.336-636.352L415.935 626.944l-135.28-135.28c-12.496-12.496-32.752-12.496-45.264 0-12.496 12.496-12.496 32.752 0 45.248l158.384 158.4c12.496 12.48 32.752 12.48 45.264 0 1.44-1.44 2.673-3.009 3.793-4.64l318.784-320.753c12.48-12.496 12.48-32.752 0-45.263-12.512-12.496-32.768-12.496-45.28 0" /></svg>
     )
 }
 
@@ -421,16 +421,20 @@ export function CajasIcon({ className }: Props) {
 
 export function PrinterIcon({ className }: Props) {
     return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z" /><path fill="currentColor" d="M19 7h-1V2H6v5H5c-1.65 0-3 1.35-3 3v7c0 1.1.9 2 2 2h2v3h12v-3h2c1.1 0 2-.9 2-2v-7c0-1.65-1.35-3-3-3M8 4h8v3H8zm8 16H8v-4h8zm4-3h-2v-3H6v3H4v-7c0-.55.45-1 1-1h14c.55 0 1 .45 1 1z" /><path fill="currentColor" d="M14 11h4v1h-4z" /></svg>
     )
 }
 
 export function NetworkIcon({ className }: Props) {
     return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2">
+                <rect width="6" height="6" x="16" y="16" rx="1" />
+                <rect width="6" height="6" x="2" y="16" rx="1" />
+                <rect width="6" height="6" x="9" y="2" rx="1" />
+                <path d="M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3m-7-4V8" />
+            </g>
         </svg>
     )
 }
@@ -445,11 +449,7 @@ export function TestIcon({ className }: Props) {
 
 export function FacturacionIcon({ className }: Props) {
     return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 6l4 4" />
-            <text x="12" y="16" fontSize="8" fill="currentColor" textAnchor="middle">$</text>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z" /><path fill="currentColor" d="M9.5 10.5H12a1 1 0 0 0 0-2h-1V8a1 1 0 0 0-2 0v.55a2.5 2.5 0 0 0 .5 4.95h1a.5.5 0 0 1 0 1H8a1 1 0 0 0 0 2h1v.5a1 1 0 0 0 2 0v-.55a2.5 2.5 0 0 0-.5-4.95h-1a.5.5 0 0 1 0-1M21 12h-3V3a1 1 0 0 0-.5-.87 1 1 0 0 0-1 0l-3 1.72-3-1.72a1 1 0 0 0-1 0l-3 1.72-3-1.72a1 1 0 0 0-1 0A1 1 0 0 0 2 3v16a3 3 0 0 0 3 3h14a3 3 0 0 0 3-3v-6a1 1 0 0 0-1-1M5 20a1 1 0 0 1-1-1V4.73l2 1.14a1.08 1.08 0 0 0 1 0l3-1.72 3 1.72a1.08 1.08 0 0 0 1 0l2-1.14V19a3 3 0 0 0 .18 1Zm15-1a1 1 0 0 1-2 0v-5h2Z" /></svg>
     )
 }
 
@@ -477,8 +477,9 @@ export function CopyIcon({ className }: Props) {
 
 export function PasteIcon({ className }: Props) {
     return (
-        <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" d="M20 10h-2V5c0-1.1-.9-2-2-2h-2c0-.55-.45-1-1-1H7c-.55 0-1 .45-1 1H4c-1.1 0-2 .9-2 2v11c0 1.1.9 2 2 2h6v2c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2v-8c0-1.1-.9-2-2-2m-10 2v4H4V5h2v2h8V5h2v5h-4c-1.1 0-2 .9-2 2m10 8h-8v-8h8z" />
         </svg>
     )
 }
@@ -491,9 +492,7 @@ export function RestaurantMenuIcon({ className }: Props) {
 
 export function CloudIcon({ className }: Props) {
     return (
-        <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24"><path fill="none" d="M0 0h24v24H0z" /><path fill="currentColor" d="m19.21 12.04-1.53-.11-.3-1.5A5.484 5.484 0 0 0 12 6C9.94 6 8.08 7.14 7.12 8.96l-.5.95-1.07.11A3.99 3.99 0 0 0 2 14c0 2.21 1.79 4 4 4h13c1.65 0 3-1.35 3-3 0-1.55-1.22-2.86-2.79-2.96" opacity=".3" /><path fill="currentColor" d="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96M19 18H6c-2.21 0-4-1.79-4-4 0-2.05 1.53-3.76 3.56-3.97l1.07-.11.5-.95A5.47 5.47 0 0 1 12 6c2.62 0 4.88 1.86 5.39 4.43l.3 1.5 1.53.11A2.98 2.98 0 0 1 22 15c0 1.65-1.35 3-3 3" /></svg>
     )
 }
 
@@ -775,79 +774,7 @@ export function ClaudeIcon({ className }: { className: string }) {
 
 export function GeminiIcon({ className }: { className: string }) {
     return (
-        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 32 32">
-            <path d="M0 0h32v32H0z" fill="none" />
-            <defs>
-                <path id="SVG8iAahc8M" fill="#fff" d="M57.067 28.61q-7.396-3.184-12.945-8.732q-5.547-5.546-8.732-12.944a38.4 38.4 0 0 1-1.97-5.824A1.464 1.464 0 0 0 32 .001c-.671 0-1.255.458-1.419 1.11a38.4 38.4 0 0 1-1.971 5.823q-3.186 7.397-8.732 12.944q-5.548 5.548-12.945 8.732a38.4 38.4 0 0 1-5.824 1.972A1.464 1.464 0 0 0 0 32c0 .67.458 1.255 1.11 1.418a38.4 38.4 0 0 1 5.823 1.972q7.396 3.184 12.945 8.732q5.55 5.546 8.732 12.944a38.4 38.4 0 0 1 1.971 5.824c.164.65.749 1.11 1.419 1.11s1.255-.458 1.419-1.11a38.4 38.4 0 0 1 1.971-5.823q3.185-7.395 8.732-12.944q5.548-5.548 12.945-8.732a38.4 38.4 0 0 1 5.824-1.972A1.464 1.464 0 0 0 64 32.001c0-.672-.458-1.255-1.11-1.42a38.4 38.4 0 0 1-5.823-1.97" />
-            </defs>
-            <g fill="none">
-                <g mask="url(#SVGrwDDMAfw)" transform="translate(2 2)scale(.4375)">
-                    <use href="#SVG8iAahc8M" />
-                    <g filter="url(#SVG4022te6D)">
-                        <ellipse cx="14.208" cy="16.716" fill="#ffe432" rx="14.208" ry="16.716" transform="rotate(19.552 -43.96 -16.268)" />
-                    </g>
-                    <g filter="url(#SVGfWehPcwe)">
-                        <ellipse cx="27.054" cy="2.551" fill="#fc413d" rx="18.394" ry="18.799" />
-                    </g>
-                    <g filter="url(#SVGOVrG7dor)">
-                        <ellipse cx="19.224" cy="24.904" fill="#00b95c" rx="19.224" ry="24.904" transform="rotate(-2.799 667.58 51.694)" />
-                    </g>
-                    <g filter="url(#SVGOVrG7dor)">
-                        <ellipse cx="18.843" cy="20.744" fill="#00b95c" rx="18.843" ry="20.744" transform="rotate(-31.317 81.174 36.482)" />
-                    </g>
-                    <g filter="url(#SVGZfuD4bKL)">
-                        <ellipse cx="66.462" cy="24.977" fill="#3186ff" rx="18.093" ry="17.423" />
-                    </g>
-                    <g filter="url(#SVGZWZ8re1E)">
-                        <ellipse cx="20.929" cy="22.075" fill="#fbbc04" rx="20.929" ry="22.075" transform="rotate(37.251 9.618 -7.898)" />
-                    </g>
-                    <g filter="url(#SVG5frwbcHz)">
-                        <ellipse cx="24.131" cy="22.292" fill="#3186ff" rx="24.131" ry="22.292" transform="rotate(34.51 19.317 63.957)" />
-                    </g>
-                    <g filter="url(#SVGQLeO6cNv)">
-                        <path fill="#749bff" d="M54.226-2.304c2.794 3.799-.797 11.184-8.02 16.497c-7.222 5.312-15.342 6.539-18.136 2.74S28.866 5.75 36.09.436c7.223-5.312 15.343-6.539 18.136-2.74" />
-                    </g>
-                    <g filter="url(#SVG0Tg9pchZ)">
-                        <ellipse cx="27.585" cy="17.148" fill="#fc413d" rx="27.585" ry="17.148" transform="rotate(-42.847 5.973 20.37)" />
-                    </g>
-                    <g filter="url(#SVG2faIRbvE)">
-                        <ellipse cx="14.782" cy="8.596" fill="#ffee48" rx="14.782" ry="8.596" transform="rotate(35.592 -44.338 25.191)" />
-                    </g>
-                </g>
-                <defs>
-                    <filter id="SVG4022te6D" width="38.868" height="42.756" x="-19.618" y="12.903" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
-                        <feGaussianBlur stdDeviation="2.46" />
-                    </filter>
-                    <filter id="SVGfWehPcwe" width="84.353" height="85.162" x="-15.122" y="-40.03" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
-                        <feGaussianBlur stdDeviation="11.891" />
-                    </filter>
-                    <filter id="SVGOVrG7dor" width="78.916" height="90.22" x="-20.768" y="11.483" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
-                        <feGaussianBlur stdDeviation="10.109" />
-                    </filter>
-                    <filter id="SVGZfuD4bKL" width="74.611" height="73.27" x="29.156" y="-11.658" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
-                        <feGaussianBlur stdDeviation="9.606" />
-                    </filter>
-                    <filter id="SVGZWZ8re1E" width="77.538" height="78.151" x="-38.291" y="-16.269" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
-                        <feGaussianBlur stdDeviation="8.706" />
-                    </filter>
-                    <filter id="SVG5frwbcHz" width="78.218" height="76.898" x="7.78" y="-6.098" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
-                        <feGaussianBlur stdDeviation="7.775" />
-                    </filter>
-                    <filter id="SVGQLeO6cNv" width="55.879" height="51.479" x="13.208" y="-18.425" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
-                        <feGaussianBlur stdDeviation="6.957" />
-                    </filter>
-                    <filter id="SVG0Tg9pchZ" width="70.203" height="68.674" x="-15.474" y="-31.027" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
-                        <feGaussianBlur stdDeviation="5.876" />
-                    </filter>
-                    <filter id="SVG2faIRbvE" width="55.137" height="51.261" x="-14.173" y="20.474" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
-                        <feGaussianBlur stdDeviation="7.273" />
-                    </filter>
-                    <mask id="SVGrwDDMAfw" width="64" height="64" x="0" y="0" maskUnits="userSpaceOnUse">
-                        <use href="#SVG8iAahc8M" />
-                    </mask>
-                </defs>
-            </g>
-        </svg>
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 32 32"><path fill="none" d="M0 0h32v32H0z" /><defs><path id="SVG8iAahc8M" fill="#fff" d="M57.067 28.61q-7.396-3.184-12.945-8.732-5.547-5.546-8.732-12.944a38.4 38.4 0 0 1-1.97-5.824A1.464 1.464 0 0 0 32 .001c-.671 0-1.255.458-1.419 1.11a38.4 38.4 0 0 1-1.971 5.823q-3.186 7.397-8.732 12.944-5.548 5.548-12.945 8.732a38.4 38.4 0 0 1-5.824 1.972A1.464 1.464 0 0 0 0 32c0 .67.458 1.255 1.11 1.418a38.4 38.4 0 0 1 5.823 1.972q7.396 3.184 12.945 8.732 5.55 5.546 8.732 12.944a38.4 38.4 0 0 1 1.971 5.824c.164.65.749 1.11 1.419 1.11s1.255-.458 1.419-1.11a38.4 38.4 0 0 1 1.971-5.823q3.185-7.395 8.732-12.944 5.548-5.548 12.945-8.732a38.4 38.4 0 0 1 5.824-1.972A1.464 1.464 0 0 0 64 32.001c0-.672-.458-1.255-1.11-1.42a38.4 38.4 0 0 1-5.823-1.97" /></defs><g fill="none"><g mask="url(#SVGrwDDMAfw)" transform="translate(2 2)scale(.4375)"><use href="#SVG8iAahc8M" /><g filter="url(#SVG4022te6D)"><ellipse cx="14.208" cy="16.716" fill="#ffe432" rx="14.208" ry="16.716" transform="rotate(19.552 -43.96 -16.268)" /></g><g filter="url(#SVGfWehPcwe)"><ellipse cx="27.054" cy="2.551" fill="#fc413d" rx="18.394" ry="18.799" /></g><g filter="url(#SVGOVrG7dor)"><ellipse cx="19.224" cy="24.904" fill="#00b95c" rx="19.224" ry="24.904" transform="rotate(-2.799 667.58 51.694)" /></g><g filter="url(#SVGOVrG7dor)"><ellipse cx="18.843" cy="20.744" fill="#00b95c" rx="18.843" ry="20.744" transform="rotate(-31.317 81.174 36.482)" /></g><g filter="url(#SVGZfuD4bKL)"><ellipse cx="66.462" cy="24.977" fill="#3186ff" rx="18.093" ry="17.423" /></g><g filter="url(#SVGZWZ8re1E)"><ellipse cx="20.929" cy="22.075" fill="#fbbc04" rx="20.929" ry="22.075" transform="rotate(37.251 9.618 -7.898)" /></g><g filter="url(#SVG5frwbcHz)"><ellipse cx="24.131" cy="22.292" fill="#3186ff" rx="24.131" ry="22.292" transform="rotate(34.51 19.317 63.957)" /></g><g filter="url(#SVGQLeO6cNv)"><path fill="#749bff" d="M54.226-2.304c2.794 3.799-.797 11.184-8.02 16.497-7.222 5.312-15.342 6.539-18.136 2.74S28.866 5.75 36.09.436c7.223-5.312 15.343-6.539 18.136-2.74" /></g><g filter="url(#SVG0Tg9pchZ)"><ellipse cx="27.585" cy="17.148" fill="#fc413d" rx="27.585" ry="17.148" transform="rotate(-42.847 5.973 20.37)" /></g><g filter="url(#SVG2faIRbvE)"><ellipse cx="14.782" cy="8.596" fill="#ffee48" rx="14.782" ry="8.596" transform="rotate(35.592 -44.338 25.191)" /></g></g><defs><filter id="SVG4022te6D" width="38.868" height="42.756" x="-19.618" y="12.903" colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="2.46" /></filter><filter id="SVGfWehPcwe" width="84.353" height="85.162" x="-15.122" y="-40.03" colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="11.891" /></filter><filter id="SVGOVrG7dor" width="78.916" height="90.22" x="-20.768" y="11.483" colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="10.109" /></filter><filter id="SVGZfuD4bKL" width="74.611" height="73.27" x="29.156" y="-11.658" colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="9.606" /></filter><filter id="SVGZWZ8re1E" width="77.538" height="78.151" x="-38.291" y="-16.269" colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="8.706" /></filter><filter id="SVG5frwbcHz" width="78.218" height="76.898" x="7.78" y="-6.098" colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="7.775" /></filter><filter id="SVGQLeO6cNv" width="55.879" height="51.479" x="13.208" y="-18.425" colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="6.957" /></filter><filter id="SVG0Tg9pchZ" width="70.203" height="68.674" x="-15.474" y="-31.027" colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="5.876" /></filter><filter id="SVG2faIRbvE" width="55.137" height="51.261" x="-14.173" y="20.474" colorInterpolationFilters="sRGB" filterUnits="userSpaceOnUse"><feGaussianBlur stdDeviation="7.273" /></filter><mask id="SVGrwDDMAfw" width="64" height="64" x="0" y="0" maskUnits="userSpaceOnUse"><use href="#SVG8iAahc8M" /></mask></defs></g></svg>
     );
 }
 
@@ -859,4 +786,39 @@ export function OpenAIIcon({ className }: { className: string }) {
         </svg>
 
     );
+}
+
+export function AnthropicIcon({ className }: { className: string }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" d="M16.765 5h-3.308l5.923 15h3.23zM7.226 5L1.38 20h3.308l1.307-3.154h6.154l1.23 3.077h3.309L10.688 5zm-.308 9.077l2-5.308l2.077 5.308z" />
+        </svg>
+    );
+}
+
+export function bashIcon({ className }: { className: string }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5">
+                <path d="m7 7l1.227 1.057C8.742 8.502 9 8.724 9 9s-.258.498-.773.943L7 11m4 0h3" />
+                <path d="M12 21c3.75 0 5.625 0 6.939-.955a5 5 0 0 0 1.106-1.106C21 17.625 21 15.749 21 12s0-5.625-.955-6.939a5 5 0 0 0-1.106-1.106C17.625 3 15.749 3 12 3s-5.625 0-6.939.955A5 5 0 0 0 3.955 5.06C3 6.375 3 8.251 3 12s0 5.625.955 6.939a5 5 0 0 0 1.106 1.106C6.375 21 8.251 21 12 21" />
+            </g>
+        </svg>
+    );
+}
+
+export function GoogleIcon({ className }: { className: string }) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 16 16">
+            <path d="M0 0h16v16H0z" fill="none" />
+            <g fill="none" fill-rule="evenodd" clip-rule="evenodd">
+                <path fill="#f44336" d="M7.209 1.061c.725-.081 1.154-.081 1.933 0a6.57 6.57 0 0 1 3.65 1.82a100 100 0 0 0-1.986 1.93q-1.876-1.59-4.188-.734q-1.696.78-2.362 2.528a78 78 0 0 1-2.148-1.658a.26.26 0 0 0-.16-.027q1.683-3.245 5.26-3.86" opacity=".987" />
+                <path fill="#ffc107" d="M1.946 4.92q.085-.013.161.027a78 78 0 0 0 2.148 1.658A7.6 7.6 0 0 0 4.04 7.99q.037.678.215 1.331L2 11.116Q.527 8.038 1.946 4.92" opacity=".997" />
+                <path fill="#448aff" d="M12.685 13.29a26 26 0 0 0-2.202-1.74q1.15-.812 1.396-2.228H8.122V6.713q3.25-.027 6.497.055q.616 3.345-1.423 6.032a7 7 0 0 1-.51.49" opacity=".999" />
+                <path fill="#43a047" d="M4.255 9.322q1.23 3.057 4.51 2.854a3.94 3.94 0 0 0 1.718-.626q1.148.812 2.202 1.74a6.62 6.62 0 0 1-4.027 1.684a6.4 6.4 0 0 1-1.02 0Q3.82 14.524 2 11.116z" opacity=".993" />
+            </g>
+        </svg>
+    )
 }

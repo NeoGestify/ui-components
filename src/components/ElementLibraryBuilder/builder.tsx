@@ -44,6 +44,13 @@ const SHAPE_OPTIONS = [
  */
 const IMAGE_WARN_BYTES = 200 * 1024;
 
+/**
+ * Indicador de foco compartido. `focus-visible` para que el anillo aparezca al
+ * navegar con teclado pero no al pulsar con el ratón.
+ */
+const FOCUS_CLS =
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400';
+
 /** Bytes reales que ocupa la carga útil de un data URI base64. */
 function dataUriBytes(src: string): number {
   const base64 = src.slice(src.indexOf(',') + 1);
@@ -265,7 +272,12 @@ export const ElementLibraryBuilder: React.FC = () => {
                 )}
 
                 {groups.length > 1 && (
-                  <button onClick={(e) => { e.stopPropagation(); handleRemoveGroup(group.internalId); }} className="text-red-500 text-xs">x</button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); handleRemoveGroup(group.internalId); }}
+                    aria-label={`Eliminar grupo ${group.name}`}
+                    className={`rounded px-1 text-xs text-red-500 hover:text-red-600 ${FOCUS_CLS}`}
+                  >x</button>
                 )}
               </div>
             ))}
@@ -287,7 +299,12 @@ export const ElementLibraryBuilder: React.FC = () => {
                 onClick={() => handleSelectElement(i)}
               >
                 <span>{el.id} ({el.shape})</span>
-                <button onClick={(e) => { e.stopPropagation(); handleRemoveElement(i); }} className="text-red-500 text-xs">x</button>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); handleRemoveElement(i); }}
+                  aria-label={`Eliminar elemento ${el.id}`}
+                  className={`rounded px-1 text-xs text-red-500 hover:text-red-600 ${FOCUS_CLS}`}
+                >x</button>
               </div>
             ))}
             {(!activeGroup || activeGroup.objects.length === 0) && (
@@ -349,11 +366,11 @@ export const ElementLibraryBuilder: React.FC = () => {
 
             <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-gray-700">Fill Color</label>
+                <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Fill Color</label>
                 <div className="flex gap-2">
                   <input
                     type="color"
-                    className="w-8 h-8 cursor-pointer rounded"
+                    className={`w-8 h-8 cursor-pointer rounded ${FOCUS_CLS}`}
                     value={currentElement.color}
                     onChange={(e) => handleFieldChange('color', e.target.value)}
                   />
@@ -364,11 +381,11 @@ export const ElementLibraryBuilder: React.FC = () => {
                 </div>
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-gray-700">Stroke Color</label>
+                <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Stroke Color</label>
                 <div className="flex gap-2">
                   <input
                     type="color"
-                    className="w-8 h-8 cursor-pointer rounded"
+                    className={`w-8 h-8 cursor-pointer rounded ${FOCUS_CLS}`}
                     value={currentElement.strokeColor}
                     onChange={(e) => handleFieldChange('strokeColor', e.target.value)}
                   />
@@ -490,7 +507,7 @@ export const ElementLibraryBuilder: React.FC = () => {
                       )}
                       <button
                         type="button"
-                        className="text-red-500 text-left"
+                        className={`text-red-500 hover:text-red-600 text-left rounded ${FOCUS_CLS}`}
                         onClick={() => { handleFieldChange('imageSrc', undefined); setImageError(null); }}
                       >
                         Quitar imagen
@@ -506,7 +523,7 @@ export const ElementLibraryBuilder: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-400">
+          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
             Select an element to edit or add a new one.
           </div>
         )}
@@ -529,7 +546,7 @@ export const ElementLibraryBuilder: React.FC = () => {
               placeholder="filename"
               title="Filename without extension"
             />
-            <span className="text-xs text-gray-500">.json</span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">.json</span>
             <Button
               variant="secondary"
               onClick={handleDownload}

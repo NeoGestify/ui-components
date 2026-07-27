@@ -1,5 +1,6 @@
 import { AddIcon, AlertaAdvertencia, AlertaConfirmacion, AlertaError, AlertaExito, AlertaToast, Button, CheckIcon, CloseIcon, DeleteIcon, EditIcon, Form, HomeIcon, Input, Modal, ModalRef, SaveIcon, SearchIcon, Select, SpinnerIcon, Table, ThemeToggle, useTheme, VenueMap, VenueMapEditor, VenueMapViewer, ElementLibraryBuilder } from 'neogestify-ui-components';
-import type { DomainConfig } from 'neogestify-ui-components';
+import { Calendar, DatePicker, rangePresets } from 'neogestify-ui-components';
+import type { DomainConfig, DateRange } from 'neogestify-ui-components';
 import { useState, useRef } from 'react';
 
 // ─── Demo «elemento clickeable» ────────────────────────────────────────────────
@@ -30,6 +31,9 @@ const clickDemoMap: VenueMap = {
 
 function App() {
   const [showModal, setShowModal] = useState(false);
+  const [fecha, setFecha] = useState<Date | null>(new Date());
+  const [dias, setDias] = useState<Date[]>([]);
+  const [rango, setRango] = useState<DateRange>({ start: null, end: null });
   const [lastMap, setLastMap] = useState<VenueMap | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [selectValue, setSelectValue] = useState('');
@@ -288,6 +292,65 @@ function App() {
           </div>
         </section>
 
+        {/* Calendar Section */}
+        <section className="mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Calendario &amp; DatePicker
+          </h2>
+          <p className="text-gray-500 dark:text-gray-400 text-sm mb-6">
+            Celdas grandes para el dedo, desliza para cambiar de mes, selectores rapidos de mes/ano
+            y colapso automatico a un solo mes en pantallas estrechas. Modos: fecha suelta, varias fechas y rango.
+          </p>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Fecha suelta</h3>
+              <Calendar value={fecha} onChange={setFecha} />
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                Valor: {fecha ? fecha.toLocaleDateString('es-ES') : '—'}
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Varias fechas (max. 5)</h3>
+              <Calendar mode="multiple" maxSelections={5} value={dias} onChange={setDias} />
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                {dias.length ? dias.map(d => d.toLocaleDateString('es-ES')).join(' · ') : 'Sin fechas'}
+              </p>
+            </div>
+
+            <div className="lg:col-span-2">
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
+                Rango con atajos (2 meses en escritorio, 1 en movil)
+              </h3>
+              <Calendar
+                mode="range"
+                value={rango}
+                onChange={setRango}
+                presets={rangePresets()}
+                showValueSummary
+                minDate={new Date(new Date().getFullYear(), 0, 1)}
+                maxRangeDays={30}
+              />
+              <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                {rango.start && rango.end
+                  ? `${rango.start.toLocaleDateString('es-ES')} → ${rango.end.toLocaleDateString('es-ES')}`
+                  : 'Elige un rango (maximo 30 dias)'}
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">DatePicker</h3>
+              <DatePicker label="Fecha de la reserva" value={fecha} onChange={setFecha} helperText="En movil se abre como hoja inferior." />
+            </div>
+
+            <div>
+              <h3 className="font-semibold text-gray-900 dark:text-white mb-2">DatePicker de rango</h3>
+              <DatePicker mode="range" label="Estancia" value={rango} onChange={setRango} presets={rangePresets(['next7', 'next30'])} />
+            </div>
+          </div>
+        </section>
+
         {/* Element Library Builder Section */}
         <section className="mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 overflow-hidden">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -348,8 +411,9 @@ function App() {
           </h2>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
             En modo visor, el círculo azul es <strong>clickeable</strong> y abre un
-            SweetAlert; el rectángulo gris no responde. En el editor, un elemento
-            clickeable queda bloqueado (no se puede mover).
+            SweetAlert; el rectángulo gris no responde. En el editor los elementos
+            clickeables se mueven y editan como cualquier otro: solo responden al
+            clic en modo visor.
           </p>
           <div className="rounded border dark:border-gray-700 overflow-hidden">
             <VenueMapViewer

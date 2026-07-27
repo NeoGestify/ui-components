@@ -1,6 +1,6 @@
 import { Button } from './Button';
 import { CloseIcon } from '../icons/icons';
-import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
+import React, { useEffect, useId, useState, useRef, forwardRef, useImperativeHandle } from 'react';
 
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 type ModalVariant = 'default' | 'danger' | 'success' | 'warning';
@@ -61,6 +61,8 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
 }, ref) => {
     const [show, setShow] = useState(false);
     const handleCloseRef = useRef<() => void>(() => {});
+    const panelRef = useRef<HTMLElement>(null);
+    const titleId = `modal-title-${useId()}`;
 
     const handleClose = () => {
         setShow(false);
@@ -70,6 +72,42 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     handleCloseRef.current = handleClose;
 
     useEffect(() => { setShow(true); }, []);
+
+    // El foco se lleva al panel y se mantiene dentro mientras el modal está
+    // abierto; al cerrarlo vuelve a donde estaba. Sin esto, tabular saca al
+    // usuario de teclado al contenido de detrás, que sigue siendo alcanzable.
+    useEffect(() => {
+        const previouslyFocused = document.activeElement as HTMLElement | null;
+        const panel = panelRef.current;
+        const focusables = () => Array.from(
+            panel?.querySelectorAll<HTMLElement>(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ) ?? [],
+        ).filter(el => el.offsetParent !== null);
+
+        (focusables()[0] ?? panel)?.focus();
+
+        const onKeyDown = (e: KeyboardEvent) => {
+            if (e.key !== 'Tab') return;
+            const items = focusables();
+            if (!items.length) { e.preventDefault(); return; }
+            const first = items[0];
+            const last = items[items.length - 1];
+            const active = document.activeElement;
+            if (e.shiftKey && (active === first || !panel?.contains(active))) {
+                e.preventDefault();
+                last.focus();
+            } else if (!e.shiftKey && active === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        };
+        document.addEventListener('keydown', onKeyDown);
+        return () => {
+            document.removeEventListener('keydown', onKeyDown);
+            previouslyFocused?.focus?.();
+        };
+    }, []);
 
     useEffect(() => {
         if (!closeOnEsc) return;
@@ -91,20 +129,26 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     return (
         <dialog
             open={show}
-            className={`fixed inset-0 w-full h-full flex items-center justify-center p-4 transition-opacity duration-300 bg-gray-900/60 backdrop-blur-sm ${show ? 'opacity-100' : 'opacity-0'}`}
+            aria-modal="true"
+            aria-labelledby={titleId}
+            className={`fixed inset-0 w-full h-full flex items-center justify-center p-4 transition-opacity duration-300 motion-reduce:transition-none bg-gray-900/60 backdrop-blur-sm ${show ? 'opacity-100' : 'opacity-0'}`}
             style={{ zIndex: zIndex - 10 }}
             onClick={handleBackdropClick}
         >
             <article
-                className={`relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl w-full ${widthCls} max-h-[90vh] flex flex-col overflow-hidden`}
+                ref={panelRef}
+                tabIndex={-1}
+                className={`relative focus:outline-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl w-full ${widthCls} max-h-[90vh] flex flex-col overflow-hidden`}
                 style={{ zIndex }}
             >
                 <header className={`shrink-0 px-6 py-4 flex items-center justify-between ${VARIANT_HEADER[variant]}`}>
-                    <h2 className={`text-2xl font-bold ${VARIANT_TITLE[variant]}`}>{title}</h2>
+                    <h2 id={titleId} className={`text-2xl font-bold ${VARIANT_TITLE[variant]}`}>{title}</h2>
                     {showCloseButton && (
                         <Button
                             variant="icon"
                             onClick={handleClose}
+                            aria-label="Cerrar"
+                            title="Cerrar"
                             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                         >
                             <CloseIcon className="w-5 h-5" />

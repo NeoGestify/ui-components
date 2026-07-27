@@ -10,6 +10,7 @@ Reusable UI component library built with React, Tailwind CSS and SweetAlert2.
 - Theme system (light/dark) with a Context Provider
 - Interactive venue map editor (VenueMapEditor/VenueMapViewer) with full touch support (pinch-zoom, two-finger pan)
 - Element library builder (ElementLibraryBuilder)
+- Mobile-friendly calendar and date picker (Calendar/DatePicker) with single, multiple and range selection
 - Light/dark mode support
 - TypeScript included
 - Compatible with Tailwind CSS 4.x
@@ -75,6 +76,194 @@ In your main CSS file (e.g. `src/index.css`):
 bun add react react-dom sweetalert2 sweetalert2-react-content
 ```
 
+---
+
+## Framework guides
+
+The library ships **prebuilt** ESM + CJS + types, so no framework needs to
+transpile it. Two things are always true, whatever the stack:
+
+1. **Tailwind must scan the library's source.** The `@source` path is resolved
+   **relative to the CSS file** where you write it — that is what changes from
+   one framework to the next.
+2. **The components are client-side.** They use `useState`, `useEffect`,
+   `ResizeObserver`, pointer events and (for the alerts) SweetAlert2, so they
+   need to run in the browser.
+
+### Vite (React)
+
+`src/index.css`:
+
+```css
+@import "tailwindcss";
+@source "../node_modules/neogestify-ui-components/src";
+@variant dark (&:where(.dark, .dark *));
+```
+
+Nothing else: `vite.config.ts` only needs `@tailwindcss/vite` and
+`@vitejs/plugin-react`.
+
+### Next.js (App Router)
+
+`app/globals.css` — note the path only goes up **one** level:
+
+```css
+@import "tailwindcss";
+@source "../node_modules/neogestify-ui-components/src";
+@variant dark (&:where(.dark, .dark *));
+```
+
+The package has no `"use client"` banner, so **import it from a Client
+Component**. Either mark your own component:
+
+```tsx
+'use client';
+import { Button, Calendar, VenueMapEditor } from 'neogestify-ui-components';
+
+export function BookingForm() {
+  return <Calendar mode="range" />;
+}
+```
+
+…or re-export the pieces you use once, and import that file everywhere:
+
+```tsx
+// components/ui.ts
+'use client';
+export { Button, Input, Modal, Calendar, DatePicker } from 'neogestify-ui-components';
+```
+
+`VenueMapEditor` and `ElementLibraryBuilder` measure the DOM on mount, so if
+you hit a hydration mismatch, load them without SSR:
+
+```tsx
+'use client';
+import dynamic from 'next/dynamic';
+
+const VenueMapEditor = dynamic(
+  () => import('neogestify-ui-components').then(m => m.VenueMapEditor),
+  { ssr: false },
+);
+```
+
+Avoid the flash of the wrong theme by setting the class before React hydrates —
+in `app/layout.tsx`:
+
+```tsx
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="es" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}`,
+          }}
+        />
+      </head>
+      <body>{children}</body>
+    </html>
+  );
+}
+```
+
+Install with `@tailwindcss/postcss` (Next.js compiles CSS through PostCSS):
+
+```bash
+npm i neogestify-ui-components react react-dom sweetalert2 sweetalert2-react-content
+npm i -D tailwindcss @tailwindcss/postcss
+```
+
+```js
+// postcss.config.mjs
+export default { plugins: { '@tailwindcss/postcss': {} } };
+```
+
+### Next.js (Pages Router)
+
+Same CSS, imported from `pages/_app.tsx`. There are no Server Components here,
+so no `'use client'` is needed — but `next/dynamic` with `ssr: false` still
+applies to the map editor. The anti-flash script goes in `pages/_document.tsx`,
+inside `<Head>`.
+
+### Astro
+
+```bash
+npm create astro@latest
+npx astro add react
+npm i neogestify-ui-components sweetalert2 sweetalert2-react-content
+npm i -D tailwindcss @tailwindcss/vite
+```
+
+`astro.config.mjs`:
+
+```js
+import { defineConfig } from 'astro/config';
+import react from '@astrojs/react';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+  integrations: [react()],
+  vite: { plugins: [tailwindcss()] },
+});
+```
+
+`src/styles/global.css` — from `src/styles/` you go up **two** levels:
+
+```css
+@import "tailwindcss";
+@source "../../node_modules/neogestify-ui-components/src";
+@source "../../src";
+@variant dark (&:where(.dark, .dark *));
+```
+
+Astro renders islands as static HTML by default, so every component needs a
+**client directive** or it will not be interactive:
+
+```astro
+---
+import '../styles/global.css';
+import { Calendar } from 'neogestify-ui-components';
+import { VenueMapEditor } from 'neogestify-ui-components';
+---
+<Calendar client:load mode="range" />
+<VenueMapEditor client:only="react" height="520px" />
+```
+
+Use `client:only="react"` for `VenueMapEditor` / `ElementLibraryBuilder`: they
+measure their container, so there is nothing useful to prerender.
+
+### Remix / React Router v7
+
+Vite-based, so the CSS setup is the Vite one. Import the stylesheet from
+`app/root.tsx` and, since these components are browser-only, either render them
+inside a `<ClientOnly>` boundary or guard with a mounted flag:
+
+```tsx
+import styles from './tailwind.css?url';
+export const links = () => [{ rel: 'stylesheet', href: styles }];
+```
+
+### Other setups
+
+| Stack | What to do |
+|-------|------------|
+| **Create React App / Craco** | Tailwind v4 needs PostCSS: add `@tailwindcss/postcss` to `postcss.config.js`. The `@source` path from `src/index.css` is `../node_modules/neogestify-ui-components/src` |
+| **Gatsby** | Same as CRA, plus `gatsby-plugin-postcss` |
+| **Monorepo (pnpm / workspaces)** | `node_modules` may be hoisted. Point `@source` at the real folder, e.g. `@source "../../../node_modules/neogestify-ui-components/src"`, or use the package root: `@source "../node_modules/.pnpm/**/neogestify-ui-components/src"` |
+| **Tailwind CSS 3.x** | There is no `@source`; add the path to `content` in `tailwind.config.js`: `content: ['./src/**/*.{ts,tsx}', './node_modules/neogestify-ui-components/src/**/*.{ts,tsx}']` and set `darkMode: 'class'` |
+| **No bundler / CDN** | Not supported: the package is distributed as ESM/CJS modules and expects a bundler |
+
+### Checklist when classes don't show up
+
+1. Is the `@source` path right **relative to the CSS file**? A wrong path fails
+   silently — the components render unstyled.
+2. Did you restart the dev server after touching the CSS? `@source` is read once
+   at startup.
+3. Is the `dark` variant declared? Without `@variant dark (&:where(.dark, .dark *))`
+   every `dark:` class in the library is dead code.
+4. Is `sweetalert2` installed? It is a peer dependency, not a bundled one.
+
+
 ## Usage
 
 Import everything from a single entry point:
@@ -110,6 +299,10 @@ import {
   VenueMapViewer,
   // ElementLibraryBuilder
   ElementLibraryBuilder,
+  // Calendar
+  Calendar,
+  DatePicker,
+  rangePresets,
 } from 'neogestify-ui-components';
 ```
 
@@ -1537,6 +1730,95 @@ viewport) and reflows its three columns:
 | ≥ 900 px | Three columns: groups/elements · element editor · output JSON |
 | 640–900 px | Groups/elements and the editor side by side; **output JSON moves below** |
 | < 640 px | Single column: everything stacked, form fields become one per row, and the element list is height-capped so it doesn't push the rest off-screen |
+
+---
+
+## Calendar / DatePicker
+
+A dependency-free calendar (no `date-fns`, no `moment`) designed for touch:
+large hit targets, swipe to change month, quick month/year pickers, and an
+automatic collapse to a single month on narrow containers.
+
+```tsx
+import { Calendar, DatePicker, rangePresets } from 'neogestify-ui-components';
+import type { DateRange } from 'neogestify-ui-components';
+
+// Single date
+const [date, setDate] = useState<Date | null>(null);
+<Calendar value={date} onChange={setDate} />
+
+// Several dates
+const [days, setDays] = useState<Date[]>([]);
+<Calendar mode="multiple" maxSelections={5} value={days} onChange={setDays} />
+
+// Range — two months on desktop, one on mobile
+const [range, setRange] = useState<DateRange>({ start: null, end: null });
+<Calendar mode="range" value={range} onChange={setRange} presets={rangePresets()} maxRangeDays={30} />
+
+// As a form field (popover on desktop, bottom sheet on mobile)
+<DatePicker mode="range" label="Stay" name="stay" value={range} onChange={setRange} />
+```
+
+### Mobile behaviour
+
+| Feature | Behaviour |
+|---------|-----------|
+| Hit targets | Day cells are 40 px tall by default (`size="lg"` → 48 px), the minimum recommended for touch |
+| Swipe | Dragging horizontally over the grid moves to the previous/next month. Vertical page scroll is never blocked |
+| Responsive months | The calendar measures **its own container**: under 640 px it always renders a single month, whatever `numberOfMonths` says |
+| DatePicker | Under 640 px of viewport it opens as a full-width bottom sheet (portal + backdrop + scroll lock) instead of a floating popover |
+| Quick navigation | Tapping the title opens a month grid, and from there a year grid — no need to tap `>` twelve times |
+
+### `Calendar` props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `mode` | `'single' \| 'range' \| 'multiple'` | `'single'` | Selection mode. The type of `value`/`onChange` follows it |
+| `value` / `defaultValue` | `Date \| null`, `DateRange`, `Date[]` | — | Controlled / uncontrolled value |
+| `onChange` | `(value) => void` | — | Fires on every change (including a half-open range) |
+| `onComplete` | `(value) => void` | — | Fires only when the selection is complete (closed range, chosen date) |
+| `month` / `defaultMonth` / `onMonthChange` | `Date` / `(m: Date) => void` | — | Visible month, controllable |
+| `minDate` / `maxDate` | `Date \| string \| number` | — | Selectable bounds |
+| `disabledDates` | `Date[] \| (d: Date) => boolean` | — | Blocked days |
+| `disabledDaysOfWeek` | `WeekDay[]` | — | E.g. `[0, 6]` to block weekends |
+| `minRangeDays` / `maxRangeDays` | `number` | — | Range length limits (while closing it, invalid days are disabled) |
+| `maxSelections` | `number` | — | Cap in `multiple` mode |
+| `numberOfMonths` | `number` | `2` in `range`, else `1` | Months rendered side by side |
+| `responsive` | `boolean` | `true` | Collapse to one month under 640 px of container width |
+| `locale` | `string` | `'es-ES'` | Any BCP-47 tag; month/day names come from `Intl` |
+| `weekStartsOn` | `0..6` | locale's | `0` = Sunday |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | Cell height: 32 / 40 / 48 px |
+| `presets` | `CalendarPreset[]` | — | Range shortcuts. Use `rangePresets()` for the usual ones |
+| `showOutsideDays` | `boolean` | `true` | Show the previous/next month filler days |
+| `showFooter` | `boolean` | `true` | "Today" / "Clear" bar |
+| `showValueSummary` | `boolean` | `false` | Text summary of the current selection |
+| `swipeNavigation` | `boolean` | `true` | Change month by swiping |
+| `readOnly` / `disabled` | `boolean` | `false` | `readOnly` still allows navigation |
+| `labels` | `Partial<CalendarLabels>` | Spanish | UI strings (translate here) |
+| `renderDay` | `(state: DayState) => ReactNode` | — | Custom cell content (dots, prices, availability…) |
+| `onDayClick` | `(d: Date) => void` | — | Fires even on disabled days |
+
+### `DatePicker` props
+
+Takes every `Calendar` prop plus: `label`, `placeholder`, `error`,
+`helperText`, `displayFormat` (an `Intl.DateTimeFormatOptions`), `clearable`,
+`closeOnSelect`, `name` (renders a hidden input: `YYYY-MM-DD`, `start/end` for
+ranges, comma-separated for multiple), `required`, `onOpenChange`, and the
+`className` / `inputClassName` / `calendarClassName` slots.
+
+### Keyboard
+
+`←` `→` `↑` `↓` move day by day / week by week · `Home` / `End` jump to the
+start/end of the week · `PageUp` / `PageDown` change month (with `Shift`, year)
+· `Enter` / `Space` select · `Esc` cancels a half-open range, and closes the
+`DatePicker`.
+
+### Date helpers
+
+The module also exports the utilities it uses internally, all local-time and
+dependency-free: `startOfDay`, `addDays`, `addMonths`, `startOfMonth`,
+`endOfMonth`, `isSameDay`, `isBeforeDay`, `isAfterDay`, `diffDays`,
+`isWithin`, `normalizeRange`, `toDate`, `toISODate`, `formatDate`.
 
 ---
 

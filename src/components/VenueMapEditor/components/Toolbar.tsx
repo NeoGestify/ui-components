@@ -21,6 +21,13 @@ interface ToolButtonProps {
   large?: boolean;
 }
 
+/**
+ * Indicador de foco compartido. `focus-visible` para que el anillo aparezca al
+ * navegar con teclado pero no al pulsar con el ratón.
+ */
+const FOCUS_CLS =
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400';
+
 function ToolButton({ active, disabled, title, onClick, children, large }: ToolButtonProps) {
   return (
     <button
@@ -32,6 +39,7 @@ function ToolButton({ active, disabled, title, onClick, children, large }: ToolB
       disabled={disabled}
       className={[
         'flex items-center justify-center rounded transition-colors shrink-0 disabled:opacity-30 disabled:cursor-not-allowed',
+        FOCUS_CLS,
         large ? 'w-10 h-10' : 'w-8 h-8',
         active
           ? 'bg-blue-100 dark:bg-blue-500/25 text-blue-700 dark:text-blue-300 ring-1 ring-blue-400 dark:ring-blue-500'
@@ -115,6 +123,7 @@ function TypeChip({ typeDef, active, onClick }: TypeChipProps) {
       onClick={onClick}
       className={[
         'flex items-center gap-1.5 px-2 py-1 rounded border text-xs whitespace-nowrap transition-colors',
+        FOCUS_CLS,
         active
           ? 'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-medium'
           : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700',
@@ -294,7 +303,8 @@ export function Toolbar({
                   type="button"
                   onClick={() => setActiveGroupId(group.id)}
                   className={[
-                    'px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap',
+                    'px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap rounded-t',
+                    FOCUS_CLS,
                     group.id === activeGroupId
                       ? 'text-slate-800 dark:text-slate-100'
                       : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300',
@@ -308,7 +318,7 @@ export function Toolbar({
                     title={`Eliminar "${group.name}"`}
                     aria-label={`Eliminar librería ${group.name}`}
                     onClick={() => onRemoveLibraryGroup(group.id)}
-                    className="pr-2 pl-0.5 py-1 text-slate-300 dark:text-slate-600 hover:text-red-400 transition-colors leading-none"
+                    className={`pr-2 pl-0.5 py-1 rounded text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors leading-none ${FOCUS_CLS}`}
                   >
                     ×
                   </button>
