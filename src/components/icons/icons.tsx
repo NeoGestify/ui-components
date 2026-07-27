@@ -3,7 +3,7 @@ import type { Props } from "../../types/types";
 // Spinner de carga animado
 export function SpinnerIcon({ className = "" }: { className?: string }) {
     return (
-        <svg className={`animate-spin h-8 w-8 text-indigo-600 mx-auto mb-4 ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <svg className={`animate-spin h-8 w-8 text-[var(--nui-accent,oklch(51.1%_.262_276.966))] dark:text-[var(--nui-accent-dark,oklch(58.5%_.233_277.117))] mx-auto mb-4 ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
         </svg>
@@ -821,4 +821,89 @@ export function GoogleIcon({ className }: { className: string }) {
             </g>
         </svg>
     )
+}
+
+export function ChevronLeftIcon({ className }: Props) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" d="M15.41 7.41L14 6l-6 6l6 6l1.41-1.41L10.83 12z" />
+        </svg>
+    );
+}
+
+export function ChevronRightIcon({ className }: Props) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" d="M10 6L8.59 7.41L13.17 12l-4.58 4.59L10 18l6-6z" />
+        </svg>
+    );
+}
+
+export function ChevronUpIcon({ className }: Props) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path d="M0 0h24v24H0z" fill="none" />
+            <path fill="currentColor" d="M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6l-6 6z" />
+        </svg>
+    );
+}
+
+/** Persona única. `UsersIcon` es la versión en grupo. */
+export function UserIcon({ className }: Props) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 12a5 5 0 1 0 0-10a5 5 0 0 0 0 10m0 2c-4.4 0-8 2.2-8 5v1h16v-1c0-2.8-3.6-5-8-5" />
+        </svg>
+    );
+}
+
+/** Triángulo de advertencia. */
+export function WarningIcon({ className }: Props) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 5.99L19.53 19H4.47zM12 2L1 21h22z" />
+            <path fill="currentColor" d="M13 16h-2v2h2zm0-6h-2v5h2z" />
+        </svg>
+    );
+}
+
+/** Círculo con exclamación: error o incidencia. */
+export function ErrorIcon({ className }: Props) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path fill="currentColor" d="M12 2a10 10 0 1 0 0 20a10 10 0 0 0 0-20m0 18a8 8 0 1 1 0-16a8 8 0 0 1 0 16" />
+            <path fill="currentColor" d="M11 7h2v6h-2zm0 8h2v2h-2z" />
+        </svg>
+    );
+}
+
+/** Barra inclinada: separador de rutas de navegación. */
+export function SlashIcon({ className }: Props) {
+    return (
+        <svg xmlns="http://www.w3.org/2000/svg" className={className} viewBox="0 0 24 24">
+            <path fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" d="M9 18L15 6" />
+        </svg>
+    );
+}
+
+/** Aro de carga: arco de 3/4 sobre una pista tenue. */
+export function RingSpinnerIcon({ className }: Props) {
+    return (
+        <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+        </svg>
+    );
+}
+
+/** Aro de carga con un cuarto de arco: más discreto que `RingSpinnerIcon`. */
+export function QuarterSpinnerIcon({ className }: Props) {
+    return (
+        <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+        </svg>
+    );
 }

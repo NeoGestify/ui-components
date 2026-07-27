@@ -12,17 +12,10 @@ import {
   DEFAULT_LABELS, type CalendarMode, type CalendarProps, type CalendarSize,
   type CalendarValue, type DateInput, type DayState,
 } from './types';
-
-// ─── Iconos locales (chevrons finos, del tamaño del texto) ──────────────────
-
-const Chevron = ({ dir, className = 'w-4 h-4' }: { dir: 'left' | 'right' | 'down'; className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
-    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    {dir === 'left' && <path d="M15 19l-7-7 7-7" />}
-    {dir === 'right' && <path d="M9 5l7 7-7 7" />}
-    {dir === 'down' && <path d="M6 9l6 6 6-6" />}
-  </svg>
-);
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '../icons/icons';
+import {
+  bg, bgHover, border, focusRing, focusVisibleRing, text, textHover,
+} from '../../theme/tokens';
 
 // ─── Tamaños ────────────────────────────────────────────────────────────────
 
@@ -33,21 +26,24 @@ const SIZE: Record<CalendarSize, { cell: string; text: string; head: string; gap
 };
 
 const NAV_BTN =
-  'inline-flex items-center justify-center rounded-md p-1.5 text-gray-500 dark:text-gray-400 ' +
-  'hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 ' +
-  'focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 ' +
+  `inline-flex items-center justify-center rounded-md p-1.5 ${text.subtle} ` +
+  `${bgHover.surface} ${textHover.muted} ${focusRing} ` +
   'disabled:opacity-40 disabled:pointer-events-none transition-colors touch-manipulation';
 
 const FOOT_BTN =
-  'rounded-md px-2.5 py-1.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 ' +
-  'hover:bg-indigo-50 dark:hover:bg-indigo-500/10 focus:outline-none focus:ring-2 ' +
-  'focus:ring-indigo-500 dark:focus:ring-indigo-400 disabled:opacity-40 disabled:pointer-events-none ' +
+  `rounded-md px-2.5 py-1.5 text-sm font-medium ${text.accent} ` +
+  `${bgHover.accentSoft} ${focusRing} disabled:opacity-40 disabled:pointer-events-none ` +
   'transition-colors touch-manipulation';
 
 /** Debajo de esto, `responsive` fuerza un solo mes visible. */
 const NARROW_PX = 640;
 /** Desplazamiento horizontal mínimo (px) para que un gesto cuente como swipe. */
 const SWIPE_PX = 45;
+
+/** Anillo tenue que marca el día de hoy. */
+const ringAccentSoft =
+  'ring-[color-mix(in_oklab,var(--nui-accent,oklch(51.1%_.262_276.966))_60%,transparent)] ' +
+  'dark:ring-[color-mix(in_oklab,var(--nui-accent-dark,oklch(58.5%_.233_277.117))_70%,transparent)]';
 
 type View = 'days' | 'months' | 'years';
 
@@ -367,14 +363,14 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
     return (
       <div key={offset} className="min-w-0 flex-1" role="group" aria-label={formatMonthYear(mDate, locale)}>
         {monthsToRender > 1 && (
-          <div className={`mb-1 text-center font-semibold text-gray-900 dark:text-white ${sz.head}`}>
+          <div className={`mb-1 text-center font-semibold ${text.base} ${sz.head}`}>
             {formatMonthYear(mDate, locale)}
           </div>
         )}
         <div className="grid grid-cols-7" role="row">
           {weekDays.map((w, i) => (
             <div key={i} role="columnheader" aria-label={w}
-              className="pb-1 text-center text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+              className={`pb-1 text-center text-xs font-medium uppercase tracking-wide ${text.subtle}`}>
               {w}
             </div>
           ))}
@@ -405,24 +401,25 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
             const bandEnd = inBand && (isSameDay(day, range.end) || (!!preview && isSameDay(day, preview.end)));
 
             const bandCls = inBand && !(bandStart && bandEnd)
-              ? `bg-indigo-50 dark:bg-indigo-500/15 ${bandStart ? 'rounded-l-full' : ''} ${bandEnd ? 'rounded-r-full' : ''}`
+              ? `${bg.accentSoft} ${bandStart ? 'rounded-l-full' : ''} ${bandEnd ? 'rounded-r-full' : ''}`
               : '';
 
             const btnCls = [
               'flex h-full w-full items-center justify-center rounded-full font-medium leading-none',
               'transition-colors duration-100 touch-manipulation select-none',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400 focus-visible:ring-offset-1 focus-visible:ring-offset-white dark:focus-visible:ring-offset-gray-800',
+              focusVisibleRing,
+              'focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--nui-surface,#fff)] dark:focus-visible:ring-offset-[var(--nui-surface-dark,oklch(27.8%_.033_256.848))]',
               sz.text,
               selected
-                ? 'bg-indigo-600 text-white hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 shadow-sm'
+                ? `${bg.accent} ${text.onAccent} ${bgHover.accent} shadow-sm`
                 : dayDisabled
-                  ? 'cursor-not-allowed text-gray-300 dark:text-gray-600'
+                  ? 'cursor-not-allowed opacity-40'
                   : inBand
-                    ? 'text-indigo-900 hover:bg-indigo-100 dark:text-indigo-100 dark:hover:bg-indigo-500/25'
+                    ? `${text.accent} ${bgHover.accentSoft}`
                     : outside
-                      ? 'text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700'
-                      : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700',
-              !selected && isToday ? 'ring-1 ring-inset ring-indigo-400 dark:ring-indigo-400/70' : '',
+                      ? `${text.subtle} ${bgHover.surface}`
+                      : `${text.muted} ${bgHover.surface}`,
+              !selected && isToday ? `ring-1 ring-inset ${ringAccentSoft}` : '',
               readOnly && !dayDisabled ? 'cursor-default' : '',
             ].filter(Boolean).join(' ');
 
@@ -485,8 +482,8 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
       ref={rootRef}
       id={rootId}
       className={[
-        'inline-block w-full max-w-full rounded-xl border border-gray-200 bg-white text-gray-900',
-        'dark:border-gray-700 dark:bg-gray-800 dark:text-white',
+        'inline-block w-full max-w-full rounded-xl border',
+        border.subtle, bg.surface, text.base,
         disabled ? 'opacity-60' : '',
         sz.gap,
         className,
@@ -498,15 +495,14 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
       <div className="mb-2 flex items-center justify-between gap-1">
         <button type="button" className={NAV_BTN} onClick={() => (view === 'years' ? setYearPage(y => y - 12) : shift(-1))}
           disabled={view === 'days' && !canGoPrev} aria-label={view === 'years' ? labels.previousYear : labels.previousMonth}>
-          <Chevron dir="left" />
+          <ChevronLeftIcon className="w-4 h-4" />
         </button>
 
         <button
           type="button"
           onClick={openMonthView}
-          className={`flex min-w-0 items-center gap-1 rounded-md px-2 py-1 font-semibold text-gray-900 dark:text-white
-            hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500
-            dark:focus:ring-indigo-400 transition-colors touch-manipulation ${sz.head}`}
+          className={`flex min-w-0 items-center gap-1 rounded-md px-2 py-1 font-semibold ${text.base}
+            ${bgHover.surface} ${focusRing} transition-colors touch-manipulation ${sz.head}`}
           aria-label={labels.selectMonth}
           aria-expanded={view !== 'days'}
         >
@@ -517,17 +513,17 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
                 ? `${formatMonthYear(visibleMonth, locale)} – ${formatMonthYear(lastVisible, locale)}`
                 : formatMonthYear(visibleMonth, locale)}
           </span>
-          <Chevron dir="down" className={`w-4 h-4 shrink-0 transition-transform ${view !== 'days' ? 'rotate-180' : ''}`} />
+          <ChevronDownIcon className={`w-4 h-4 shrink-0 transition-transform ${view !== 'days' ? 'rotate-180' : ''}`} />
         </button>
 
         <button type="button" className={NAV_BTN} onClick={() => (view === 'years' ? setYearPage(y => y + 12) : shift(1))}
           disabled={view === 'days' && !canGoNext} aria-label={view === 'years' ? labels.nextYear : labels.nextMonth}>
-          <Chevron dir="right" />
+          <ChevronRightIcon className="w-4 h-4" />
         </button>
       </div>
 
       {showValueSummary && view === 'days' && (
-        <div className="mb-2 truncate text-center text-sm text-gray-500 dark:text-gray-400" aria-live="polite">
+        <div className={`mb-2 truncate text-center text-sm ${text.subtle}`} aria-live="polite">
           {summary}
         </div>
       )}
@@ -541,12 +537,9 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
               type="button"
               onClick={() => applyPreset(p.range())}
               disabled={disabled || readOnly}
-              className="rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-600
-                hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700
-                dark:border-gray-600 dark:bg-gray-700/50 dark:text-gray-300 dark:hover:border-indigo-500
-                dark:hover:bg-indigo-500/15 dark:hover:text-indigo-300
-                focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-40
-                transition-colors touch-manipulation"
+              className={`rounded-full border ${border.subtle} ${bg.surfaceMuted} px-3 py-1 text-xs font-medium ${text.subtle}
+                ${bgHover.accentSoft} ${textHover.accent} ${focusRing} disabled:opacity-40
+                transition-colors touch-manipulation`}
             >
               {p.label}
             </button>
@@ -581,18 +574,17 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
                 type="button"
                 onClick={() => { goToMonth(new Date(yearPage, i, 1)); setView('days'); }}
                 className={`rounded-lg px-2 py-2.5 text-sm font-medium transition-colors touch-manipulation
-                  focus:outline-none focus:ring-2 focus:ring-indigo-500 ${isCur
-                    ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'}`}
+                  ${focusRing} ${isCur
+                    ? `${bg.accent} ${text.onAccent}`
+                    : `${text.muted} ${bgHover.surface}`}`}
               >
                 {name.slice(0, 3)}
               </button>
             );
           })}
           <button type="button" onClick={() => setView('years')}
-            className="col-span-3 mt-1 rounded-lg px-2 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50
-              dark:text-indigo-400 dark:hover:bg-indigo-500/10 focus:outline-none focus:ring-2 focus:ring-indigo-500
-              transition-colors touch-manipulation">
+            className={`col-span-3 mt-1 rounded-lg px-2 py-2 text-sm font-medium ${text.accent} ${bgHover.accentSoft}
+              ${focusRing} transition-colors touch-manipulation`}>
             {yearPage} · {labels.selectYear}
           </button>
         </div>
@@ -610,9 +602,9 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
                 disabled={!!outOfBounds}
                 onClick={() => { setYearPage(y); setView('months'); }}
                 className={`rounded-lg px-1 py-2.5 text-sm font-medium transition-colors touch-manipulation
-                  focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-30 disabled:pointer-events-none ${isCur
-                    ? 'bg-indigo-600 text-white dark:bg-indigo-500'
-                    : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-700'}`}
+                  ${focusRing} disabled:opacity-30 disabled:pointer-events-none ${isCur
+                    ? `${bg.accent} ${text.onAccent}`
+                    : `${text.muted} ${bgHover.surface}`}`}
               >
                 {y}
               </button>
@@ -623,7 +615,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
 
       {/* Pie */}
       {showFooter && (
-        <div className="mt-2 flex items-center justify-between gap-2 border-t border-gray-100 pt-2 dark:border-gray-700">
+        <div className={`mt-2 flex items-center justify-between gap-2 border-t ${border.subtle} pt-2`}>
           <button
             type="button"
             className={FOOT_BTN}
@@ -634,7 +626,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
           </button>
           <button
             type="button"
-            className={`${FOOT_BTN} text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700`}
+            className={`${FOOT_BTN} ${text.subtle} ${bgHover.surface}`}
             disabled={disabled || readOnly}
             onClick={() => { setHovered(null); commit(emptyValue(), false); }}
           >

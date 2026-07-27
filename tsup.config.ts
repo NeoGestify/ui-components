@@ -7,6 +7,7 @@ export default defineConfig({
     'components/icons/index': 'src/components/icons/index.ts',
     'components/alerts/index': 'src/components/alerts/index.ts',
     'context/theme/index': 'src/context/theme/index.ts',
+    'theme/index': 'src/theme/index.ts',
     'components/VenueMapEditor/index': 'src/components/VenueMapEditor/index.ts',
     'components/ElementLibraryBuilder/index': 'src/components/ElementLibraryBuilder/index.ts',
     'components/Calendar/index': 'src/components/Calendar/index.ts',

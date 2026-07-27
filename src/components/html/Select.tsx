@@ -1,5 +1,7 @@
 import { useId, type SelectHTMLAttributes, type FC, type ReactNode } from 'react';
 import { ChevronDownIcon } from '../icons/icons';
+// `placeholder` se renombra: el componente ya tiene una prop con ese nombre.
+import { bg, border, focusBorder, focusRing, focusRingOf, placeholder as placeholderCls, text } from '../../theme/tokens';
 
 type SelectVariant = 'default' | 'outline' | 'filled' | 'minimal' | 'custom' | 'small';
 type SelectSize = 'sm' | 'md' | 'lg';
@@ -29,10 +31,10 @@ const SIZE_CLASSES: Record<SelectSize, string> = {
 };
 
 const VARIANT_CLASSES: Record<Exclude<SelectVariant, 'small'>, string> = {
-  default: 'border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800',
-  outline: 'border-2 border-indigo-300 dark:border-indigo-600 bg-transparent',
-  filled:  'border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700',
-  minimal: 'border-0 border-b border-gray-300 dark:border-gray-600 bg-transparent rounded-none focus:ring-0',
+  default: `border ${border.base} ${bg.surface}`,
+  outline: `border-2 ${border.accent} bg-transparent`,
+  filled:  `border ${border.base} ${bg.surfaceMuted}`,
+  minimal: `border-0 border-b ${border.base} bg-transparent rounded-none focus:ring-0`,
   custom:  '',
 };
 
@@ -73,12 +75,12 @@ export const Select: FC<SelectProps> = ({
   // Windows/Linux queda texto blanco sobre fondo blanco.
   const baseCls =
     'appearance-none relative block w-full pl-3 pr-9 [color-scheme:light] dark:[color-scheme:dark] ' +
-    'placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md ' +
-    'focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 focus:z-10 ' +
+    `${placeholderCls} ${text.base} rounded-md ` +
+    `${focusRing} ${focusBorder.accent} focus:z-10 ` +
     'disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200';
 
   const errorCls = hasError
-    ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400 focus:border-red-500'
+    ? `${border.dangerSubtle} ${focusRingOf.danger} ${focusBorder.danger}`
     : '';
 
   const selectCls = [
@@ -91,24 +93,24 @@ export const Select: FC<SelectProps> = ({
   ].filter(Boolean).join(' ');
 
   const helpNode = errorMsg
-    ? <p id={describedById} className="text-sm text-red-600 dark:text-red-400" role="alert">{errorMsg}</p>
+    ? <p id={describedById} className={`text-sm ${text.danger}`} role="alert">{errorMsg}</p>
     : helperText
-      ? <p id={describedById} className={`text-sm ${hasError ? 'text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400'}`}>{helperText}</p>
+      ? <p id={describedById} className={`text-sm ${hasError ? text.danger : text.subtle}`}>{helperText}</p>
       : null;
 
   return (
     <div className="space-y-1 w-full">
       {label && (
         typeof label === 'string' ? (
-          <label htmlFor={selectId} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor={selectId} className={`block text-sm font-medium ${text.muted}`}>
             {label}
-            {props.required && <span className="ml-1 text-red-500" aria-hidden="true">*</span>}
+            {props.required && <span className={`ml-1 ${text.danger}`} aria-hidden="true">*</span>}
           </label>
         ) : label
       )}
       <div className="relative">
         {icon && (
-          <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 text-gray-400 dark:text-gray-500">
+          <div className={`pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 ${text.faint}`}>
             {icon}
           </div>
         )}
@@ -137,7 +139,7 @@ export const Select: FC<SelectProps> = ({
             </option>
           ))}
         </select>
-        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 text-gray-400 dark:text-gray-500">
+        <div className={`pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2.5 ${text.faint}`}>
           <ChevronDownIcon className="w-4 h-4" />
         </div>
       </div>

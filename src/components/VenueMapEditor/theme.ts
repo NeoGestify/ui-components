@@ -81,6 +81,29 @@ export const VENUE_PALETTES: Record<VenueTheme, VenuePalette> = {
   dark: DARK,
 };
 
+/** Colores del lienzo que el consumidor quiere cambiar, por tema. */
+export interface VenuePaletteOverride {
+  light?: Partial<VenuePalette>;
+  dark?: Partial<VenuePalette>;
+}
+
+/**
+ * Mezcla la paleta por defecto de `theme` con lo que indique el consumidor.
+ * `wallMaterials` se fusiona material a material para poder redefinir solo uno.
+ */
+export function resolvePalette(theme: VenueTheme, override?: VenuePaletteOverride): VenuePalette {
+  const base = VENUE_PALETTES[theme];
+  const patch = override?.[theme];
+  if (!patch) return base;
+  return {
+    ...base,
+    ...patch,
+    wallMaterials: patch.wallMaterials
+      ? { ...base.wallMaterials, ...patch.wallMaterials }
+      : base.wallMaterials,
+  };
+}
+
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 
 /** Lee el tema activo del `<html>`: clase `.dark`, `data-theme` o `color-scheme`. */

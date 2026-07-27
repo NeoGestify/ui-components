@@ -1,5 +1,8 @@
 import { useId, type InputHTMLAttributes, type FC, type ReactNode } from 'react';
 import { CloseIcon } from '../icons/icons';
+import {
+  bg, border, focusBorder, focusRing, focusRingOf, placeholder, text,
+} from '../../theme/tokens';
 
 type InputVariant = 'default' | 'outline' | 'filled' | 'minimal';
 type InputSize = 'sm' | 'md' | 'lg';
@@ -18,6 +21,10 @@ interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'size' 
   onClear?: () => void;
 }
 
+/** Reutilizado por el botón de limpiar. */
+const textHoverMuted =
+  'hover:text-[var(--nui-text-muted,oklch(37.3%_.034_259.733))] dark:hover:text-[var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))]';
+
 const SIZE_CLASSES: Record<InputSize, string> = {
   sm: 'px-2.5 py-1.5 text-xs',
   md: 'px-3 py-2 text-sm',
@@ -25,10 +32,10 @@ const SIZE_CLASSES: Record<InputSize, string> = {
 };
 
 const VARIANT_CLASSES: Record<InputVariant, string> = {
-  default: 'border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800',
-  outline: 'border-2 border-indigo-300 dark:border-indigo-600 bg-transparent',
-  filled:  'border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700',
-  minimal: 'border-0 border-b border-gray-300 dark:border-gray-600 bg-transparent rounded-none focus:ring-0',
+  default: `border ${border.base} ${bg.surface}`,
+  outline: `border-2 ${border.accent} bg-transparent`,
+  filled:  `border ${border.base} ${bg.surfaceMuted}`,
+  minimal: `border-0 border-b ${border.base} bg-transparent rounded-none focus:ring-0`,
 };
 
 export const Input: FC<InputProps> = ({
@@ -52,7 +59,7 @@ export const Input: FC<InputProps> = ({
   const inputId = id || `input-${autoId}`;
 
   const errorCls = error
-    ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400 focus:border-red-500'
+    ? `${border.dangerSubtle} ${focusRingOf.danger} ${focusBorder.danger}`
     : '';
 
   const showClear = clearable && !props.disabled && props.value !== undefined && props.value !== '';
@@ -60,7 +67,7 @@ export const Input: FC<InputProps> = ({
 
   // `color-scheme` alinea los widgets nativos (calendario de date/datetime,
   // flechas de number, autocompletado) con el tema activo.
-  const baseCls = 'appearance-none relative block w-full [color-scheme:light] dark:[color-scheme:dark] placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500 focus:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200';
+  const baseCls = `appearance-none relative block w-full [color-scheme:light] dark:[color-scheme:dark] ${placeholder} ${text.base} rounded-md ${focusRing} ${focusBorder.accent} focus:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200`;
 
   const inputCls = [
     baseCls,
@@ -76,23 +83,25 @@ export const Input: FC<InputProps> = ({
 
   // ── Checkbox / Radio ──────────────────────────────────────────────────────
   const toggleCls = [
-    `h-4 w-4 ${type === 'radio' ? 'rounded-full' : 'rounded'} border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 [color-scheme:light] dark:[color-scheme:dark] accent-indigo-600 dark:accent-indigo-400`,
-    'text-indigo-600 dark:text-indigo-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400',
-    'focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900',
+    `h-4 w-4 ${type === 'radio' ? 'rounded-full' : 'rounded'} border ${border.base} ${bg.surface} [color-scheme:light] dark:[color-scheme:dark]`,
+    'accent-[var(--nui-accent,oklch(51.1%_.262_276.966))] dark:accent-[var(--nui-accent-dark,oklch(58.5%_.233_277.117))]',
+    `${text.accent} ${focusRing}`,
+    'focus:ring-offset-2 focus:ring-offset-[var(--nui-surface,#fff)] dark:focus:ring-offset-[var(--nui-surface-sunken-dark,oklch(21%_.034_264.665))]',
     'disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer',
-    error ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400' : '',
+    error ? `${border.dangerSubtle} ${focusRingOf.danger}` : '',
   ].filter(Boolean).join(' ');
 
   // ── File input ────────────────────────────────────────────────────────────
   const fileCls = [
-    'block w-full text-gray-500 dark:text-gray-400 bg-white dark:bg-gray-800 border rounded-md',
-    'focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500',
+    `block w-full ${text.subtle} ${bg.surface} border rounded-md`,
+    `${focusRing} ${focusBorder.accent}`,
     'disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200',
     'file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-medium',
-    'file:bg-indigo-50 file:text-indigo-700 dark:file:bg-indigo-900/50 dark:file:text-indigo-300',
-    'hover:file:bg-indigo-100 dark:hover:file:bg-indigo-800/50 file:transition-colors file:duration-200 file:cursor-pointer',
+    'file:bg-[var(--nui-accent-soft,oklch(96.2%_.018_272.314))] dark:file:bg-[var(--nui-accent-soft-dark,oklch(58.5%_.233_277.117_/_.15))]',
+    'file:text-[var(--nui-accent-text,oklch(51.1%_.262_276.966))] dark:file:text-[var(--nui-accent-text-dark,oklch(67.3%_.182_276.935))]',
+    'file:transition-colors file:duration-200 file:cursor-pointer',
     SIZE_CLASSES[size],
-    error ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400' : 'border-gray-300 dark:border-gray-600',
+    error ? `${border.dangerSubtle} ${focusRingOf.danger}` : border.base,
     className,
   ].filter(Boolean).join(' ');
 
@@ -101,19 +110,19 @@ export const Input: FC<InputProps> = ({
 
   const labelNode = label && (
     typeof label === 'string' ? (
-      <label htmlFor={inputId} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label htmlFor={inputId} className={`block text-sm font-medium ${text.muted}`}>
         {label}
-        {props.required && <span className="ml-1 text-red-500" aria-hidden="true">*</span>}
+        {props.required && <span className={`ml-1 ${text.danger}`} aria-hidden="true">*</span>}
       </label>
     ) : label
   );
 
   const errorNode = error && (
-    <p className="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>
+    <p className={`text-sm ${text.danger}`} role="alert">{error}</p>
   );
 
   const helperNode = helperText && !error && (
-    <p className="text-sm text-gray-500 dark:text-gray-400">{helperText}</p>
+    <p className={`text-sm ${text.subtle}`}>{helperText}</p>
   );
 
   if (type === 'checkbox' || type === 'radio') {
@@ -140,26 +149,26 @@ export const Input: FC<InputProps> = ({
     );
   }
 
-  const prefixBorderCls = error ? 'border-red-300 dark:border-red-600' : 'border-gray-300 dark:border-gray-600';
+  const prefixBorderCls = error ? border.dangerSubtle : border.base;
 
   return (
     <div className={wrapperCls}>
       {labelNode}
       <div className="flex">
         {prefix && (
-          <span className={`inline-flex shrink-0 items-center px-3 border border-r-0 ${prefixBorderCls} bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-l-md text-sm`}>
+          <span className={`inline-flex shrink-0 items-center px-3 border border-r-0 ${prefixBorderCls} ${bg.surfaceMuted} ${text.subtle} rounded-l-md text-sm`}>
             {prefix}
           </span>
         )}
         <div className="relative flex-1">
           {icon && iconSide === 'left' && (
-            <div className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 text-gray-400 dark:text-gray-500">
+            <div className={`pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 ${text.faint}`}>
               {icon}
             </div>
           )}
           <input id={inputId} className={inputCls} type={type} {...props} />
           {icon && iconSide === 'right' && !showClear && (
-            <div className="pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center pr-3 text-gray-400 dark:text-gray-500">
+            <div className={`pointer-events-none absolute inset-y-0 right-0 z-10 flex items-center pr-3 ${text.faint}`}>
               {icon}
             </div>
           )}
@@ -169,14 +178,14 @@ export const Input: FC<InputProps> = ({
               onClick={onClear}
               tabIndex={-1}
               aria-label="Limpiar"
-              className="absolute inset-y-0 right-0 z-10 flex items-center pr-3 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+              className={`absolute inset-y-0 right-0 z-10 flex items-center pr-3 ${text.faint} ${textHoverMuted}`}
             >
               <CloseIcon className="w-4 h-4" />
             </button>
           )}
         </div>
         {suffix && (
-          <span className={`inline-flex shrink-0 items-center px-3 border border-l-0 ${prefixBorderCls} bg-gray-50 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-r-md text-sm`}>
+          <span className={`inline-flex shrink-0 items-center px-3 border border-l-0 ${prefixBorderCls} ${bg.surfaceMuted} ${text.subtle} rounded-r-md text-sm`}>
             {suffix}
           </span>
         )}

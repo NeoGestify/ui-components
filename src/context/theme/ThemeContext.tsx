@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { ThemeContext, type Theme } from './theme.types';
+import { applyNuiColors, type NuiColors } from '../../theme/colors';
+import { applyMotion } from '../../theme/motion';
 
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 
@@ -31,6 +33,25 @@ export interface ThemeProviderProps {
   enableSystem?: boolean;
   /** Clave de localStorage. Por defecto `'theme'`. */
   storageKey?: string;
+  /**
+   * Colores de la librería para cada tema. Escribe las variables `--nui-*` en
+   * `<html>`; lo que no se indique conserva el color por defecto.
+   *
+   * ```tsx
+   * <ThemeProvider colors={{ light: { accent: '#059669' }, dark: { accent: '#34d399' } }}>
+   * ```
+   *
+   * Alternativa sin JavaScript: declarar las mismas variables en tu CSS.
+   */
+  colors?: NuiColors;
+  /**
+   * Anima los cambios de tamaño y posición de la librería (acordeones,
+   * modales, hojas, tooltips…). `false` los deja instantáneos.
+   *
+   * Independiente de `prefers-reduced-motion`, que ya se respeta siempre.
+   * Cada componente puede saltárselo con su prop `animate`.
+   */
+  animations?: boolean;
 }
 
 export function ThemeProvider({
@@ -38,6 +59,8 @@ export function ThemeProvider({
   defaultTheme = 'light',
   enableSystem = true,
   storageKey = 'theme',
+  colors,
+  animations = true,
 }: ThemeProviderProps) {
   // No se lee localStorage durante el render inicial: en SSR no existe y
   // provocaría un mismatch de hidratación. Se sincroniza en el primer efecto.
@@ -67,6 +90,21 @@ export function ThemeProvider({
       // sin persistencia disponible: el tema sigue funcionando en memoria
     }
   }, [theme, storageKey]);
+
+  // ── Colores personalizados ─────────────────────────────────────────────────
+  // Se serializa el objeto para no reaplicar en cada render cuando el
+  // consumidor pasa un literal nuevo con el mismo contenido.
+  const colorsKey = colors ? JSON.stringify(colors) : '';
+  useEffect(() => {
+    if (!isBrowser || !colorsKey) return;
+    return applyNuiColors(JSON.parse(colorsKey) as NuiColors);
+  }, [colorsKey]);
+
+  // ── Animaciones ────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isBrowser || animations) return;
+    return applyMotion(false);
+  }, [animations]);
 
   // ── Sincronización entre pestañas ──────────────────────────────────────────
   useEffect(() => {

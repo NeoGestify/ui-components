@@ -2,13 +2,14 @@ import { useState, useRef, useCallback } from 'react';
 import type { KeyboardEvent } from 'react';
 import { useCoarsePointer } from '../hooks/usePointerCapabilities';
 import type { Floor } from '../types';
+import { bg, border, borderHover, focusVisibleRing, text, textHover } from '../../../theme/tokens';
 
 /**
  * Indicador de foco compartido. `focus-visible` para que el anillo aparezca al
  * navegar con teclado pero no al pulsar con el ratón.
  */
 const FOCUS_CLS =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400';
+  focusVisibleRing;
 
 interface FloorTabsProps {
   floors: Floor[];
@@ -103,7 +104,7 @@ export function FloorTabs({
     <div
       role="tablist"
       aria-label="Plantas"
-      className="flex items-center gap-1 px-2 py-1 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs overflow-x-auto shrink-0"
+      className={`flex items-center gap-1 px-2 py-1 border-b ${border.subtle} ${bg.surfaceMuted} text-xs overflow-x-auto shrink-0`}
     >
       {sorted.map(floor => {
         const isActive = floor.id === activeFloorId;
@@ -124,8 +125,8 @@ export function FloorTabs({
               FOCUS_CLS,
               coarse ? 'py-2' : 'py-1',
               isActive
-                ? 'bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-100 font-medium'
-                : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer',
+                ? `${bg.surface} ${border.base} ${text.base} font-medium`
+                : `border-transparent ${text.subtle} ${textHover.muted} cursor-pointer`,
             ].join(' ')}
             onClick={() => !isActive && onSelect(floor.id)}
             onKeyDown={e => handleTabKeyDown(e, floor, idx)}
@@ -133,7 +134,7 @@ export function FloorTabs({
             {!readOnly && isActive && canMoveLeft && (
               <button
                 type="button"
-                className={`rounded text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 leading-none ${FOCUS_CLS} ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
+                className={`rounded ${text.subtle} ${textHover.muted} leading-none ${FOCUS_CLS} ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
                 onClick={e => { e.stopPropagation(); onReorder(floor.id, 'left'); }}
                 title="Mover a la izquierda"
                 aria-label={`Mover ${floor.name} a la izquierda`}
@@ -151,7 +152,7 @@ export function FloorTabs({
                 onKeyDown={handleKeyDown}
                 onClick={e => e.stopPropagation()}
                 aria-label="Nombre de la planta"
-                className={`w-24 border border-blue-400 rounded px-1 text-xs bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 ${FOCUS_CLS}`}
+                className={`w-24 border ${border.accent} rounded px-1 text-xs ${bg.surface} ${text.base} ${FOCUS_CLS}`}
               />
             ) : (
               <span
@@ -166,7 +167,7 @@ export function FloorTabs({
             {!readOnly && isActive && canMoveRight && (
               <button
                 type="button"
-                className={`rounded text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 leading-none ${FOCUS_CLS} ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
+                className={`rounded ${text.subtle} ${textHover.muted} leading-none ${FOCUS_CLS} ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
                 onClick={e => { e.stopPropagation(); onReorder(floor.id, 'right'); }}
                 title="Mover a la derecha"
                 aria-label={`Mover ${floor.name} a la derecha`}
@@ -178,7 +179,7 @@ export function FloorTabs({
             {!readOnly && floors.length > 1 && (
               <button
                 type="button"
-                className={`rounded text-slate-500 dark:text-slate-400 hover:text-red-500 leading-none ${FOCUS_CLS} ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
+                className={`rounded ${text.subtle} ${textHover.danger} leading-none ${FOCUS_CLS} ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
                 onClick={e => { e.stopPropagation(); onDelete(floor.id); }}
                 title="Eliminar planta"
                 aria-label={`Eliminar ${floor.name}`}
@@ -193,7 +194,7 @@ export function FloorTabs({
       {!readOnly && (
         <button
           type="button"
-          className={`flex items-center justify-center ${coarse ? 'w-9 h-9' : 'w-6 h-6'} rounded border border-dashed border-slate-300 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-colors shrink-0 ${FOCUS_CLS}`}
+          className={`flex items-center justify-center ${coarse ? 'w-9 h-9' : 'w-6 h-6'} rounded border border-dashed ${border.base} ${text.subtle} ${borderHover.accent} ${textHover.accent} transition-colors shrink-0 ${FOCUS_CLS}`}
           onClick={onAdd}
           title="Añadir planta"
           aria-label="Añadir planta"

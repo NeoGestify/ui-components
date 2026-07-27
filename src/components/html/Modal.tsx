@@ -1,11 +1,13 @@
 import { Button } from './Button';
 import { CloseIcon } from '../icons/icons';
+import { bg, border, text } from '../../theme/tokens';
+import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
 import React, { useEffect, useId, useState, useRef, forwardRef, useImperativeHandle } from 'react';
 
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 type ModalVariant = 'default' | 'danger' | 'success' | 'warning';
 
-interface ModalProps {
+interface ModalProps extends AnimatableProps {
     onClose: () => void;
     title: React.ReactNode;
     children: React.ReactNode;
@@ -33,17 +35,17 @@ const SIZE_CLASS: Record<ModalSize, string> = {
 };
 
 const VARIANT_HEADER: Record<ModalVariant, string> = {
-    default: 'bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700',
-    danger:  'bg-red-50 dark:bg-red-900/30 border-b border-red-200 dark:border-red-800',
-    success: 'bg-green-50 dark:bg-green-900/30 border-b border-green-200 dark:border-green-800',
-    warning: 'bg-yellow-50 dark:bg-yellow-900/30 border-b border-yellow-200 dark:border-yellow-800',
+    default: `${bg.surfaceBand} border-b ${border.subtle}`,
+    danger:  'bg-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-danger-dark,oklch(63.7%_.237_25.331))_25%,transparent)] border-b border-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_25%,transparent)]',
+    success: 'bg-[color-mix(in_oklab,var(--nui-success,oklch(62.7%_.194_149.214))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-success-dark,oklch(72.3%_.219_149.579))_25%,transparent)] border-b border-[color-mix(in_oklab,var(--nui-success,oklch(62.7%_.194_149.214))_25%,transparent)]',
+    warning: 'bg-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-warning-dark,oklch(79.5%_.184_86.047))_25%,transparent)] border-b border-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_25%,transparent)]',
 };
 
 const VARIANT_TITLE: Record<ModalVariant, string> = {
-    default: 'text-gray-900 dark:text-white',
-    danger:  'text-red-700 dark:text-red-300',
-    success: 'text-green-700 dark:text-green-300',
-    warning: 'text-yellow-700 dark:text-yellow-300',
+    default: text.base,
+    danger:  text.danger,
+    success: text.success,
+    warning: text.warning,
 };
 
 export const Modal = forwardRef<ModalRef, ModalProps>(({
@@ -58,6 +60,7 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     closeOnBackdrop = false,
     closeOnEsc = false,
     variant = 'default',
+    animate,
 }, ref) => {
     const [show, setShow] = useState(false);
     const handleCloseRef = useRef<() => void>(() => {});
@@ -131,14 +134,15 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
             open={show}
             aria-modal="true"
             aria-labelledby={titleId}
-            className={`fixed inset-0 w-full h-full flex items-center justify-center p-4 transition-opacity duration-300 motion-reduce:transition-none bg-gray-900/60 backdrop-blur-sm ${show ? 'opacity-100' : 'opacity-0'}`}
-            style={{ zIndex: zIndex - 10 }}
+            style={{ zIndex: zIndex - 10, ...motionStyle(animate) }}
+            className={`fixed inset-0 w-full h-full flex items-center justify-center p-4 ${motion.fade} bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_60%,transparent)] backdrop-blur-sm ${show ? 'opacity-100' : 'opacity-0'}`}
             onClick={handleBackdropClick}
         >
             <article
                 ref={panelRef}
                 tabIndex={-1}
-                className={`relative focus:outline-none bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-2xl w-full ${widthCls} max-h-[90vh] flex flex-col overflow-hidden`}
+                className={`relative focus:outline-none ${bg.surface} border ${border.subtle} rounded-lg shadow-2xl w-full ${widthCls} max-h-[90vh] flex flex-col overflow-hidden
+                    ${motion.enter} ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
                 style={{ zIndex }}
             >
                 <header className={`shrink-0 px-6 py-4 flex items-center justify-between ${VARIANT_HEADER[variant]}`}>
@@ -149,7 +153,7 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
                             onClick={handleClose}
                             aria-label="Cerrar"
                             title="Cerrar"
-                            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                            className={`${text.faint} hover:text-[var(--nui-text-muted,oklch(37.3%_.034_259.733))] dark:hover:text-[var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))]`}
                         >
                             <CloseIcon className="w-5 h-5" />
                         </Button>
@@ -159,7 +163,7 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
                     {children}
                 </div>
                 {footer && (
-                    <footer className="shrink-0 bg-gray-50 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-6 py-4 flex justify-end gap-3">
+                    <footer className={`shrink-0 ${bg.surfaceBand} border-t ${border.subtle} px-6 py-4 flex justify-end gap-3`}>
                         {footer}
                     </footer>
                 )}

@@ -3,6 +3,7 @@ import { ElementShape, ElementTypeDef, ElementLibrary } from '../VenueMapEditor/
 import { Button, Input, Select, TextArea } from '../html';
 import { IMAGE_ACCEPT, fileToDataUri, sanitizeImageSrc } from '../VenueMapEditor/utils/imageSrc';
 import { useContainerSize } from '../VenueMapEditor/hooks/useContainerSize';
+import { bg, bgHover, border, focusVisibleRing, text } from '../../theme/tokens';
 
 /**
  * Anchos (px del contenedor) en los que cambia la disposición.
@@ -49,7 +50,7 @@ const IMAGE_WARN_BYTES = 200 * 1024;
  * navegar con teclado pero no al pulsar con el ratón.
  */
 const FOCUS_CLS =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 dark:focus-visible:ring-indigo-400';
+  focusVisibleRing;
 
 /** Bytes reales que ocupa la carga útil de un data URI base64. */
 function dataUriBytes(src: string): number {
@@ -220,7 +221,7 @@ export const ElementLibraryBuilder: React.FC = () => {
     <div
       ref={rootRef}
       className={[
-        'flex gap-4 p-4 h-full text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-900',
+        `flex gap-4 p-4 h-full text-sm ${text.base} ${bg.surface}`,
         stackOutput
           // Apilado: el contenido crece más que el contenedor, así que éste es
           // quien scrollea. `min-h-0` evita que los hijos flex impongan su
@@ -242,8 +243,8 @@ export const ElementLibraryBuilder: React.FC = () => {
       <div className={[
         'flex flex-col gap-4',
         stackAll
-          ? 'w-full shrink-0 border-b dark:border-gray-700 pb-4'
-          : 'w-1/4 shrink-0 min-h-0 border-r dark:border-gray-700 pr-4',
+          ? `w-full shrink-0 border-b ${border.subtle} pb-4`
+          : `w-1/4 shrink-0 min-h-0 border-r ${border.subtle} pr-4`,
       ].join(' ')}>
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
@@ -254,7 +255,7 @@ export const ElementLibraryBuilder: React.FC = () => {
             {groups.map((group) => (
               <div
                 key={group.internalId}
-                className={`flex items-center justify-between p-2 rounded cursor-pointer ${activeGroupId === group.internalId ? 'bg-indigo-100 text-indigo-900 dark:bg-indigo-900/50 dark:text-indigo-100 font-semibold' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                className={`flex items-center justify-between p-2 rounded cursor-pointer ${activeGroupId === group.internalId ? `${bg.accentSoft} ${text.accent} font-semibold` : `${bgHover.surface}`}`}
                 onClick={() => handleSelectGroup(group.internalId)}
               >
                 {editingGroupId === group.internalId ? (
@@ -276,7 +277,7 @@ export const ElementLibraryBuilder: React.FC = () => {
                     type="button"
                     onClick={(e) => { e.stopPropagation(); handleRemoveGroup(group.internalId); }}
                     aria-label={`Eliminar grupo ${group.name}`}
-                    className={`rounded px-1 text-xs text-red-500 hover:text-red-600 ${FOCUS_CLS}`}
+                    className={`rounded px-1 text-xs ${text.danger} hover:${text.danger} ${FOCUS_CLS}`}
                   >x</button>
                 )}
               </div>
@@ -284,7 +285,7 @@ export const ElementLibraryBuilder: React.FC = () => {
           </div>
         </div>
 
-        <hr className="dark:border-gray-700" />
+        <hr className={`${border.subtle}`} />
 
         <div className={`flex flex-col gap-2 overflow-hidden ${stackAll ? '' : 'flex-grow'}`}>
           <div className="flex items-center justify-between">
@@ -295,7 +296,7 @@ export const ElementLibraryBuilder: React.FC = () => {
             {activeGroup?.objects.map((el, i) => (
               <div
                 key={i}
-                className={`flex items-center justify-between p-2 rounded cursor-pointer ${activeElementIndex === i ? 'bg-indigo-100 text-indigo-900 dark:bg-indigo-900/50 dark:text-indigo-100 font-semibold' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                className={`flex items-center justify-between p-2 rounded cursor-pointer ${activeElementIndex === i ? `${bg.accentSoft} ${text.accent} font-semibold` : `${bgHover.surface}`}`}
                 onClick={() => handleSelectElement(i)}
               >
                 <span>{el.id} ({el.shape})</span>
@@ -303,12 +304,12 @@ export const ElementLibraryBuilder: React.FC = () => {
                   type="button"
                   onClick={(e) => { e.stopPropagation(); handleRemoveElement(i); }}
                   aria-label={`Eliminar elemento ${el.id}`}
-                  className={`rounded px-1 text-xs text-red-500 hover:text-red-600 ${FOCUS_CLS}`}
+                  className={`rounded px-1 text-xs ${text.danger} hover:${text.danger} ${FOCUS_CLS}`}
                 >x</button>
               </div>
             ))}
             {(!activeGroup || activeGroup.objects.length === 0) && (
-              <span className="text-gray-400 dark:text-gray-500 italic text-xs">No elements yet</span>
+              <span className={`${text.faint} italic text-xs`}>No elements yet</span>
             )}
           </div>
         </div>
@@ -366,7 +367,7 @@ export const ElementLibraryBuilder: React.FC = () => {
 
             <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Fill Color</label>
+                <label className={`text-xs font-semibold ${text.muted}`}>Fill Color</label>
                 <div className="flex gap-2">
                   <input
                     type="color"
@@ -381,7 +382,7 @@ export const ElementLibraryBuilder: React.FC = () => {
                 </div>
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Stroke Color</label>
+                <label className={`text-xs font-semibold ${text.muted}`}>Stroke Color</label>
                 <div className="flex gap-2">
                   <input
                     type="color"
@@ -402,13 +403,13 @@ export const ElementLibraryBuilder: React.FC = () => {
                 type="checkbox"
                 checked={!!currentElement.clickable}
                 onChange={(e) => handleFieldChange('clickable', e.target.checked)}
-                className="mt-0.5 accent-indigo-500 [color-scheme:light] dark:[color-scheme:dark]"
+                className="mt-0.5 accent-[var(--nui-accent,oklch(51.1%_.262_276.966))] dark:accent-[var(--nui-accent-dark,oklch(58.5%_.233_277.117))] [color-scheme:light] dark:[color-scheme:dark]"
               />
               <span className="flex flex-col">
-                <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                <span className={`text-xs font-semibold ${text.muted}`}>
                   Clickable by default
                 </span>
-                <span className="text-[11px] text-gray-400 dark:text-gray-500 leading-snug">
+                <span className={`text-[11px] ${text.faint} leading-snug`}>
                   Elements of this type respond to clicks in the viewer only (not
                   in the editor). Each placed element can override this.
                 </span>
@@ -416,7 +417,7 @@ export const ElementLibraryBuilder: React.FC = () => {
             </label>
 
             {currentElement.shape === 'path' && (
-              <div className="flex flex-col gap-4 border dark:border-gray-700 p-4 rounded bg-gray-50 dark:bg-gray-800/50">
+              <div className={`flex flex-col gap-4 border ${border.subtle} p-4 rounded ${bg.surfaceMuted}/50`}>
                 <h4 className="font-semibold text-sm">Path Config</h4>
                 <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
                   <Input
@@ -446,9 +447,9 @@ export const ElementLibraryBuilder: React.FC = () => {
             )}
 
             {currentElement.shape === 'svg' && (
-              <div className="flex flex-col gap-4 border dark:border-amber-700/50 p-4 rounded bg-amber-50 dark:bg-amber-900/10">
+              <div className="flex flex-col gap-4 p-4 rounded border border-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_35%,transparent)] bg-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_10%,white)] dark:bg-[color-mix(in_oklab,var(--nui-warning-dark,oklch(79.5%_.184_86.047))_12%,transparent)]">
                 <h4 className="font-semibold text-sm">SVG Markup (Autosanitized)</h4>
-                <p className="text-xs text-amber-800 dark:text-amber-400">
+                <p className={`text-xs ${text.warning}`}>
                   Paste your raw SVG here. Double quotes will be converted to single quotes automatically to safely embed the string in JSON.
                 </p>
                 <TextArea
@@ -462,9 +463,9 @@ export const ElementLibraryBuilder: React.FC = () => {
             )}
 
             {currentElement.shape === 'image' && (
-              <div className="flex flex-col gap-4 border dark:border-sky-700/50 p-4 rounded bg-sky-50 dark:bg-sky-900/10">
+              <div className="flex flex-col gap-4 p-4 rounded border border-[color-mix(in_oklab,var(--nui-info,oklch(54.6%_.245_262.881))_35%,transparent)] bg-[color-mix(in_oklab,var(--nui-info,oklch(54.6%_.245_262.881))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-info-dark,oklch(62.3%_.214_259.815))_12%,transparent)]">
                 <h4 className="font-semibold text-sm">Imagen (base64)</h4>
-                <p className="text-xs text-sky-800 dark:text-sky-400">
+                <p className={`text-xs ${text.info}`}>
                   El archivo se incrusta como data URI dentro del JSON, así que la
                   librería y los mapas que la usen no dependen de ningún servidor.
                 </p>
@@ -494,20 +495,20 @@ export const ElementLibraryBuilder: React.FC = () => {
                     <img
                       src={currentElement.imageSrc}
                       alt="Vista previa"
-                      className="w-16 h-16 object-contain border dark:border-gray-700 rounded bg-white"
+                      className={`w-16 h-16 object-contain border ${border.subtle} rounded bg-white`}
                     />
                     <div className="flex flex-col gap-1 text-xs">
-                      <span className="text-gray-500 dark:text-gray-400">
+                      <span className={`${text.subtle}`}>
                         {(dataUriBytes(currentElement.imageSrc) / 1024).toFixed(0)} KB incrustados
                       </span>
                       {dataUriBytes(currentElement.imageSrc) > IMAGE_WARN_BYTES && (
-                        <span className="text-amber-600 dark:text-amber-400">
+                        <span className={`${text.warning}`}>
                           Imagen pesada: agranda el JSON de todos los mapas que la usen.
                         </span>
                       )}
                       <button
                         type="button"
-                        className={`text-red-500 hover:text-red-600 text-left rounded ${FOCUS_CLS}`}
+                        className={`${text.danger} hover:${text.danger} text-left rounded ${FOCUS_CLS}`}
                         onClick={() => { handleFieldChange('imageSrc', undefined); setImageError(null); }}
                       >
                         Quitar imagen
@@ -518,12 +519,12 @@ export const ElementLibraryBuilder: React.FC = () => {
               </div>
             )}
 
-            <div className="flex justify-end gap-2 mt-4 pt-4 border-t dark:border-gray-700">
+            <div className={`flex justify-end gap-2 mt-4 pt-4 border-t ${border.subtle}`}>
               <Button onClick={handleSaveElement}>Save Changes to Element</Button>
             </div>
           </div>
         ) : (
-          <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+          <div className={`flex items-center justify-center h-full ${text.subtle}`}>
             Select an element to edit or add a new one.
           </div>
         )}
@@ -534,8 +535,8 @@ export const ElementLibraryBuilder: React.FC = () => {
       <div className={[
         'flex flex-col gap-2',
         stackOutput
-          ? 'w-full shrink-0 border-t dark:border-gray-700 pt-4'
-          : 'w-1/3 shrink-0 min-h-0 border-l dark:border-gray-700 pl-4 h-full max-h-full',
+          ? `w-full shrink-0 border-t ${border.subtle} pt-4`
+          : `w-1/3 shrink-0 min-h-0 border-l ${border.subtle} pl-4 h-full max-h-full`,
       ].join(' ')}>
         <div className={`flex gap-2 shrink-0 ${stackAll ? 'flex-col items-stretch' : 'items-center justify-between'}`}>
           <h3 className="font-bold">Output JSON</h3>
@@ -546,7 +547,7 @@ export const ElementLibraryBuilder: React.FC = () => {
               placeholder="filename"
               title="Filename without extension"
             />
-            <span className="text-xs text-gray-500 dark:text-gray-400">.json</span>
+            <span className={`text-xs ${text.subtle}`}>.json</span>
             <Button
               variant="secondary"
               onClick={handleDownload}
@@ -569,7 +570,7 @@ export const ElementLibraryBuilder: React.FC = () => {
           <TextArea
             readOnly
             rows={stackOutput ? 12 : 22}
-            className="resize-none font-mono text-xs text-green-600 dark:text-green-400 bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-800"
+            className={`resize-none font-mono text-xs ${text.success} ${bg.surfaceMuted} ${border.subtle}`}
             value={generatedLib}
           />
         </div>

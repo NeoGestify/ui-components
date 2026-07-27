@@ -2,31 +2,21 @@ import {
   useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+import { CalendarIcon, CloseIcon } from '../icons/icons';
 import { Calendar } from './Calendar';
 import { formatDate, toDate, toISODate, type DateRange } from './dateUtils';
 import {
   DEFAULT_LABELS, type CalendarMode, type CalendarProps, type CalendarValue, type DateInput,
 } from './types';
-
-const CalendarGlyph = ({ className = 'w-4 h-4' }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
-    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  </svg>
-);
-
-const XGlyph = ({ className = 'w-4 h-4' }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
-    strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <path d="M6 6l12 12M18 6L6 18" />
-  </svg>
-);
+// `text` se renombra: dentro del componente hay una variable local con ese nombre.
+import { bg, bgHover, border, focusRing, focusVisibleRing, text as textCls } from '../../theme/tokens';
+import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
 
 /** Ancho de ventana por debajo del cual el desplegable se abre como hoja inferior. */
 const SHEET_BREAKPOINT = 640;
 
 export interface DatePickerProps<M extends CalendarMode = 'single'>
-  extends Omit<CalendarProps<M>, 'className' | 'showFooter' | 'autoFocus'> {
+  extends Omit<CalendarProps<M>, 'className' | 'showFooter' | 'autoFocus'>, AnimatableProps {
   label?: ReactNode;
   placeholder?: string;
   error?: string;
@@ -63,7 +53,7 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
   const {
     label, placeholder, error, helperText, displayFormat = { dateStyle: 'medium' },
     clearable = true, closeOnSelect = true, name, required, className = '',
-    inputClassName = '', calendarClassName = '', onOpenChange,
+    inputClassName = '', calendarClassName = '', onOpenChange, animate,
     mode = 'single' as M, value, defaultValue, onChange, onComplete,
     locale = 'es-ES', disabled = false, readOnly = false, labels: labelsProp,
     id, ...calendarProps
@@ -79,6 +69,9 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
     () => typeof window !== 'undefined' && window.innerWidth < SHEET_BREAKPOINT,
   );
   const [dropUp, setDropUp] = useState(false);
+  // Un frame por detrás de `open`, para que el panel se monte cerrado y la
+  // transición tenga desde dónde salir.
+  const [shown, setShown] = useState(false);
   const [alignRight, setAlignRight] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -135,6 +128,12 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
     window.addEventListener('resize', decide);
     return () => window.removeEventListener('resize', decide);
   }, [open, panelWidthPx]);
+
+  useEffect(() => {
+    if (!open) { setShown(false); return; }
+    const id = requestAnimationFrame(() => setShown(true));
+    return () => cancelAnimationFrame(id);
+  }, [open]);
 
   // Cierre por clic fuera / Escape.
   useEffect(() => {
@@ -220,28 +219,26 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
   const triggerCls = [
     'relative flex w-full items-center gap-2 rounded-md border py-2 pl-3 text-left text-sm transition-colors',
     showClear ? 'pr-9' : 'pr-3',
-    'bg-white dark:bg-gray-800 text-gray-900 dark:text-white',
-    'focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 focus:border-indigo-500',
+    `${bg.surface} ${textCls.base}`,
+    focusRing,
     'disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation',
-    error
-      ? 'border-red-300 dark:border-red-600 focus:ring-red-500 dark:focus:ring-red-400'
-      : 'border-gray-300 dark:border-gray-600',
+    error ? border.dangerSubtle : border.base,
     inputClassName,
   ].filter(Boolean).join(' ');
 
   const helpNode = error
-    ? <p id={descId} className="text-sm text-red-600 dark:text-red-400" role="alert">{error}</p>
+    ? <p id={descId} className={`text-sm ${textCls.danger}`} role="alert">{error}</p>
     : helperText
-      ? <p id={descId} className="text-sm text-gray-500 dark:text-gray-400">{helperText}</p>
+      ? <p id={descId} className={`text-sm ${textCls.subtle}`}>{helperText}</p>
       : null;
 
   return (
     <div ref={rootRef} className={`relative w-full space-y-1 ${className}`}>
       {label && (
         typeof label === 'string' ? (
-          <label htmlFor={fieldId} className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label htmlFor={fieldId} className={`block text-sm font-medium ${textCls.muted}`}>
             {label}
-            {required && <span className="ml-1 text-red-500" aria-hidden="true">*</span>}
+            {required && <span className={`ml-1 ${textCls.danger}`} aria-hidden="true">*</span>}
           </label>
         ) : label
       )}
@@ -261,8 +258,8 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
           aria-invalid={!!error || undefined}
           aria-describedby={helpNode ? descId : undefined}
         >
-          <CalendarGlyph className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
-          <span className={`min-w-0 flex-1 truncate ${hasValue ? '' : 'text-gray-500 dark:text-gray-400'}`}>
+          <CalendarIcon className={`h-4 w-4 shrink-0 ${textCls.faint}`} />
+          <span className={`min-w-0 flex-1 truncate ${hasValue ? '' : textCls.subtle}`}>
             {text || hint}
           </span>
         </button>
@@ -271,11 +268,11 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
             type="button"
             aria-label={labels.clear}
             onClick={() => handleChange(emptyValue)}
-            className="absolute inset-y-0 right-0 flex items-center rounded-md px-2 text-gray-400
-              hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500
-              dark:text-gray-500 dark:hover:text-gray-300 dark:focus-visible:ring-indigo-400"
+            className={`absolute inset-y-0 right-0 flex items-center rounded-md px-2 ${textCls.faint}
+              hover:text-[var(--nui-text-muted,oklch(37.3%_.034_259.733))]
+              dark:hover:text-[var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))] ${focusVisibleRing}`}
           >
-            <XGlyph />
+            <CloseIcon className="h-4 w-4" />
           </button>
         )}
       </div>
@@ -289,45 +286,47 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
           role="dialog"
           aria-modal="false"
           aria-label={typeof label === 'string' ? label : hint}
-          className={`absolute z-50 ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'} ${alignRight ? 'right-0' : 'left-0'}
-            max-w-[min(92vw,44rem)] rounded-xl border border-gray-200 bg-white shadow-xl
-            dark:border-gray-700 dark:bg-gray-800`}
-          style={{ width: panelWidthPx }}
+          className={`absolute z-50 ${dropUp ? 'bottom-full mb-2 origin-bottom' : 'top-full mt-2 origin-top'} ${alignRight ? 'right-0' : 'left-0'}
+            max-w-[min(92vw,44rem)] rounded-xl border ${border.subtle} ${bg.surface} shadow-xl
+            ${motion.enterFast} ${shown ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+          style={{ width: panelWidthPx, ...motionStyle(animate) }}
         >
           {calendar}
         </div>
       )}
 
       {open && isSheet && typeof document !== 'undefined' && createPortal(
-        <div className="fixed inset-0 z-[60] flex items-end justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px]" onClick={() => setOpenState(false)} />
+        <div className="fixed inset-0 z-[60] flex items-end justify-center" style={motionStyle(animate)}>
+          <div
+            className={`absolute inset-0 bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_45%,transparent)] backdrop-blur-[1px]
+              ${motion.fade} ${shown ? 'opacity-100' : 'opacity-0'}`}
+            onClick={() => setOpenState(false)}
+          />
           <div
             ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-label={typeof label === 'string' ? label : hint}
-            className="relative w-full max-h-[90vh] overflow-y-auto rounded-t-2xl border-t border-gray-200
-              bg-white pb-[env(safe-area-inset-bottom)] shadow-2xl dark:border-gray-700 dark:bg-gray-800
-              motion-safe:animate-[calendarSheetIn_.18s_ease-out]"
+            className={`relative w-full max-h-[90vh] overflow-y-auto rounded-t-2xl border-t ${border.subtle}
+              ${bg.surface} pb-[env(safe-area-inset-bottom)] shadow-2xl
+              ${motion.enter} ${shown ? 'translate-y-0' : 'translate-y-full'}`}
           >
             {/* Asa: pista visual de que la hoja se puede cerrar. */}
             <div className="flex justify-center pt-2" onClick={() => setOpenState(false)}>
-              <span className="h-1.5 w-10 rounded-full bg-gray-300 dark:bg-gray-600" />
+              <span className="h-1.5 w-10 rounded-full bg-[var(--nui-border,oklch(87.2%_.01_258.338))] dark:bg-[var(--nui-border-dark,oklch(44.6%_.03_256.802))]" />
             </div>
             {calendar}
             <div className="flex gap-2 px-3 pb-3">
               <button
                 type="button"
                 onClick={() => setOpenState(false)}
-                className="flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-medium text-white
-                  hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2
-                  dark:bg-indigo-500 dark:hover:bg-indigo-400 transition-colors touch-manipulation"
+                className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium ${bg.accent} ${textCls.onAccent}
+                  ${bgHover.accent} ${focusRing} focus:ring-offset-2 transition-colors touch-manipulation`}
               >
                 {labels.apply}
               </button>
             </div>
           </div>
-          <style>{'@keyframes calendarSheetIn{from{transform:translateY(100%)}to{transform:translateY(0)}}'}</style>
         </div>,
         document.body,
       )}

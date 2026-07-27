@@ -8,6 +8,7 @@ import {
 import type { ToolMode, ElementTypeDef, AreaShape } from '../types';
 import { parseSvgMarkup } from '../utils/svgParser';
 import { sanitizeImageSrc } from '../utils/imageSrc';
+import { bg, bgHover, border, borderHover, focusVisibleRing, ringAccent, text, textHover } from '../../../theme/tokens';
 
 // ─── ToolButton ───────────────────────────────────────────────────────────────
 
@@ -26,7 +27,7 @@ interface ToolButtonProps {
  * navegar con teclado pero no al pulsar con el ratón.
  */
 const FOCUS_CLS =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400';
+  focusVisibleRing;
 
 function ToolButton({ active, disabled, title, onClick, children, large }: ToolButtonProps) {
   return (
@@ -42,8 +43,8 @@ function ToolButton({ active, disabled, title, onClick, children, large }: ToolB
         FOCUS_CLS,
         large ? 'w-10 h-10' : 'w-8 h-8',
         active
-          ? 'bg-blue-100 dark:bg-blue-500/25 text-blue-700 dark:text-blue-300 ring-1 ring-blue-400 dark:ring-blue-500'
-          : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-800 dark:hover:text-white',
+          ? `${bg.accentSoft} ${text.accent} ring-1 ${ringAccent}`
+          : `${text.muted} ${bgHover.surface} ${textHover.base}`,
       ].join(' ')}
     >
       {children}
@@ -53,7 +54,7 @@ function ToolButton({ active, disabled, title, onClick, children, large }: ToolB
 
 function Sep({ hidden }: { hidden?: boolean }) {
   if (hidden) return null;
-  return <div className="w-px h-6 bg-slate-200 dark:bg-slate-700 mx-1 shrink-0" />;
+  return <div className={`w-px h-6 ${bg.surfaceMuted} mx-1 shrink-0`} />;
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -125,8 +126,8 @@ function TypeChip({ typeDef, active, onClick }: TypeChipProps) {
         'flex items-center gap-1.5 px-2 py-1 rounded border text-xs whitespace-nowrap transition-colors',
         FOCUS_CLS,
         active
-          ? 'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-500/20 text-blue-700 dark:text-blue-300 font-medium'
-          : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700',
+          ? `${border.accent} ${bg.accentSoft} ${text.accent} font-medium`
+          : `${border.subtle} ${bg.surface} ${text.muted} ${borderHover.base} ${bgHover.surface}`,
       ].join(' ')}
     >
       {imageHref ? (
@@ -198,7 +199,7 @@ export function Toolbar({
   const activeGroup = paletteGroups.find(g => g.id === activeGroupId) ?? null;
 
   return (
-    <div className="flex flex-col bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-700 shadow-sm shrink-0">
+    <div className={`flex flex-col ${bg.surface} border-b ${border.subtle} shadow-sm shrink-0`}>
       {/* ── Main row ──
           Con poco ancho la fila se desplaza horizontalmente en lugar de
           desbordar o aplastar los botones. */}
@@ -248,7 +249,7 @@ export function Toolbar({
           <IconZoomIn className="w-4 h-4" />
         </ToolButton>
         {!tight && (
-          <span className="text-xs text-slate-500 dark:text-slate-400 w-10 text-center tabular-nums select-none shrink-0">
+          <span className={`text-xs ${text.subtle} w-10 text-center tabular-nums select-none shrink-0`}>
             {Math.round(zoom * 100)}%
           </span>
         )}
@@ -286,17 +287,17 @@ export function Toolbar({
 
       {/* ── Element palette (only when PLACE is active and there are groups) ── */}
       {tool === 'PLACE' && paletteGroups.length > 0 && (
-        <div className="flex flex-col border-t border-slate-100 dark:border-slate-800">
+        <div className={`flex flex-col border-t ${border.subtle}`}>
           {/* Tab bar — one tab per group */}
-          <div className="flex items-end gap-0 overflow-x-auto bg-slate-50 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-2 pt-1">
+          <div className={`flex items-end gap-0 overflow-x-auto ${bg.surfaceMuted} border-b ${border.subtle} px-2 pt-1`}>
             {paletteGroups.map(group => (
               <div
                 key={group.id}
                 className={[
                   'flex items-center shrink-0 rounded-t border-x border-t transition-colors',
                   group.id === activeGroupId
-                    ? 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 -mb-px'
-                    : 'bg-slate-50 dark:bg-slate-800 border-transparent',
+                    ? `${bg.surface} ${border.subtle} -mb-px`
+                    : `${bg.surfaceMuted} border-transparent`,
                 ].join(' ')}
               >
                 <button
@@ -306,8 +307,8 @@ export function Toolbar({
                     'px-3 py-1 text-xs font-medium transition-colors whitespace-nowrap rounded-t',
                     FOCUS_CLS,
                     group.id === activeGroupId
-                      ? 'text-slate-800 dark:text-slate-100'
-                      : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300',
+                      ? `${text.base}`
+                      : `${text.faint} ${textHover.muted}`,
                   ].join(' ')}
                 >
                   {group.name || 'Sin nombre'}
@@ -318,7 +319,7 @@ export function Toolbar({
                     title={`Eliminar "${group.name}"`}
                     aria-label={`Eliminar librería ${group.name}`}
                     onClick={() => onRemoveLibraryGroup(group.id)}
-                    className={`pr-2 pl-0.5 py-1 rounded text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors leading-none ${FOCUS_CLS}`}
+                    className={`pr-2 pl-0.5 py-1 rounded ${text.faint} ${textHover.danger} transition-colors leading-none ${FOCUS_CLS}`}
                   >
                     ×
                   </button>
@@ -331,7 +332,7 @@ export function Toolbar({
           {activeGroup && (
             <div
               className={[
-                'flex items-center gap-1 px-2 py-1.5 bg-white dark:bg-slate-900 min-h-[36px]',
+                `flex items-center gap-1 px-2 py-1.5 ${bg.surface} min-h-[36px]`,
                 // En compacto la paleta no se envuelve (comería el lienzo):
                 // se desplaza en una sola fila.
                 compact ? 'flex-nowrap overflow-x-auto' : 'flex-wrap',

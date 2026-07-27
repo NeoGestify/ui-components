@@ -1,3 +1,7 @@
+// El ciclo types <-> theme es solo de tipos: TypeScript lo resuelve y no
+// queda nada de él en el bundle.
+import type { VenuePaletteOverride } from './theme';
+
 // ─── Domain primitives ───────────────────────────────────────────────────────
 
 export type WallMaterial = 'concrete' | 'brick' | 'glass' | 'drywall' | 'wood';
@@ -260,6 +264,18 @@ export interface VenueMapEditorProps {
    * - `'light'` / `'dark'`: fuerza el tema con independencia de la página.
    */
   theme?: 'light' | 'dark' | 'auto';
+  /**
+   * Colores del lienzo (rejilla, suelo, paredes, selección…).
+   *
+   * El SVG no puede usar clases de Tailwind en `fill`/`stroke`, así que sus
+   * colores se pasan por aquí. Lo que no se indique conserva el valor por
+   * defecto del tema activo.
+   *
+   * ```tsx
+   * <VenueMapEditor palette={{ light: { accent: '#059669' }, dark: { accent: '#34d399' } }} />
+   * ```
+   */
+  palette?: VenuePaletteOverride;
   /** Clases extra para el contenedor raíz. */
   className?: string;
   /**

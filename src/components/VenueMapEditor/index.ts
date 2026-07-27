@@ -26,7 +26,7 @@ export type {
 export type { PaletteGroup } from './components/Toolbar';
 
 // Tema
-export { useVenueTheme, VENUE_PALETTES } from './theme';
+export { useVenueTheme, resolvePalette, VENUE_PALETTES, type VenuePaletteOverride } from './theme';
 export type { VenueTheme, VenueThemeSetting, VenuePalette } from './theme';
 
 // Hooks (for advanced consumers)

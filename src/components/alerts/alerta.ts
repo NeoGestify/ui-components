@@ -1,4 +1,5 @@
 import Swal from "sweetalert2";
+import { activeScheme, resolveColor } from "../../theme/colors";
 
 interface AlertaOptions {
     title: string;
@@ -26,9 +27,11 @@ interface AlertaOptions {
 }
 
 export async function Alerta(options: AlertaOptions) {
-    const theme = localStorage.getItem('theme');
-
-    const isDark = theme === 'dark';
+    // SweetAlert2 pinta su propio DOM fuera de Tailwind, así que los colores del
+    // tema se resuelven aquí a partir de las variables `--nui-*`.
+    const scheme = activeScheme();
+    const isDark = scheme === 'dark';
+    const color = (token: Parameters<typeof resolveColor>[0]) => resolveColor(token, scheme);
 
     const result = await Swal.fire({
         title: options.title,
@@ -39,8 +42,11 @@ export async function Alerta(options: AlertaOptions) {
         cancelButtonText: options.cancelButtonText || 'Cancelar',
         showDenyButton: options.showDenyButton || false,
         denyButtonText: options.denyButtonText || 'No',
-        background: isDark ? '#1f2937' : '#f9fafb',
-        color: isDark ? '#f9fafb' : '#1f2937',
+        background: color('surface-muted'),
+        color: color('text'),
+        confirmButtonColor: color('accent'),
+        cancelButtonColor: color('text-subtle'),
+        denyButtonColor: color('danger'),
         customClass: {
             popup: isDark ? 'swal-dark-popup' : 'swal-light-popup',
             title: isDark ? 'swal-dark-title' : 'swal-light-title',

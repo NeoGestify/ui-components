@@ -1,4 +1,5 @@
 import { type FormHTMLAttributes, type FC, type FormEvent, type ReactNode, type CSSProperties } from 'react';
+import { bg, border } from '../../theme/tokens';
 
 interface FormProps extends FormHTMLAttributes<HTMLFormElement> {
     children: ReactNode;
@@ -29,7 +30,7 @@ export const Form: FC<FormProps> = ({
             case 'modal':
                 return 'flex-1 px-6 py-4 overflow-y-auto';
             case 'card':
-                return `bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm p-6${hasGrid ? '' : ' space-y-6'}`;
+                return `${bg.surface} border ${border.subtle} rounded-xl shadow-sm p-6${hasGrid ? '' : ' space-y-6'}`;
             case 'inline':
                 return hasGrid ? '' : 'flex flex-wrap gap-4 items-end';
             case 'compact':

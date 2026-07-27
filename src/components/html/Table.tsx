@@ -1,4 +1,5 @@
 import { type ReactNode, type CSSProperties } from 'react';
+import { bg, bgHover, border, divide, text } from '../../theme/tokens';
 import { SortAscIcon, SortDescIcon, SortBothIcon } from '../icons/icons';
 
 type TableVariant =
@@ -142,7 +143,7 @@ const SIZE_TD: Record<TableSize, string> = {
 const VARIANT_TABLE: Record<TableVariant, string> = {
     default:  'w-full min-w-full table-auto',
     striped:  'w-full min-w-full table-auto',
-    bordered: 'w-full min-w-full table-auto border border-gray-300 dark:border-gray-600',
+    bordered: `w-full min-w-full table-auto border ${border.base}`,
     minimal:  'w-full min-w-full table-auto',
     ghost:    'w-full min-w-full table-auto',
     card:     'w-full min-w-full table-auto',
@@ -152,59 +153,57 @@ const VARIANT_TABLE: Record<TableVariant, string> = {
 };
 
 const VARIANT_THEAD: Record<TableVariant, string> = {
-    default:  'bg-gray-100 dark:bg-gray-700',
-    striped:  'bg-gray-100 dark:bg-gray-700',
-    bordered: 'bg-gray-100 dark:bg-gray-700',
+    default:  bg.surfaceMuted,
+    striped:  bg.surfaceMuted,
+    bordered: bg.surfaceMuted,
     minimal:  '',
     ghost:    '',
-    card:     'bg-gray-50 dark:bg-gray-800/80',
-    accent:   'bg-blue-600 dark:bg-blue-700',
-    dark:     'bg-gray-800 dark:bg-gray-900',
+    card:     bg.surfaceMuted,
+    accent:   bg.accent,
+    dark:     bg.inverted,
     custom:   '',
 };
 
 const VARIANT_TH: Record<TableVariant, string> = {
-    default:  'font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300',
-    striped:  'font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300',
-    bordered: 'font-semibold uppercase tracking-wider text-gray-600 dark:text-gray-300 border border-gray-300 dark:border-gray-600',
-    minimal:  'font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700',
-    ghost:    'font-semibold text-gray-600 dark:text-gray-400 border-b-2 border-gray-300 dark:border-gray-600',
-    card:     'font-semibold text-gray-600 dark:text-gray-300 border-b border-gray-200 dark:border-gray-700',
-    accent:   'font-semibold uppercase tracking-wider text-white',
-    dark:     'font-semibold uppercase tracking-wider text-gray-100',
+    default:  `font-semibold uppercase tracking-wider ${text.muted}`,
+    striped:  `font-semibold uppercase tracking-wider ${text.muted}`,
+    bordered: `font-semibold uppercase tracking-wider ${text.muted} border ${border.base}`,
+    minimal:  `font-semibold ${text.subtle} border-b ${border.subtle}`,
+    ghost:    `font-semibold ${text.subtle} border-b-2 ${border.base}`,
+    card:     `font-semibold ${text.muted} border-b ${border.subtle}`,
+    accent:   `font-semibold uppercase tracking-wider ${text.onAccent}`,
+    dark:     `font-semibold uppercase tracking-wider ${text.onInverted}`,
     custom:   '',
 };
 
 // Base row bg per variant (overridden by stripe for 'striped')
 const VARIANT_TR_BASE: Record<TableVariant, string> = {
-    default:  'bg-white dark:bg-gray-800',
+    default:  bg.surface,
     striped:  '',
-    bordered: 'bg-white dark:bg-gray-800',
+    bordered: bg.surface,
     minimal:  '',
     ghost:    '',
-    card:     'bg-white dark:bg-gray-900',
-    accent:   'bg-white dark:bg-gray-800',
-    dark:     'bg-white dark:bg-gray-800',
+    card:     bg.surface,
+    accent:   bg.surface,
+    dark:     bg.surface,
     custom:   '',
 };
 
 const VARIANT_TR_HOVER: Record<TableVariant, string> = {
-    default:  'hover:bg-gray-50 dark:hover:bg-gray-700/60',
-    striped:  'hover:bg-blue-50 dark:hover:bg-blue-900/20',
-    bordered: 'hover:bg-gray-50 dark:hover:bg-gray-700/60',
-    minimal:  'hover:bg-gray-50 dark:hover:bg-gray-800/60',
-    ghost:    'hover:bg-gray-50/70 dark:hover:bg-white/5',
-    card:     'hover:bg-gray-50 dark:hover:bg-gray-800/50',
-    accent:   'hover:bg-blue-50 dark:hover:bg-blue-900/20',
-    dark:     'hover:bg-gray-50 dark:hover:bg-gray-700/60',
+    default:  bgHover.surface,
+    striped:  bgHover.accentSoft,
+    bordered: bgHover.surface,
+    minimal:  bgHover.surface,
+    ghost:    bgHover.surface,
+    card:     bgHover.surface,
+    accent:   bgHover.accentSoft,
+    dark:     bgHover.surface,
     custom:   '',
 };
 
 const VARIANT_TR_STRIPE: Record<TableVariant, (i: number) => string> = {
     default:  () => '',
-    striped:  (i) => i % 2 === 0
-        ? 'bg-white dark:bg-gray-800'
-        : 'bg-gray-50 dark:bg-gray-700/40',
+    striped:  (i) => i % 2 === 0 ? bg.surface : bg.surfaceMuted,
     bordered: () => '',
     minimal:  () => '',
     ghost:    () => '',
@@ -215,26 +214,26 @@ const VARIANT_TR_STRIPE: Record<TableVariant, (i: number) => string> = {
 };
 
 const VARIANT_TD: Record<TableVariant, string> = {
-    default:  'text-gray-700 dark:text-gray-300',
-    striped:  'text-gray-700 dark:text-gray-300',
-    bordered: 'text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700',
-    minimal:  'text-gray-700 dark:text-gray-300 border-b border-gray-100 dark:border-gray-800',
-    ghost:    'text-gray-700 dark:text-gray-300',
-    card:     'text-gray-700 dark:text-gray-300',
-    accent:   'text-gray-700 dark:text-gray-300',
-    dark:     'text-gray-700 dark:text-gray-300',
+    default:  text.muted,
+    striped:  text.muted,
+    bordered: `${text.muted} border ${border.subtle}`,
+    minimal:  `${text.muted} border-b ${border.subtle}`,
+    ghost:    text.muted,
+    card:     text.muted,
+    accent:   text.muted,
+    dark:     text.muted,
     custom:   '',
 };
 
 const VARIANT_TBODY_DIVIDER: Record<TableVariant, string> = {
-    default:  'divide-y divide-gray-200 dark:divide-gray-700',
+    default:  `divide-y ${divide.base}`,
     striped:  '',
     bordered: '',
     minimal:  '',
-    ghost:    'divide-y divide-gray-200 dark:divide-gray-700',
-    card:     'divide-y divide-gray-100 dark:divide-gray-800',
-    accent:   'divide-y divide-gray-200 dark:divide-gray-700',
-    dark:     'divide-y divide-gray-200 dark:divide-gray-700',
+    ghost:    `divide-y ${divide.base}`,
+    card:     `divide-y ${divide.base}`,
+    accent:   `divide-y ${divide.base}`,
+    dark:     `divide-y ${divide.base}`,
     custom:   '',
 };
 
@@ -251,7 +250,7 @@ function SkeletonRow({ colCount, size }: { colCount: number; size: TableSize }) 
         <tr>
             {Array.from({ length: colCount }).map((_, i) => (
                 <td key={i} className={SIZE_TD[size]}>
-                    <div className="h-4 rounded bg-gray-200 dark:bg-gray-700 motion-safe:animate-pulse" />
+                    <div className={`h-4 rounded ${bg.surfaceMuted} motion-safe:animate-pulse`} />
                 </td>
             ))}
         </tr>
@@ -336,7 +335,7 @@ export function Table({
                 style={style}
             >
                 {caption && (
-                    <caption className="mb-2 text-left text-sm text-gray-500 dark:text-gray-400">
+                    <caption className={`mb-2 text-left text-sm ${text.subtle}`}>
                         {caption}
                     </caption>
                 )}
@@ -381,7 +380,7 @@ export function Table({
                         <tr>
                             <td
                                 colSpan={cols.length}
-                                className={`${SIZE_TD[size]} py-8 text-center text-gray-400 dark:text-gray-500`}
+                                className={`${SIZE_TD[size]} py-8 text-center ${text.faint}`}
                             >
                                 {emptyState ?? 'Sin datos'}
                             </td>
@@ -422,7 +421,7 @@ export function Table({
                 </tbody>
 
                 {footerRows && footerRows.length > 0 && (
-                    <tfoot className="border-t border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800/50">
+                    <tfoot className={`border-t ${border.subtle} ${bg.surfaceMuted}`}>
                         {footerRows.map((row, rowIndex) => (
                             <tr key={rowIndex}>
                                 {row.map((cell, cellIndex) => {
@@ -432,7 +431,7 @@ export function Table({
                                             key={cellIndex}
                                             className={[
                                                 SIZE_TD[size],
-                                                'font-medium text-gray-700 dark:text-gray-300',
+                                                `font-medium ${text.muted}`,
                                                 ALIGN_CLASS[col?.align ?? 'left'],
                                                 col?.className ?? '',
                                                 tdClassName,

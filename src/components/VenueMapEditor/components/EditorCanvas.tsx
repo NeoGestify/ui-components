@@ -720,12 +720,12 @@ export function EditorCanvas({
         pared quedaría atrapado sin forma de cancelarlo. */}
     {wallDraw && coarse && (
       <div className="absolute inset-x-0 bottom-3 flex justify-center pointer-events-none">
-        <div className="flex items-center gap-3 rounded-full bg-slate-900/90 dark:bg-slate-100/90 px-4 py-2 text-xs text-white dark:text-slate-900 shadow-lg pointer-events-auto">
+        <div className="flex items-center gap-3 rounded-full bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_90%,transparent)] px-4 py-2 text-xs text-white shadow-lg pointer-events-auto">
           <span>Toca para fijar el siguiente punto</span>
           <button
             type="button"
             onClick={() => setWallDraw(null)}
-            className="rounded-full bg-white/20 dark:bg-slate-900/20 px-3 py-1 font-medium"
+            className="rounded-full bg-white/20 px-3 py-1 font-medium"
           >
             Cancelar
           </button>

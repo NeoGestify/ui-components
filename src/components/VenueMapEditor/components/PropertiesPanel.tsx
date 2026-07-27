@@ -4,6 +4,7 @@ import type { MapElement, ElementTypeDef, Wall, WallMaterial } from '../types';
 import { parseSvgMarkup } from '../utils/svgParser';
 import { sanitizeImageSrc } from '../utils/imageSrc';
 import { isClickable } from '../utils/interaction';
+import { bg, bgHover, border, focusVisibleRing, ringAccent, text, textHover } from '../../../theme/tokens';
 
 interface PropertiesPanelProps {
   elements: MapElement[];
@@ -28,7 +29,7 @@ interface PropertiesPanelProps {
 // ─── Estilos compartidos ──────────────────────────────────────────────────────
 
 const PANEL_BASE =
-  'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 flex flex-col shrink-0';
+  `${border.subtle} ${bg.surface} flex flex-col shrink-0`;
 
 /**
  * En pantallas anchas es una columna lateral fija; en estrechas se convierte en
@@ -40,27 +41,30 @@ function panelCls(compact: boolean, short: boolean): string {
   return `${PANEL_BASE} w-full border-t ${short ? 'max-h-[55%]' : 'max-h-[45%]'} overflow-y-auto`;
 }
 const HEADER_CLS =
-  'px-3 py-2 border-b border-slate-100 dark:border-slate-800 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wide';
+  `px-3 py-2 border-b ${border.subtle} text-xs font-semibold ${text.subtle} uppercase tracking-wide`;
 const FIELD_LABEL_CLS =
-  'text-[10px] font-medium text-slate-400 dark:text-slate-500 uppercase tracking-wide';
+  `text-[10px] font-medium ${text.faint} uppercase tracking-wide`;
 const CONTROL_CLS =
-  'w-full border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-xs ' +
-  'text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-800 ' +
+  `w-full border ${border.subtle} rounded px-1.5 py-1 text-xs ` +
+  `${text.muted} ${bg.surface} ` +
   '[color-scheme:light] dark:[color-scheme:dark] ' +
-  'focus:outline-none focus:ring-1 focus:ring-blue-400 dark:focus:ring-blue-500';
+  `focus:outline-none focus:ring-1 focus:${ringAccent}`;
 /**
  * Indicador de foco compartido. `focus-visible` (y no `focus`) para que el
  * anillo salga al navegar con teclado pero no al pulsar con el ratón.
  */
 const FOCUS_CLS =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-blue-400';
+  focusVisibleRing;
 const BTN_CLS =
-  'w-full text-xs px-3 py-1.5 rounded border border-slate-200 dark:border-slate-700 ' +
-  'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ' +
+  `w-full text-xs px-3 py-1.5 rounded border ${border.subtle} ` +
+  `${text.muted} ${bgHover.surface} transition-colors ` +
   FOCUS_CLS;
 const DANGER_BTN_CLS =
-  'w-full text-xs px-3 py-1.5 rounded bg-red-50 dark:bg-red-950/50 border border-red-200 dark:border-red-900 ' +
-  'text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors ' +
+  'w-full text-xs px-3 py-1.5 rounded ' +
+  'bg-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_8%,white)] ' +
+  'dark:bg-[color-mix(in_oklab,var(--nui-danger-dark,oklch(63.7%_.237_25.331))_18%,transparent)] ' +
+  'border border-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_25%,transparent)] ' +
+  `${text.danger} transition-colors ` +
   FOCUS_CLS;
 
 // ─── Small numeric field ──────────────────────────────────────────────────────
@@ -145,7 +149,7 @@ function PanelHeader({
           type="button"
           onClick={onClose}
           aria-label="Cerrar panel"
-          className={`text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-200 px-2 -my-1 text-base leading-none rounded ${FOCUS_CLS}`}
+          className={`${text.faint} ${textHover.muted} px-2 -my-1 text-base leading-none rounded ${FOCUS_CLS}`}
         >
           ×
         </button>
@@ -205,7 +209,7 @@ function WallPanel({
       </div>
 
       {onDeleteWall && (
-        <div className="px-3 pb-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <div className={`px-3 pb-3 pt-3 border-t ${border.subtle}`}>
           <button type="button" onClick={() => onDeleteWall(wall.id)} className={DANGER_BTN_CLS}>
             Eliminar pared
           </button>
@@ -271,8 +275,8 @@ export function PropertiesPanel({
       <div className={panelCls(compact, short)}>
         <PanelHeader title="Propiedades" compact={compact} onClose={onClose} />
         <div className="flex-1 flex flex-col items-center justify-center gap-3 p-4 text-center">
-          <span className="text-2xl font-bold text-slate-700 dark:text-slate-200">{count}</span>
-          <span className="text-xs text-slate-400 dark:text-slate-500">elementos seleccionados</span>
+          <span className={`text-2xl font-bold ${text.muted}`}>{count}</span>
+          <span className={`text-xs ${text.faint}`}>elementos seleccionados</span>
         </div>
         <div className="px-3 pb-3 flex flex-col gap-2">
           <button type="button" onClick={() => onDuplicate(ids)} className={BTN_CLS}>
@@ -313,12 +317,12 @@ export function PropertiesPanel({
               <img
                 src={imageHref}
                 alt=""
-                className="w-3.5 h-3.5 shrink-0 object-contain border border-slate-300 dark:border-slate-600 rounded-sm"
+                className={`w-3.5 h-3.5 shrink-0 object-contain border ${border.base} rounded-sm`}
               />
             ) : preview ? (
               <svg
                 viewBox={preview.viewBox}
-                className="w-3.5 h-3.5 shrink-0 border border-slate-300 dark:border-slate-600 rounded-sm"
+                className={`w-3.5 h-3.5 shrink-0 border ${border.base} rounded-sm`}
                 style={{ color: typeDef.strokeColor }}
                 dangerouslySetInnerHTML={{ __html: preview.innerHtml }}
               />
@@ -328,11 +332,11 @@ export function PropertiesPanel({
                 style={{ background: typeDef.color, borderColor: typeDef.strokeColor }}
               />
             )}
-            <span className="text-xs font-medium text-slate-700 dark:text-slate-200 truncate">
+            <span className={`text-xs font-medium ${text.muted} truncate`}>
               {typeDef.label}
             </span>
             {(typeDef.shape === 'svg' || typeDef.shape === 'image') && (
-              <span className="text-[9px] uppercase tracking-wide text-slate-400 dark:text-slate-500 font-medium ml-auto">
+              <span className={`text-[9px] uppercase tracking-wide ${text.faint} font-medium ml-auto`}>
                 {typeDef.shape === 'svg' ? 'SVG' : 'IMG'}
               </span>
             )}
@@ -371,7 +375,7 @@ export function PropertiesPanel({
             <button
               type="button"
               onClick={() => setGeom({ r: 0 })}
-              className={`border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-xs text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors ${FOCUS_CLS}`}
+              className={`border ${border.subtle} rounded px-1.5 py-1 text-xs ${text.subtle} ${bgHover.surface} transition-colors ${FOCUS_CLS}`}
             >
               Resetear
             </button>
@@ -384,11 +388,11 @@ export function PropertiesPanel({
             type="checkbox"
             checked={isClickable(el, typeDef)}
             onChange={e => onChangeClickable(el.id, e.target.checked)}
-            className="mt-0.5 accent-blue-500 [color-scheme:light] dark:[color-scheme:dark]"
+            className="mt-0.5 accent-[var(--nui-accent,oklch(51.1%_.262_276.966))] dark:accent-[var(--nui-accent-dark,oklch(58.5%_.233_277.117))] [color-scheme:light] dark:[color-scheme:dark]"
           />
           <span className="flex flex-col gap-0.5">
-            <span className="text-xs font-medium text-slate-700 dark:text-slate-200">Clickable</span>
-            <span className="text-[10px] text-slate-400 dark:text-slate-500 leading-snug">
+            <span className={`text-xs font-medium ${text.muted}`}>Clickable</span>
+            <span className={`text-[10px] ${text.faint} leading-snug`}>
               Responde al clic en el visor. En el editor se edita como cualquier
               otro elemento.
             </span>
@@ -400,9 +404,9 @@ export function PropertiesPanel({
           <div className="flex flex-col gap-1">
             <span className={FIELD_LABEL_CLS}>Metadata</span>
             {Object.entries(el.metadata).map(([k, v]) => (
-              <div key={k} className="flex justify-between text-xs text-slate-500 dark:text-slate-400">
+              <div key={k} className={`flex justify-between text-xs ${text.subtle}`}>
                 <span className="truncate">{k}</span>
-                <span className="ml-2 text-slate-400 dark:text-slate-500 truncate">{String(v)}</span>
+                <span className={`ml-2 ${text.faint} truncate`}>{String(v)}</span>
               </div>
             ))}
           </div>
@@ -410,7 +414,7 @@ export function PropertiesPanel({
       </div>
 
       {/* Actions */}
-      <div className="px-3 pb-3 flex flex-col gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+      <div className={`px-3 pb-3 flex flex-col gap-2 border-t ${border.subtle} pt-3`}>
         <button type="button" onClick={() => onDuplicate([el.id])} className={BTN_CLS}>
           Duplicar (Ctrl+D)
         </button>

@@ -5,9 +5,14 @@ Reusable UI component library built with React, Tailwind CSS and SweetAlert2.
 ## Features
 
 - Pre-styled HTML components (Button, Input, TextArea, Form, Select, Table, Modal, Loading)
+- Presentation components (Card, Avatar, Badge, Alert, Skeleton, Progress)
+- Navigation components (Tabs, Accordion, Breadcrumb, Pagination) with full keyboard support
+- Controls (Switch, Tooltip)
+- **Animations** on everything that moves, switchable globally and per component
 - SVG icon collection (80+ icons)
 - Preconfigured SweetAlert2 alerts + InfoAlert component
 - Theme system (light/dark) with a Context Provider
+- **Configurable colors**: every color is a CSS variable you can override — no CSS import, no config file
 - Interactive venue map editor (VenueMapEditor/VenueMapViewer) with full touch support (pinch-zoom, two-finger pan)
 - Element library builder (ElementLibraryBuilder)
 - Mobile-friendly calendar and date picker (Calendar/DatePicker) with single, multiple and range selection
@@ -77,6 +82,130 @@ bun add react react-dom sweetalert2 sweetalert2-react-content
 ```
 
 ---
+---
+
+## Theming (custom colors)
+
+Every color in the library is a CSS variable with the current color as its
+fallback, so **an existing project keeps working with zero changes** and a new
+one can retint the whole library by declaring a handful of variables.
+
+### The quick version
+
+```css
+/* your stylesheet — nothing to import from the library */
+:root {
+  --nui-accent:            #059669;   /* light theme */
+  --nui-accent-hover:      #047857;
+  --nui-accent-text:       #059669;
+  --nui-accent-soft:       #ecfdf5;
+
+  --nui-accent-dark:       #10b981;   /* dark theme  */
+  --nui-accent-hover-dark: #059669;
+  --nui-accent-text-dark:  #34d399;
+  --nui-accent-soft-dark:  rgb(16 185 129 / .18);
+}
+```
+
+Buttons, inputs, calendar, tabs, focus rings and the map editor chrome all
+follow. Anything you don't declare keeps its default.
+
+The naming rule is always the same: `--nui-<token>` for the light theme,
+`--nui-<token>-dark` for the dark one. Values can be any CSS color — hex,
+`rgb()`, `oklch()`, `color-mix()`.
+
+### From JavaScript
+
+Useful when the colors come from an API or from user settings:
+
+```tsx
+import { ThemeProvider } from 'neogestify-ui-components';
+
+<ThemeProvider colors={{
+  light: { accent: '#059669', 'accent-hover': '#047857' },
+  dark:  { accent: '#34d399' },
+}}>
+  <App />
+</ThemeProvider>
+```
+
+Or imperatively, outside React:
+
+```ts
+import { applyNuiColors, nuiColorsToCss, resolveColor } from 'neogestify-ui-components';
+
+const undo = applyNuiColors({ light: { accent: '#059669' } });  // returns an undo fn
+nuiColorsToCss({ light: { accent: '#059669' } });               // ":root{--nui-accent:#059669}" — for SSR
+resolveColor('accent');                                          // the color actually in effect right now
+```
+
+For SSR, put `nuiColorsToCss(...)` in a `<style>` in your `<head>` so the colors
+are right on the first paint instead of after hydration.
+
+### Tokens
+
+| Token | Role | Default (light / dark) |
+|-------|------|------------------------|
+| `surface` | Cards, panels, inputs | white / gray-800 |
+| `surface-muted` | Headers, footers, prefixes | gray-50 / gray-700 |
+| `surface-hover` | Row and button hover | gray-100 / gray-700 |
+| `surface-sunken` | Page background | gray-100 / gray-900 |
+| `surface-inverted` | Inverted table header | gray-800 / gray-900 |
+| `border` | Field borders | gray-300 / gray-600 |
+| `border-subtle` | Separators, dividers | gray-200 / gray-700 |
+| `text` | Main text | gray-900 / white |
+| `text-muted` | Labels, cells | gray-700 / gray-300 |
+| `text-subtle` | Helper text, placeholders | gray-500 / gray-400 |
+| `text-faint` | Decorative icons | gray-400 / gray-500 |
+| `accent` | Primary buttons, selection | indigo-600 / indigo-500 |
+| `accent-hover` | Accent hover | indigo-700 / indigo-600 |
+| `accent-fg` | Text on accent | white / white |
+| `accent-text` | Accent-coloured text | indigo-600 / indigo-400 |
+| `accent-soft` | Tints (range band, chips) | indigo-50 / indigo-500 15 % |
+| `accent-subtle` | Accent borders | indigo-100 / indigo-800 |
+| `ring` / `ring-offset` | Focus ring and its gap | indigo-500 / indigo-400 |
+| `danger`, `danger-hover`, `danger-text`, `danger-subtle` | Errors, destructive actions | red |
+| `success`, `success-text` | Confirmation | green |
+| `warning`, `warning-text` | Warnings | yellow |
+| `info`, `info-text` | Information | blue |
+| `scrim` | Modal/overlay backdrop | gray-900 |
+
+Import `NUI_DEFAULTS` if you need the exact default values.
+
+### The map canvas
+
+The editor's SVG can't use Tailwind classes in `fill`/`stroke`, so its colors
+travel through a prop instead. It merges with the active theme's palette, so you
+only pass what you want to change:
+
+```tsx
+<VenueMapEditor
+  palette={{
+    light: { accent: '#059669', gridMinor: '#e7f5ee' },
+    dark:  { accent: '#34d399' },
+  }}
+/>
+```
+
+Available keys: `canvasBg`, `gridMinor`, `gridMajor`, `artboardFill`,
+`artboardStroke`, `artboardShadowOpacity`, `wallFill`, `wallStroke`,
+`wallMaterials` (per material, merged one by one), `accent`, `handleFill`,
+`label`, `previewFill`. `VENUE_PALETTES` and `resolvePalette` are exported if
+you'd rather start from the defaults.
+
+### Alerts
+
+The SweetAlert2 alerts paint their own DOM outside Tailwind, so they read the
+variables at call time: background from `surface-muted`, text from `text`,
+buttons from `accent` / `danger`. Nothing to configure — set the variables and
+the alerts follow.
+
+### Contrast
+
+The library can't validate the colors you pick. Keep at least 4.5:1 on these
+pairs: `text` over `surface`, `accent-fg` over `accent`, `accent-text` over
+`surface`, and `text-subtle` over `surface`.
+
 
 ## Framework guides
 
@@ -299,10 +428,31 @@ import {
   VenueMapViewer,
   // ElementLibraryBuilder
   ElementLibraryBuilder,
+  // Presentation
+  Card, CardHeader, CardBody, CardFooter,
+  Avatar, AvatarGroup,
+  Badge,
+  Alert,
+  Skeleton, SkeletonText,
+  Progress,
+  // Navigation
+  Tabs,
+  Accordion,
+  Breadcrumb,
+  Pagination,
+  // Controls
+  Switch,
+  Tooltip,
   // Calendar
   Calendar,
   DatePicker,
   rangePresets,
+  // Theming
+  applyNuiColors,
+  applyMotion,
+  nuiColorsToCss,
+  resolveColor,
+  NUI_DEFAULTS,
 } from 'neogestify-ui-components';
 ```
 
@@ -788,10 +938,323 @@ Props:
 - `className`: Extra classes
 
 ---
+---
+
+## Presentation Components
+
+### Card
+
+```tsx
+<Card
+  title="Monthly sales"
+  description="Compared with last month"
+  action={<Badge variant="success" dot>+12 %</Badge>}
+  footer={<span className="text-xs">Updated 5 min ago</span>}
+>
+  <p className="text-3xl font-bold">48,320 EUR</p>
+</Card>
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `variant` | `'default' \| 'outlined' \| 'elevated' \| 'ghost' \| 'custom'` | `'default'` | Border and shadow |
+| `padding` | `'none' \| 'sm' \| 'md' \| 'lg'` | `'md'` | Applies to every section |
+| `title` / `description` / `action` | `ReactNode` | — | Header. A string `title` is wrapped in an `<h3>` |
+| `footer` | `ReactNode` | — | Footer with a separator and a muted background |
+| `media` | `ReactNode` | — | Full-bleed image above the header |
+| `interactive` | `boolean` | `false` | Hover highlight, pointer cursor and keyboard focus |
+| `href` | `string` | — | Renders as `<a>` and implies `interactive` |
+| `fullHeight` | `boolean` | `false` | Fills the row height — for grids of uneven cards |
+
+`CardHeader`, `CardBody` and `CardFooter` are exported for layouts the props
+can't express.
+
+### Avatar / AvatarGroup
+
+Falls back in stages: image → initials → icon. Initials and the tint come from
+`name`, and the tint is stable — the same person is always the same colour.
+
+```tsx
+<Avatar name="Ada Lovelace" src="/ada.jpg" status="online" />
+<AvatarGroup max={4} avatars={[{ name: 'Ada' }, { name: 'Alan' }, …]} />
+```
+
+| Prop | Type | Default |
+|------|------|---------|
+| `src` / `name` / `alt` | `string` | — |
+| `size` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl'` | `'md'` |
+| `shape` | `'circle' \| 'square'` | `'circle'` |
+| `status` | `'online' \| 'offline' \| 'busy' \| 'away'` | — |
+| `icon` / `ring` | `ReactNode` / `boolean` | — |
+
+`AvatarGroup` takes `avatars`, `max` (default 4), `size` and `shape`. The
+overflow becomes a `+N` chip. `initialsOf(name)` is exported too.
+
+### Badge
+
+```tsx
+<Badge variant="success" dot>Active</Badge>
+<Badge variant="accent" pill onRemove={() => remove(tag)}>{tag}</Badge>
+```
+
+`variant`: `neutral` (default), `accent`, `success`, `warning`, `danger`,
+`info`, `outline`, `solid` · `size`: `sm | md | lg` · `dot` prefixes a coloured
+dot · `pill` rounds it fully · `onRemove` adds a labelled close button.
+
+### Alert
+
+An **inline** notice, in the page flow — unlike the `Alerta*` functions, which
+are SweetAlert2 dialogs that interrupt the user.
+
+```tsx
+<Alert variant="warning" title="Quota almost full" onClose={hide}
+       actions={<Button size="sm" variant="outline">Upgrade</Button>}>
+  You have used 92 % of your space.
+</Alert>
+```
+
+`variant`: `info` (default), `success`, `warning`, `danger`, `neutral` ·
+`title`, `icon` (`false` removes it), `onClose`, `actions`. The `danger`
+variant uses `role="alert"` so it interrupts a screen reader; the rest use
+`role="status"` and wait their turn.
+
+### Skeleton
+
+```tsx
+<Skeleton variant="circle" width={40} />
+<Skeleton lines={3} />
+```
+
+`variant`: `text` (default), `circle`, `rect`, `rounded` · `width`, `height`,
+`lines` (the last one comes out shorter), `animated`. Marked `aria-hidden`:
+announce loading on the container with `aria-busy`, not on every grey block.
+
+### Progress
+
+```tsx
+<Progress value={72} label="Uploading" showValue />
+<Progress indeterminate label="Processing…" variant="info" />
+```
+
+`value` / `max`, `variant` (`accent | success | warning | danger | info`),
+`size` (`xs | sm | md | lg`), `label`, `showValue`, `indeterminate`,
+`valueText`.
+
+---
+
+## Navigation Components
+
+### Tabs
+
+Full `tablist` pattern: roving tabindex, arrow keys, Home and End.
+
+```tsx
+<Tabs items={[
+  { id: 'general', label: 'General', content: <Form /> },
+  { id: 'security', label: 'Security', badge: <Badge size="sm" variant="danger">2</Badge>, content: <Security /> },
+  { id: 'archived', label: 'Archived', disabled: true },
+]} />
+```
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `items` | `TabItem[]` | — | `{ id, label, content?, icon?, badge?, disabled? }` |
+| `value` / `defaultValue` / `onChange` | — | — | Controlled or uncontrolled |
+| `variant` | `'line' \| 'pill' \| 'enclosed'` | `'line'` | |
+| `size` | `'sm' \| 'md' \| 'lg'` | `'md'` | |
+| `fullWidth` | `boolean` | `false` | Splits the width evenly |
+| `activation` | `'automatic' \| 'manual'` | `'automatic'` | `manual` only moves focus; Enter confirms |
+
+Omit `content` and only the bar renders — you own the panel.
+
+### Accordion
+
+```tsx
+<Accordion type="multiple" items={[
+  { title: 'Shipping', content: <p>…</p>, meta: '3 days' },
+]} />
+```
+
+`items`: `{ id?, title, content, meta?, icon?, disabled? }` · `type`:
+`single` (default) or `multiple` · `value` / `defaultValue` / `onValueChange` ·
+`collapsible` (default `true`) · `variant`: `separated` (default), `bordered`,
+`plain`. Arrow keys, Home and End move between headers. Collapsed panels are
+hidden, not unmounted, so their internal state survives.
+
+### Breadcrumb
+
+```tsx
+<Breadcrumb items={[{ label: 'Home', href: '/' }, { label: 'Order 42' }]} />
+```
+
+The last item is the current page: it gets `aria-current="page"` and is not a
+link. Past `maxItems` (default 4) the **middle** collapses into `…` — the start
+and the end are what orient the user.
+
+### Pagination
+
+```tsx
+<Pagination page={p} totalPages={12} onChange={setP} />
+<Pagination page={p} totalPages={12} onChange={setP} compact />
+```
+
+`siblings` (pages either side, default 1), `boundaries` (fixed pages at each
+end, default 1), `compact` (just Previous/Next with «Page X of Y» — the
+sensible option on mobile), `size`, `labels` for translation. Returns `null`
+when there is a single page. The `pageRange()` helper is exported.
+
+### A note on narrow layouts
+
+`Tabs` and `Table` scroll horizontally rather than wrapping, so their bar keeps
+its shape on a phone. Both carry `min-w-0` / `overflow-x-auto` internally, which
+means they will not stretch a grid or flex track wider than the viewport.
+
+If you build your own grid around library components, give the columns
+`min-w-0`. Grid and flex items default to `min-width: auto`, so a child that
+doesn't wrap forces its track to grow instead of scrolling:
+
+```tsx
+<div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
+```
+
+`Calendar`, `VenueMapEditor` and `ElementLibraryBuilder` measure **their own
+container** rather than the viewport, so they reflow correctly inside a sidebar
+or a modal, not just at page level.
+
+---
+
+## Controls
+
+### Switch
+
+```tsx
+<Switch label="Email notifications" description="We ping you on every order."
+        checked={on} onChange={setOn} />
+```
+
+`role="switch"` with `aria-checked`. Props: `checked` / `defaultChecked` /
+`onChange`, `label`, `description`, `labelPosition`, `size` (`sm | md | lg`),
+`disabled`, `required`, `name` (hidden input for forms), `value`.
+
+### Tooltip
+
+```tsx
+<Tooltip content="Export as JSON">
+  <Button variant="icon" aria-label="Export"><SaveIcon /></Button>
+</Tooltip>
+```
+
+Shows on hover and on keyboard focus; on touch screens it appears on
+press-and-hold. It renders in a portal with fixed positioning, so no ancestor's
+`overflow: hidden` can clip it, and it repositions on scroll. `Escape` hides it.
+
+Props: `content`, `placement` (`top | bottom | left | right`), `delay` (ms),
+`disabled`, `maxWidth`.
+
+**The tooltip is not an accessible name.** An icon-only button still needs its
+own `aria-label`.
+
+---
+
+## Animations
+
+Everything that changes size or position animates: accordion panels, modals,
+the date picker's panel and sheet, tooltips, the tab underline, the switch
+thumb, progress bars and interactive cards.
+
+All of it reads its duration from a single CSS variable, so the switch is one
+variable — not a prop threaded through the tree.
+
+### Turning it off globally
+
+```tsx
+<ThemeProvider animations={false}>
+```
+
+```ts
+import { applyMotion } from 'neogestify-ui-components';
+const undo = applyMotion(false);   // returns an undo function
+```
+
+```css
+:root { --nui-duration: 0ms; --nui-duration-fast: 0ms; }
+```
+
+For SSR, `motionToCss(false)` gives you the same CSS as a string to drop into a
+`<style>` and avoid the first frame animating before your setting applies.
+
+### Turning it off for one component
+
+Every animated component takes `animate`:
+
+```tsx
+<Accordion animate={false} items={faq} />
+<Modal animate={false} …>
+```
+
+Because it writes the same CSS variable inline, it **cascades**: putting it on a
+container silences everything inside it.
+
+```tsx
+<Card animate={false}>
+  <Tabs …/>        {/* also instant */}
+</Card>
+```
+
+### Reduced motion
+
+Independently of all this, every transition carries
+`motion-reduce:transition-none`, so a user with «reduce motion» in their OS gets
+no animation without anyone configuring anything. `animations={false}` is for
+the *product's* decision; `prefers-reduced-motion` is the *user's*, and it always
+wins.
+
+### Duration
+
+| Variable | Default | Used by |
+|----------|---------|---------|
+| `--nui-duration` | `200ms` | Panels, modals, sheets, indicators |
+| `--nui-duration-fast` | `120ms` | Tooltips, colour changes |
+
+Any CSS time value works, so you can slow things down instead of switching them
+off:
+
+```css
+:root { --nui-duration: 400ms; }
+```
+
+Setting `0ms` doesn't remove the transition, it makes it instant — the end state
+is identical either way, so nothing in the library depends on an animation
+actually running. `motionDuration()` reads the effective value in milliseconds
+if you need to sync something in JavaScript.
+
+### What animates, and how
+
+| Component | Transition |
+|-----------|-----------|
+| `Accordion` | Real height, via `grid-template-rows: 0fr → 1fr` — no `max-height` guess, no measuring in JS |
+| `Modal` | Backdrop fades, panel scales from 95 % |
+| `DatePicker` | Desktop panel scales from its anchored edge; mobile sheet slides up from the bottom |
+| `Tooltip` | Fades in with a 4 px nudge from the side it points at |
+| `Tabs` | The underline slides and resizes between tabs instead of jumping |
+| `Switch` | Thumb travel |
+| `Progress` | Bar width |
+| `Card` | `interactive` cards lift 2 px on hover |
+
+The collapsed accordion panel stays in the DOM so it can animate — it gets the
+`inert` attribute while closed, which takes it out of the tab order and hides it
+from screen readers.
+
 
 ## SVG Icons
 
-The library ships more than 80 SVG icons:
+The library ships more than 90 SVG icons. **Every inline SVG in the library
+lives here** — components never define their own, they import from this
+collection, so an icon swapped here changes everywhere at once.
+
+Added in 3.0: `ChevronLeftIcon`, `ChevronRightIcon`, `ChevronUpIcon`,
+`UserIcon`, `WarningIcon`, `ErrorIcon`, `SlashIcon`, `RingSpinnerIcon`,
+`QuarterSpinnerIcon`.
 
 ```tsx
 import {

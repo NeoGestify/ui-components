@@ -15,7 +15,7 @@ import type {
 } from './types';
 import type { ElementTypeDef } from './types';
 import { useLibraryStorage } from './hooks/useLibraryStorage';
-import { useVenueTheme, VENUE_PALETTES } from './theme';
+import { useVenueTheme, resolvePalette } from './theme';
 import { useContainerSize } from './hooks/useContainerSize';
 import { useCoarsePointer } from './hooks/usePointerCapabilities';
 import { Toolbar } from './components/Toolbar';
@@ -138,11 +138,12 @@ export function VenueMapEditor({
   onElementClick,
   onElementTypeClick,
   theme: themeSetting = 'auto',
+  palette: paletteOverride,
   className,
   containment = 'full',
 }: VenueMapEditorProps) {
   const theme = useVenueTheme(themeSetting);
-  const palette = VENUE_PALETTES[theme];
+  const palette = useMemo(() => resolvePalette(theme, paletteOverride), [theme, paletteOverride]);
   const containerRef = useRef<HTMLDivElement>(null);
   // La disposición responde al ancho del PROPIO editor, no al del viewport:
   // el componente puede estar embebido en un hueco estrecho de una pantalla
