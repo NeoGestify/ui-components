@@ -135,6 +135,16 @@ Found and fixed during a review pass over the existing code:
   `motion-safe:`. Loading spinners stay animated on purpose — a frozen spinner
   communicates nothing.
 
+### Fixes
+
+- **Modal header and footer were lighter than the panel in dark mode.** A
+  regression from the token migration: they used to be `dark:bg-gray-800`
+  (matching the panel) and got mapped to `surface-muted`, whose dark value is
+  gray-700. A band lighter than its panel reads as raised, and a header is
+  recessed, not raised. New `surface-band` token — gray-50 in light (the
+  original value, so nothing changes there) and gray-900 in dark. Applied to the
+  modal's header and footer and to the card footer, which had the same problem.
+
 ### Responsive fixes
 
 - **`Tabs` could break the page layout.** Its bar doesn't wrap, so its intrinsic

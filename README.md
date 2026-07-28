@@ -150,6 +150,7 @@ are right on the first paint instead of after hydration.
 | `surface-muted` | Headers, footers, prefixes | gray-50 / gray-700 |
 | `surface-hover` | Row and button hover | gray-100 / gray-700 |
 | `surface-sunken` | Page background | gray-100 / gray-900 |
+| `surface-band` | Header and footer bands **inside** a panel (modal, card) | gray-50 / gray-900 |
 | `surface-inverted` | Inverted table header | gray-800 / gray-900 |
 | `border` | Field borders | gray-300 / gray-600 |
 | `border-subtle` | Separators, dividers | gray-200 / gray-700 |
@@ -370,6 +371,57 @@ inside a `<ClientOnly>` boundary or guard with a mounted flag:
 ```tsx
 import styles from './tailwind.css?url';
 export const links = () => [{ rel: 'stylesheet', href: styles }];
+```
+
+### TanStack Start
+
+Vite-based, so the CSS setup is the Vite one. Import the stylesheet from the
+root route (`src/routes/__root.tsx`).
+
+It does SSR, and these components are browser-only: wrap them in `clientOnly`
+or mount them after the first render.
+
+```tsx
+import { clientOnly } from '@tanstack/react-router';
+
+const VenueMapEditor = clientOnly(() =>
+  import('neogestify-ui-components').then(m => ({ default: m.VenueMapEditor })),
+);
+```
+
+### Storybook
+
+With the Vite builder, add the Tailwind plugin and import the CSS from
+`preview`:
+
+```ts
+// .storybook/main.ts
+import tailwindcss from '@tailwindcss/vite';
+
+export default {
+  framework: '@storybook/react-vite',
+  viteFinal: async config => {
+    config.plugins?.push(tailwindcss());
+    return config;
+  },
+};
+```
+
+```ts
+// .storybook/preview.ts
+import '../src/index.css';
+```
+
+For dark mode, put the class on a global decorator:
+
+```tsx
+export const decorators = [
+  (Story, ctx) => (
+    <div className={ctx.globals.theme === 'dark' ? 'dark' : ''}>
+      <Story />
+    </div>
+  ),
+];
 ```
 
 ### Other setups
