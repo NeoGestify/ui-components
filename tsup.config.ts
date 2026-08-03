@@ -14,8 +14,11 @@ export default defineConfig({
   },
   format: ['cjs', 'esm'],
   dts: true,
-  splitting: false,
-  sourcemap: true,
+  // Las 9 entradas comparten los iconos y los tokens de color. Sin splitting,
+  // cada bundle se lleva su propia copia: `AnimateSpin` acababa duplicado en 6.
+  splitting: true,
+  // No se publican: eran ~1,5 MB del tarball, la mayor parte de su peso.
+  sourcemap: false,
   clean: true,
   external: ['react', 'react-dom', 'react/jsx-runtime', 'sweetalert2', 'sweetalert2-react-content'],
   treeshake: true,
