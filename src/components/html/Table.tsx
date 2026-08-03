@@ -250,7 +250,7 @@ function SkeletonRow({ colCount, size }: { colCount: number; size: TableSize }) 
         <tr>
             {Array.from({ length: colCount }).map((_, i) => (
                 <td key={i} className={SIZE_TD[size]}>
-                    <div className={`h-4 rounded ${bg.surfaceMuted} motion-safe:animate-pulse`} />
+                    <div className={`h-4 rounded ${bg.skeleton} motion-safe:animate-pulse`} />
                 </td>
             ))}
         </tr>

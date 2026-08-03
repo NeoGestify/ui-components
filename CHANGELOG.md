@@ -1,5 +1,54 @@
 # Changelog
 
+## 3.0.2
+
+Arreglo de colores en modo oscuro. Con la paleta por defecto casi no se nota;
+si has retematizado la librería, sí.
+
+### Hover que no seguía al tema oscuro
+
+Tres grupos de tokens usaban en `dark:` la variable del tema **claro**. Quien
+declarara solo las variables `-dark` veía el color saltar al del tema claro al
+pasar el ratón por encima:
+
+- `bgHoverOf.success` / `.warning` — los botones `variant="success"` y
+  `variant="warning"`. Además, en claro el color se mezclaba con negro por
+  `color-mix`, lo que ignoraba por completo tu color.
+- `textHover.accent` / `.danger` — apuntaban en oscuro al **mismo** token que en
+  reposo, así que el hover sencillamente no se veía.
+- `focusBorder.accent` / `.danger` — no tenían variante `dark:` en absoluto: el
+  borde al enfocar usaba el color claro sobre fondo oscuro.
+
+### Cuatro tokens nuevos
+
+La causa de fondo era que faltaban pares de hover, que `danger` sí tenía:
+
+| Token | Claro / Oscuro |
+|---|---|
+| `success-hover` | green-700 / green-600 |
+| `warning-hover` | yellow-700 / yellow-600 |
+| `accent-text-hover` | indigo-700 / indigo-300 |
+| `danger-text-hover` | red-700 / red-300 |
+
+Son aditivos: si no declaras nada, los colores por defecto no cambian.
+
+### `Skeleton` con más contraste en claro
+
+Los marcadores de carga usaban `surface-muted`, que en claro es gray-50: a 1,5
+puntos de luminosidad del blanco del panel, prácticamente invisibles. En oscuro
+sí funcionaban (gray-700 sobre gray-800 son 9,5 puntos).
+
+Ahora tienen token propio, `skeleton` (gray-200 / gray-700), que iguala el
+contraste en los dos temas y además permite ajustarlo. El modo oscuro no cambia.
+
+Afecta a `Skeleton`, a `SkeletonText` y a las filas de carga de `Table`, que
+tenían su propia copia del mismo bloque gris.
+
+**Convención nueva, documentada en el README:** en claro un `*-hover` oscurece el
+color de reposo, y en oscuro lo **aclara** — oscurecer sobre fondo oscuro se lee
+como «desactivado», no como «encima». Si sobrescribes una variable `*-hover`,
+sobrescribe también su `-dark`.
+
 ## 3.0.1
 
 Release de empaquetado: no cambia ni una línea de los componentes, pero el

@@ -38,7 +38,7 @@ export const Skeleton: FC<SkeletonProps> = ({
   className = '', style, ...props
 }) => {
   const base = [
-    bg.surfaceMuted,
+    bg.skeleton,
     SHAPE[variant],
     animated ? 'motion-safe:animate-pulse' : '',
   ].filter(Boolean).join(' ');

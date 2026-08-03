@@ -152,6 +152,7 @@ are right on the first paint instead of after hydration.
 | `surface-sunken` | Page background | gray-100 / gray-900 |
 | `surface-band` | Header and footer bands **inside** a panel (modal, card) | gray-50 / gray-900 |
 | `surface-inverted` | Inverted table header | gray-800 / gray-900 |
+| `skeleton` | Loading placeholders (`Skeleton`, `Table` while loading) | gray-200 / gray-700 |
 | `border` | Field borders | gray-300 / gray-600 |
 | `border-subtle` | Separators, dividers | gray-200 / gray-700 |
 | `text` | Main text | gray-900 / white |
@@ -162,16 +163,22 @@ are right on the first paint instead of after hydration.
 | `accent-hover` | Accent hover | indigo-700 / indigo-600 |
 | `accent-fg` | Text on accent | white / white |
 | `accent-text` | Accent-coloured text | indigo-600 / indigo-400 |
+| `accent-text-hover` | Accent text hover | indigo-700 / indigo-300 |
 | `accent-soft` | Tints (range band, chips) | indigo-50 / indigo-500 15 % |
 | `accent-subtle` | Accent borders | indigo-100 / indigo-800 |
 | `ring` / `ring-offset` | Focus ring and its gap | indigo-500 / indigo-400 |
-| `danger`, `danger-hover`, `danger-text`, `danger-subtle` | Errors, destructive actions | red |
-| `success`, `success-text` | Confirmation | green |
-| `warning`, `warning-text` | Warnings | yellow |
+| `danger`, `danger-hover`, `danger-text`, `danger-text-hover`, `danger-subtle` | Errors, destructive actions | red |
+| `success`, `success-hover`, `success-text` | Confirmation | green |
+| `warning`, `warning-hover`, `warning-text` | Warnings | yellow |
 | `info`, `info-text` | Information | blue |
 | `scrim` | Modal/overlay backdrop | gray-900 |
 
 Import `NUI_DEFAULTS` if you need the exact default values.
+
+> **Hover tokens go the other way in dark mode.** In light, `*-hover` darkens the
+> resting colour; in dark it lightens it, because darkening against a dark
+> background reads as "disabled" rather than "hovered". If you override a
+> `*-hover` variable, override its `-dark` counterpart too.
 
 ### The map canvas
 
@@ -1106,6 +1113,14 @@ variant uses `role="alert"` so it interrupts a screen reader; the rest use
 `variant`: `text` (default), `circle`, `rect`, `rounded` · `width`, `height`,
 `lines` (the last one comes out shorter), `animated`. Marked `aria-hidden`:
 announce loading on the container with `aria-busy`, not on every grey block.
+
+Its colour comes from the `skeleton` token (gray-200 / gray-700). If your page
+background is not the default white, tune it to taste:
+
+```css
+:root      { --nui-skeleton: oklch(87.2% .01 258.338); }  /* stronger, gray-300 */
+:root.dark { --nui-skeleton-dark: oklch(44.6% .03 256.802); }
+```
 
 ### Progress
 
