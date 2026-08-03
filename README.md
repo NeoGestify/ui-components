@@ -78,7 +78,14 @@ In your main CSS file (e.g. `src/index.css`):
 ### 3. Install the peer dependencies
 
 ```bash
-bun add react react-dom sweetalert2 sweetalert2-react-content
+bun add react react-dom
+```
+
+`sweetalert2` is an **optional** peer: install it only if you use the `Alerta*`
+functions or `InfoAlert`. Everything else works without it.
+
+```bash
+bun add sweetalert2
 ```
 
 ---
@@ -306,7 +313,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 Install with `@tailwindcss/postcss` (Next.js compiles CSS through PostCSS):
 
 ```bash
-npm i neogestify-ui-components react react-dom sweetalert2 sweetalert2-react-content
+npm i neogestify-ui-components react react-dom
 npm i -D tailwindcss @tailwindcss/postcss
 ```
 
@@ -327,7 +334,7 @@ inside `<Head>`.
 ```bash
 npm create astro@latest
 npx astro add react
-npm i neogestify-ui-components sweetalert2 sweetalert2-react-content
+npm i neogestify-ui-components
 npm i -D tailwindcss @tailwindcss/vite
 ```
 
@@ -582,6 +589,7 @@ Props:
 - `isActive`: Active state for the `toggle` or `nav` variant (boolean)
 - `disabled`: Disables the button
 - `type`: HTML type (`button`, `submit`, `reset`)
+- `animate`: `false` makes hover and active changes instant (boolean)
 - `className`: Extra classes
 - `children`: Button content
 
@@ -986,6 +994,8 @@ Props:
 - `closeOnEsc`: Close when pressing Escape (boolean, default: `false`)
 - `showCloseButton`: Shows a close button (boolean, default: `true`)
 - `zIndex`: Modal z-index (number, default: `50`)
+- `animate`: `false` opens and closes instantly (boolean)
+- `className`: Extra classes for the panel
 
 Ref methods (`ModalRef`):
 - `handleClose()`: Closes the modal with an animation
@@ -1474,6 +1484,7 @@ Alerta({
   cancelButtonText: 'Cancel',
   showDenyButton: true,
   denyButtonText: 'No',
+  showConfirmButton: true,   // defaults to false for toasts and timed alerts
   onConfirm: () => {},
   onCancel: () => {},
   onDeny: () => {},

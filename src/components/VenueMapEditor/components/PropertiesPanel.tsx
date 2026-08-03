@@ -5,6 +5,7 @@ import { parseSvgMarkup } from '../utils/svgParser';
 import { sanitizeImageSrc } from '../utils/imageSrc';
 import { isClickable } from '../utils/interaction';
 import { bg, bgHover, border, focusVisibleRing, ringAccent, text, textHover } from '../../../theme/tokens';
+import { motion } from '../../../theme/motion';
 
 interface PropertiesPanelProps {
   elements: MapElement[];
@@ -57,14 +58,14 @@ const FOCUS_CLS =
   focusVisibleRing;
 const BTN_CLS =
   `w-full text-xs px-3 py-1.5 rounded border ${border.subtle} ` +
-  `${text.muted} ${bgHover.surface} transition-colors ` +
+  `${text.muted} ${bgHover.surface} ${motion.colors} ` +
   FOCUS_CLS;
 const DANGER_BTN_CLS =
   'w-full text-xs px-3 py-1.5 rounded ' +
   'bg-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_8%,white)] ' +
   'dark:bg-[color-mix(in_oklab,var(--nui-danger-dark,oklch(63.7%_.237_25.331))_18%,transparent)] ' +
   'border border-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_25%,transparent)] ' +
-  `${text.danger} transition-colors ` +
+  `${text.danger} ${motion.colors} ` +
   FOCUS_CLS;
 
 // ─── Small numeric field ──────────────────────────────────────────────────────
@@ -375,7 +376,7 @@ export function PropertiesPanel({
             <button
               type="button"
               onClick={() => setGeom({ r: 0 })}
-              className={`border ${border.subtle} rounded px-1.5 py-1 text-xs ${text.subtle} ${bgHover.surface} transition-colors ${FOCUS_CLS}`}
+              className={`border ${border.subtle} rounded px-1.5 py-1 text-xs ${text.subtle} ${bgHover.surface} ${motion.colors} ${FOCUS_CLS}`}
             >
               Resetear
             </button>

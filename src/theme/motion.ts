@@ -24,8 +24,6 @@ export const NUI_DURATION = '200ms';
 /** Duración de los gestos cortos (aparecer un tooltip, un menú). */
 export const NUI_DURATION_FAST = '120ms';
 
-const D = `var(--nui-duration,${NUI_DURATION})`;
-const DF = `var(--nui-duration-fast,${NUI_DURATION_FAST})`;
 
 /**
  * Fragmentos de clase por tipo de transición. Se escriben literales para que
@@ -46,6 +44,12 @@ export const motion = {
   size: 'transition-[width,left,transform] duration-[var(--nui-duration,200ms)] ease-out motion-reduce:transition-none',
   /** Cambios de color: no es transformación de espacio, pero comparte el mando. */
   colors: 'transition-colors duration-[var(--nui-duration-fast,120ms)] motion-reduce:transition-none',
+  /**
+   * Controles que al pasar por encima cambian color, sombra y escala a la vez
+   * (los botones). Va en un solo fragmento porque dos clases `transition-*`
+   * compiten por la misma propiedad CSS y solo se aplicaría una.
+   */
+  control: 'transition-[color,background-color,border-color,box-shadow,transform] duration-[var(--nui-duration,200ms)] ease-out motion-reduce:transition-none',
 } as const;
 
 /** Variables que dejan las animaciones en instantáneas. */
@@ -131,5 +135,3 @@ export interface AnimatableProps {
    */
   animate?: boolean;
 }
-
-export { D as DURATION_VAR, DF as DURATION_FAST_VAR };

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { ThemeContext, type Theme } from './theme.types';
 import { applyNuiColors, type NuiColors } from '../../theme/colors';
@@ -125,8 +125,15 @@ export function ThemeProvider({
     setThemeState(newTheme);
   }, []);
 
+  // Sin memoizar, el objeto era nuevo en cada render y volvía a renderizar a
+  // todos los consumidores de `useTheme` aunque el tema no hubiera cambiado.
+  const value = useMemo(
+    () => ({ theme, toggleTheme, setTheme }),
+    [theme, toggleTheme, setTheme],
+  );
+
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

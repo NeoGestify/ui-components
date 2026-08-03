@@ -1,14 +1,16 @@
 import { Button } from './Button';
 import { CloseIcon } from '../icons/icons';
 import { bg, border, text } from '../../theme/tokens';
-import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { motion, motionDuration, motionStyle, type AnimatableProps } from '../../theme/motion';
 import React, { useEffect, useId, useState, useRef, forwardRef, useImperativeHandle } from 'react';
 
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
 type ModalVariant = 'default' | 'danger' | 'success' | 'warning';
 
-interface ModalProps extends AnimatableProps {
+export interface ModalProps extends AnimatableProps {
     onClose: () => void;
+    /** Clases extra para el panel. Se añaden al final, así que ganan. */
+    className?: string;
     title: React.ReactNode;
     children: React.ReactNode;
     footer?: React.ReactNode;
@@ -61,16 +63,26 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     closeOnEsc = false,
     variant = 'default',
     animate,
+    className = '',
 }, ref) => {
     const [show, setShow] = useState(false);
     const handleCloseRef = useRef<() => void>(() => {});
     const panelRef = useRef<HTMLElement>(null);
+    const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const titleId = `modal-title-${useId()}`;
 
+    // `onClose` se avisa cuando termina la animación de salida, no a los 300 ms
+    // fijos de antes: aquella cifra no coincidía con `--nui-duration` y, con
+    // `animate={false}`, hacía esperar a un cierre que ya era instantáneo.
     const handleClose = () => {
         setShow(false);
-        setTimeout(() => onClose(), 300);
+        if (closeTimer.current) clearTimeout(closeTimer.current);
+        closeTimer.current = setTimeout(onClose, animate === false ? 0 : motionDuration());
     };
+
+    // Sin esto, cerrar y desmontar a la vez dejaba un `onClose` en vuelo que se
+    // ejecutaba sobre un componente que ya no existe.
+    useEffect(() => () => { if (closeTimer.current) clearTimeout(closeTimer.current); }, []);
 
     handleCloseRef.current = handleClose;
 
@@ -142,7 +154,7 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
                 ref={panelRef}
                 tabIndex={-1}
                 className={`relative focus:outline-none ${bg.surface} border ${border.subtle} rounded-lg shadow-2xl w-full ${widthCls} max-h-[90vh] flex flex-col overflow-hidden
-                    ${motion.enter} ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+                    ${motion.enter} ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'} ${className}`}
                 style={{ zIndex }}
             >
                 <header className={`shrink-0 px-6 py-4 flex items-center justify-between ${VARIANT_HEADER[variant]}`}>

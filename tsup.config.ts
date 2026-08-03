@@ -20,6 +20,6 @@ export default defineConfig({
   // No se publican: eran ~1,5 MB del tarball, la mayor parte de su peso.
   sourcemap: false,
   clean: true,
-  external: ['react', 'react-dom', 'react/jsx-runtime', 'sweetalert2', 'sweetalert2-react-content'],
+  external: ['react', 'react-dom', 'react/jsx-runtime', 'sweetalert2'],
   treeshake: true,
 })

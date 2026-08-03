@@ -2,6 +2,7 @@ import { useId, type SelectHTMLAttributes, type FC, type ReactNode } from 'react
 import { ChevronDownIcon } from '../icons/icons';
 // `placeholder` se renombra: el componente ya tiene una prop con ese nombre.
 import { bg, border, focusBorder, focusRing, focusRingOf, placeholder as placeholderCls, text } from '../../theme/tokens';
+import { motion } from '../../theme/motion';
 
 type SelectVariant = 'default' | 'outline' | 'filled' | 'minimal' | 'custom' | 'small';
 type SelectSize = 'sm' | 'md' | 'lg';
@@ -77,7 +78,7 @@ export const Select: FC<SelectProps> = ({
     'appearance-none relative block w-full pl-3 pr-9 [color-scheme:light] dark:[color-scheme:dark] ' +
     `${placeholderCls} ${text.base} rounded-md ` +
     `${focusRing} ${focusBorder.accent} focus:z-10 ` +
-    'disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200';
+    `disabled:opacity-50 disabled:cursor-not-allowed ${motion.colors}`;
 
   const errorCls = hasError
     ? `${border.dangerSubtle} ${focusRingOf.danger} ${focusBorder.danger}`

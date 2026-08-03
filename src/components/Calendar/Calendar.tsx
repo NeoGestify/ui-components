@@ -16,6 +16,7 @@ import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from '../icons/ico
 import {
   bg, bgHover, border, focusRing, focusVisibleRing, text, textHover,
 } from '../../theme/tokens';
+import { motion } from '../../theme/motion';
 
 // ─── Tamaños ────────────────────────────────────────────────────────────────
 
@@ -28,12 +29,12 @@ const SIZE: Record<CalendarSize, { cell: string; text: string; head: string; gap
 const NAV_BTN =
   `inline-flex items-center justify-center rounded-md p-1.5 ${text.subtle} ` +
   `${bgHover.surface} ${textHover.muted} ${focusRing} ` +
-  'disabled:opacity-40 disabled:pointer-events-none transition-colors touch-manipulation';
+  `disabled:opacity-40 disabled:pointer-events-none ${motion.colors} touch-manipulation`;
 
 const FOOT_BTN =
   `rounded-md px-2.5 py-1.5 text-sm font-medium ${text.accent} ` +
   `${bgHover.accentSoft} ${focusRing} disabled:opacity-40 disabled:pointer-events-none ` +
-  'transition-colors touch-manipulation';
+  `${motion.colors} touch-manipulation`;
 
 /** Debajo de esto, `responsive` fuerza un solo mes visible. */
 const NARROW_PX = 640;
@@ -406,7 +407,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
 
             const btnCls = [
               'flex h-full w-full items-center justify-center rounded-full font-medium leading-none',
-              'transition-colors duration-100 touch-manipulation select-none',
+              `${motion.colors} touch-manipulation select-none`,
               focusVisibleRing,
               'focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--nui-surface,#fff)] dark:focus-visible:ring-offset-[var(--nui-surface-dark,oklch(27.8%_.033_256.848))]',
               sz.text,
@@ -502,7 +503,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
           type="button"
           onClick={openMonthView}
           className={`flex min-w-0 items-center gap-1 rounded-md px-2 py-1 font-semibold ${text.base}
-            ${bgHover.surface} ${focusRing} transition-colors touch-manipulation ${sz.head}`}
+            ${bgHover.surface} ${focusRing} ${motion.colors} touch-manipulation ${sz.head}`}
           aria-label={labels.selectMonth}
           aria-expanded={view !== 'days'}
         >
@@ -513,7 +514,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
                 ? `${formatMonthYear(visibleMonth, locale)} – ${formatMonthYear(lastVisible, locale)}`
                 : formatMonthYear(visibleMonth, locale)}
           </span>
-          <ChevronDownIcon className={`w-4 h-4 shrink-0 transition-transform ${view !== 'days' ? 'rotate-180' : ''}`} />
+          <ChevronDownIcon className={`w-4 h-4 shrink-0 ${motion.transform} ${view !== 'days' ? 'rotate-180' : ''}`} />
         </button>
 
         <button type="button" className={NAV_BTN} onClick={() => (view === 'years' ? setYearPage(y => y + 12) : shift(1))}
@@ -539,7 +540,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
               disabled={disabled || readOnly}
               className={`rounded-full border ${border.subtle} ${bg.surfaceMuted} px-3 py-1 text-xs font-medium ${text.subtle}
                 ${bgHover.accentSoft} ${textHover.accent} ${focusRing} disabled:opacity-40
-                transition-colors touch-manipulation`}
+                ${motion.colors} touch-manipulation`}
             >
               {p.label}
             </button>
@@ -573,7 +574,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
                 key={name}
                 type="button"
                 onClick={() => { goToMonth(new Date(yearPage, i, 1)); setView('days'); }}
-                className={`rounded-lg px-2 py-2.5 text-sm font-medium transition-colors touch-manipulation
+                className={`rounded-lg px-2 py-2.5 text-sm font-medium ${motion.colors} touch-manipulation
                   ${focusRing} ${isCur
                     ? `${bg.accent} ${text.onAccent}`
                     : `${text.muted} ${bgHover.surface}`}`}
@@ -584,7 +585,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
           })}
           <button type="button" onClick={() => setView('years')}
             className={`col-span-3 mt-1 rounded-lg px-2 py-2 text-sm font-medium ${text.accent} ${bgHover.accentSoft}
-              ${focusRing} transition-colors touch-manipulation`}>
+              ${focusRing} ${motion.colors} touch-manipulation`}>
             {yearPage} · {labels.selectYear}
           </button>
         </div>
@@ -601,7 +602,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
                 type="button"
                 disabled={!!outOfBounds}
                 onClick={() => { setYearPage(y); setView('months'); }}
-                className={`rounded-lg px-1 py-2.5 text-sm font-medium transition-colors touch-manipulation
+                className={`rounded-lg px-1 py-2.5 text-sm font-medium ${motion.colors} touch-manipulation
                   ${focusRing} disabled:opacity-30 disabled:pointer-events-none ${isCur
                     ? `${bg.accent} ${text.onAccent}`
                     : `${text.muted} ${bgHover.surface}`}`}

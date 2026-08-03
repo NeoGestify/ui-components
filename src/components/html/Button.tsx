@@ -3,12 +3,13 @@ import { type ButtonHTMLAttributes, type FC, type ReactNode } from 'react';
 import {
   bg, bgHover, bgHoverOf, border, borderSoft, focusRing, focusRingOf, ringOffset, text, textHover,
 } from '../../theme/tokens';
+import { motion, withMotionStyle, type AnimatableProps } from '../../theme/motion';
 
 type ButtonVariant = 'primary' | 'secondary' | 'icon' | 'danger' | 'success' | 'outline' | 'nav' | 'custom' | 'link' | 'warning' | 'toggle' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
 type ButtonShape = 'rounded' | 'pill' | 'square';
 
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, AnimatableProps {
   variant?: ButtonVariant;
   children: ReactNode;
   isLoading?: boolean;
@@ -21,7 +22,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   shape?: ButtonShape;
 }
 
-const BASE = 'transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer inline-flex items-center gap-2';
+const BASE = `${motion.control} disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer inline-flex items-center gap-2`;
 
 const SIZE_PAD: Record<ButtonSize, string> = {
   sm: 'px-2.5 py-1.5 text-xs',
@@ -69,6 +70,8 @@ export const Button: FC<ButtonProps> = ({
   shape,
   className = '',
   disabled,
+  animate,
+  style,
   ...props
 }) => {
   const sizeCls = variant === 'icon'
@@ -103,7 +106,12 @@ export const Button: FC<ButtonProps> = ({
   ].filter(Boolean).join(' ');
 
   return (
-    <button className={classes} disabled={disabled || isLoading} {...props}>
+    <button
+      className={classes}
+      style={withMotionStyle(animate, style)}
+      disabled={disabled || isLoading}
+      {...props}
+    >
       {isLoading ? (
         <>
           <AnimateSpin className="h-4 w-4 shrink-0 text-current" />

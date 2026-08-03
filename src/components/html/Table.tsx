@@ -1,5 +1,6 @@
 import { type ReactNode, type CSSProperties } from 'react';
 import { bg, bgHover, border, divide, text } from '../../theme/tokens';
+import { motion } from '../../theme/motion';
 import { SortAscIcon, SortDescIcon, SortBothIcon } from '../icons/icons';
 
 type TableVariant =
@@ -308,7 +309,7 @@ export function Table({
     const resolvedTrClass = (i: number): string => {
         const stripeCls = VARIANT_TR_STRIPE[variant](i);
         const baseCls = stripeCls || VARIANT_TR_BASE[variant];
-        const hoverCls = hoverable ? `${VARIANT_TR_HOVER[variant]} transition-colors` : '';
+        const hoverCls = hoverable ? `${VARIANT_TR_HOVER[variant]} ${motion.colors}` : '';
         const clickCls = onRowClick ? 'cursor-pointer' : '';
         const customCls = typeof trClassName === 'function' ? trClassName(i) : (trClassName ?? '');
         return [baseCls, hoverCls, clickCls, customCls].filter(Boolean).join(' ');

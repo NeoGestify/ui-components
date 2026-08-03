@@ -1,5 +1,6 @@
 import { type TextareaHTMLAttributes, type FC, type ReactNode, useRef, useEffect, useId } from 'react';
 import { bg, border, focusBorder, focusRing, focusRingOf, placeholder, text } from '../../theme/tokens';
+import { motion } from '../../theme/motion';
 
 type TextAreaVariant = 'default' | 'outline' | 'filled' | 'minimal';
 type TextAreaSize = 'small' | 'medium' | 'large';
@@ -70,7 +71,7 @@ export const TextArea: FC<TextAreaProps> = ({
     propsOnInput?.(e);
   };
 
-  const baseCls = `appearance-none relative block w-full ${placeholder} ${text.base} rounded-md border ${focusRing} ${focusBorder.accent} focus:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200`;
+  const baseCls = `appearance-none relative block w-full ${placeholder} ${text.base} rounded-md border ${focusRing} ${focusBorder.accent} focus:z-10 disabled:opacity-50 disabled:cursor-not-allowed ${motion.colors}`;
   const errorCls = error ? `${border.dangerSubtle} ${focusRingOf.danger} ${focusBorder.danger}` : '';
   const resizeCls = autoResize ? 'resize-none overflow-hidden' : RESIZE_CLASSES[resize];
 

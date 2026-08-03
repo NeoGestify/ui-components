@@ -3,6 +3,7 @@ import { CloseIcon } from '../icons/icons';
 import {
   bg, border, focusBorder, focusRing, focusRingOf, placeholder, text,
 } from '../../theme/tokens';
+import { motion } from '../../theme/motion';
 
 type InputVariant = 'default' | 'outline' | 'filled' | 'minimal';
 type InputSize = 'sm' | 'md' | 'lg';
@@ -67,7 +68,7 @@ export const Input: FC<InputProps> = ({
 
   // `color-scheme` alinea los widgets nativos (calendario de date/datetime,
   // flechas de number, autocompletado) con el tema activo.
-  const baseCls = `appearance-none relative block w-full [color-scheme:light] dark:[color-scheme:dark] ${placeholder} ${text.base} rounded-md ${focusRing} ${focusBorder.accent} focus:z-10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200`;
+  const baseCls = `appearance-none relative block w-full [color-scheme:light] dark:[color-scheme:dark] ${placeholder} ${text.base} rounded-md ${focusRing} ${focusBorder.accent} focus:z-10 disabled:opacity-50 disabled:cursor-not-allowed ${motion.colors}`;
 
   const inputCls = [
     baseCls,
@@ -87,7 +88,7 @@ export const Input: FC<InputProps> = ({
     'accent-[var(--nui-accent,oklch(51.1%_.262_276.966))] dark:accent-[var(--nui-accent-dark,oklch(58.5%_.233_277.117))]',
     `${text.accent} ${focusRing}`,
     'focus:ring-offset-2 focus:ring-offset-[var(--nui-surface,#fff)] dark:focus:ring-offset-[var(--nui-surface-sunken-dark,oklch(21%_.034_264.665))]',
-    'disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 cursor-pointer',
+    `disabled:opacity-50 disabled:cursor-not-allowed ${motion.colors} cursor-pointer`,
     error ? `${border.dangerSubtle} ${focusRingOf.danger}` : '',
   ].filter(Boolean).join(' ');
 
@@ -95,11 +96,11 @@ export const Input: FC<InputProps> = ({
   const fileCls = [
     `block w-full ${text.subtle} ${bg.surface} border rounded-md`,
     `${focusRing} ${focusBorder.accent}`,
-    'disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200',
+    `disabled:opacity-50 disabled:cursor-not-allowed ${motion.colors}`,
     'file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-medium',
     'file:bg-[var(--nui-accent-soft,oklch(96.2%_.018_272.314))] dark:file:bg-[var(--nui-accent-soft-dark,oklch(58.5%_.233_277.117_/_.15))]',
     'file:text-[var(--nui-accent-text,oklch(51.1%_.262_276.966))] dark:file:text-[var(--nui-accent-text-dark,oklch(67.3%_.182_276.935))]',
-    'file:transition-colors file:duration-200 file:cursor-pointer',
+    'file:transition-colors file:duration-[var(--nui-duration-fast,120ms)] motion-reduce:file:transition-none file:cursor-pointer',
     SIZE_CLASSES[size],
     error ? `${border.dangerSubtle} ${focusRingOf.danger}` : border.base,
     className,

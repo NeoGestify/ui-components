@@ -1,6 +1,7 @@
 import { useMemo, type FC, type HTMLAttributes } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '../icons/icons';
 import { bg, bgHover, border, focusVisibleRing, text } from '../../theme/tokens';
+import { motion } from '../../theme/motion';
 
 /**
  * Páginas visibles alrededor de la actual, con «…» donde se recorta.
@@ -66,7 +67,7 @@ export const Pagination: FC<PaginationProps> = ({
 
   const btn = size === 'sm' ? 'h-8 min-w-8 px-2 text-xs' : 'h-9 min-w-9 px-3 text-sm';
   const baseBtn = [
-    'inline-flex items-center justify-center gap-1 rounded-md font-medium transition-colors',
+    `inline-flex items-center justify-center gap-1 rounded-md font-medium ${motion.colors}`,
     'disabled:opacity-40 disabled:pointer-events-none touch-manipulation',
     btn, focusVisibleRing,
   ].join(' ');

@@ -1,7 +1,7 @@
 import Swal from "sweetalert2";
 import { activeScheme, resolveColor } from "../../theme/colors";
 
-interface AlertaOptions {
+export interface AlertaOptions {
     title: string;
     text: string;
     icon: 'success' | 'error' | 'warning' | 'info' | 'question';
@@ -10,6 +10,11 @@ interface AlertaOptions {
     cancelButtonText?: string;
     showDenyButton?: boolean;
     denyButtonText?: string;
+    /**
+     * Por defecto se oculta en los toasts y en los avisos con temporizador,
+     * que se cierran solos. Ponlo explícitamente para forzar uno u otro.
+     */
+    showConfirmButton?: boolean;
     onConfirm?: () => void;
     onCancel?: () => void;
     onDeny?: () => void;
@@ -30,7 +35,6 @@ export async function Alerta(options: AlertaOptions) {
     // SweetAlert2 pinta su propio DOM fuera de Tailwind, así que los colores del
     // tema se resuelven aquí a partir de las variables `--nui-*`.
     const scheme = activeScheme();
-    const isDark = scheme === 'dark';
     const color = (token: Parameters<typeof resolveColor>[0]) => resolveColor(token, scheme);
 
     const result = await Swal.fire({
@@ -47,17 +51,10 @@ export async function Alerta(options: AlertaOptions) {
         confirmButtonColor: color('accent'),
         cancelButtonColor: color('text-subtle'),
         denyButtonColor: color('danger'),
-        customClass: {
-            popup: isDark ? 'swal-dark-popup' : 'swal-light-popup',
-            title: isDark ? 'swal-dark-title' : 'swal-light-title',
-            confirmButton: isDark ? 'swal-dark-confirm' : 'swal-light-confirm',
-            cancelButton: isDark ? 'swal-dark-cancel' : 'swal-light-cancel',
-            denyButton: isDark ? 'swal-dark-deny' : 'swal-light-deny'
-        },
         toast: options.toast || false,
         timer: options.timer,
         position: options.position || 'center',
-        showConfirmButton: !options.toast && !options.timer,
+        showConfirmButton: options.showConfirmButton ?? (!options.toast && !options.timer),
         timerProgressBar: options.toast || !!options.timer,
         allowOutsideClick: options.allowOutsideClick !== false, // Por defecto true
         allowEscapeKey: options.allowEscapeKey !== false, // Por defecto true

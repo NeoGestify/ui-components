@@ -1,5 +1,67 @@
 # Changelog
 
+## 3.0.3
+
+Deuda técnica: animaciones que no seguían al sistema, un temporizador suelto y
+dependencias que sobraban.
+
+### `sweetalert2` pasa a ser opcional
+
+- **`sweetalert2-react-content` sale de las peer dependencies.** No lo importaba
+  ni una línea de la librería; se estaba obligando a instalarlo a todo el mundo.
+- `sweetalert2` queda como peer **opcional**: solo hace falta si usas las
+  funciones `Alerta*` o `InfoAlert`. Quien solo quiera un `<Button>` ya no tiene
+  que instalarlo.
+
+Si tu gestor de paquetes es estricto con el lockfile, quizá tengas que
+reinstalar. No hay cambios en el código de las alertas.
+
+### El interruptor de animaciones ya funciona en toda la librería
+
+`applyMotion(false)`, `<ThemeProvider animations={false}>` y `--nui-duration`
+solo llegaban a una parte de los componentes. **24 transiciones estaban escritas
+a mano**, con la duración fija y sin `motion-reduce`, así que ignoraban tanto el
+interruptor como `prefers-reduced-motion` del sistema.
+
+Ahora todas pasan por `motion.ts`. Afecta a `Button`, `Input`, `TextArea`,
+`Select`, `Table`, `Pagination`, `Calendar`, `DatePicker`, `InfoAlert`,
+`ThemeToggle`, y a `Toolbar`, `FloorTabs` y `PropertiesPanel` del editor de
+mapas.
+
+- **Nuevo fragmento `motion.control`** para los controles que animan color,
+  sombra y escala a la vez — los botones. Hacía falta uno solo porque dos clases
+  `transition-*` compiten por la misma propiedad CSS y solo se aplicaría una.
+- `Button` acepta la prop `animate`, como el resto de componentes que animan.
+- Las duraciones por defecto no cambian donde eran 200 ms; los controles de
+  formulario y las filas de tabla pasan a 120 ms, la duración corta de la
+  librería. `transition-all` desaparece: ya no se animan cambios de layout.
+
+### `Modal`
+
+- El cierre esperaba **300 ms fijos**, que no coincidían con los 200 ms de
+  `--nui-duration` y se esperaban igual con `animate={false}`. Ahora lee la
+  duración real y con `animate={false}` cierra al instante.
+- Ese temporizador no se cancelaba al desmontar: cerrar y desmontar a la vez
+  dejaba un `onClose` en vuelo sobre un componente que ya no existía.
+- Acepta `className` para el panel. Era el único componente de `html/` que no la
+  tenía.
+
+### Otros
+
+- `Alerta` acepta `showConfirmButton`. Antes se calculaba a partir de `toast` y
+  `timer` y **anulaba en silencio** lo que pidiera el llamante. El valor por
+  defecto es el de siempre.
+- Se exportan los tipos `ButtonProps`, `ModalProps` y `AlertaOptions`, que no
+  estaban disponibles para tipar wrappers.
+- `genId()` ya no revienta donde no existe `crypto.randomUUID()` — HTTP que no
+  sea localhost, Safari anterior a 15.4. Se llevaba por delante el
+  `VenueMapEditor` entero.
+- `ThemeProvider` memoiza el valor del contexto: dejaba de renderizar a todos
+  los consumidores de `useTheme` en cada render.
+- Eliminadas las clases `swal-*` de las alertas, que apuntaban a un CSS que esta
+  librería nunca ha enviado, y las constantes `DURATION_VAR` /
+  `DURATION_FAST_VAR`, que no se usaban ni se exportaban.
+
 ## 3.0.2
 
 Arreglo de colores en modo oscuro. Con la paleta por defecto casi no se nota;

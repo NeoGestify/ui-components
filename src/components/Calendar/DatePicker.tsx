@@ -217,7 +217,7 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
   const showClear = clearable && hasValue && !disabled && !readOnly;
 
   const triggerCls = [
-    'relative flex w-full items-center gap-2 rounded-md border py-2 pl-3 text-left text-sm transition-colors',
+    `relative flex w-full items-center gap-2 rounded-md border py-2 pl-3 text-left text-sm ${motion.colors}`,
     showClear ? 'pr-9' : 'pr-3',
     `${bg.surface} ${textCls.base}`,
     focusRing,
@@ -321,7 +321,7 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
                 type="button"
                 onClick={() => setOpenState(false)}
                 className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium ${bg.accent} ${textCls.onAccent}
-                  ${bgHover.accent} ${focusRing} focus:ring-offset-2 transition-colors touch-manipulation`}
+                  ${bgHover.accent} ${focusRing} focus:ring-offset-2 ${motion.colors} touch-manipulation`}
               >
                 {labels.apply}
               </button>

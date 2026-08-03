@@ -1,6 +1,7 @@
 import { AlertaInfo } from './alerta';
 // `text` se renombra: el componente ya tiene una prop con ese nombre.
 import { bgHover, text as textCls, textHover } from '../../theme/tokens';
+import { motion } from '../../theme/motion';
 import { QuestionIcon } from '../icons/icons';
 import { Button } from '../html';
 
@@ -20,7 +21,7 @@ export default function InfoAlert({ title, text }: InfoAlertProps) {
             type="button"
             variant="custom"
             onClick={() => Question()}
-            className={`p-1 ${textCls.faint} ${textHover.accent} transition-colors rounded-full ${bgHover.surface}`}
+            className={`p-1 ${textCls.faint} ${textHover.accent} ${motion.colors} rounded-full ${bgHover.surface}`}
         >
             <QuestionIcon className="w-4 h-4" />
         </Button>

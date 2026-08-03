@@ -1,6 +1,6 @@
 {
   "name": "neogestify-ui-components",
-  "version": "3.0.3",
+  "version": "3.0.4",
   "description": "Biblioteca de componentes UI reutilizables con React, Tailwind y SweetAlert: formularios, tarjetas, calendario, editor de mapas (VenueMapEditor) y colores configurables",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
@@ -78,8 +78,12 @@
     "react": "^18.0.0 || ^19.0.0",
     "react-dom": "^18.0.0 || ^19.0.0",
     "sweetalert2": "^11.0.0",
-    "sweetalert2-react-content": "^5.0.0",
     "tailwindcss": "^4.1.17"
+  },
+  "peerDependenciesMeta": {
+    "sweetalert2": {
+      "optional": true
+    }
   },
   "dependencies": {},
   "devDependencies": {
@@ -91,7 +95,6 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "sweetalert2": "^11.26.24",
-    "sweetalert2-react-content": "^5.1.2",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3"
   }

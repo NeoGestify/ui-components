@@ -3,6 +3,7 @@ import type { KeyboardEvent } from 'react';
 import { useCoarsePointer } from '../hooks/usePointerCapabilities';
 import type { Floor } from '../types';
 import { bg, border, borderHover, focusVisibleRing, text, textHover } from '../../../theme/tokens';
+import { motion } from '../../../theme/motion';
 
 /**
  * Indicador de foco compartido. `focus-visible` para que el anillo aparezca al
@@ -121,7 +122,7 @@ export function FloorTabs({
             // tabulación; entre pestañas se navega con las flechas.
             tabIndex={isActive ? 0 : -1}
             className={[
-              'flex items-center gap-0.5 px-2 rounded-t border transition-colors shrink-0',
+              `flex items-center gap-0.5 px-2 rounded-t border ${motion.colors} shrink-0`,
               FOCUS_CLS,
               coarse ? 'py-2' : 'py-1',
               isActive
@@ -194,7 +195,7 @@ export function FloorTabs({
       {!readOnly && (
         <button
           type="button"
-          className={`flex items-center justify-center ${coarse ? 'w-9 h-9' : 'w-6 h-6'} rounded border border-dashed ${border.base} ${text.subtle} ${borderHover.accent} ${textHover.accent} transition-colors shrink-0 ${FOCUS_CLS}`}
+          className={`flex items-center justify-center ${coarse ? 'w-9 h-9' : 'w-6 h-6'} rounded border border-dashed ${border.base} ${text.subtle} ${borderHover.accent} ${textHover.accent} ${motion.colors} shrink-0 ${FOCUS_CLS}`}
           onClick={onAdd}
           title="Añadir planta"
           aria-label="Añadir planta"
