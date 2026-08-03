@@ -1,5 +1,36 @@
 # Changelog
 
+## 3.0.1
+
+Release de empaquetado: no cambia ni una línea de los componentes, pero el
+paquete pesa una cuarta parte.
+
+### Empaquetado
+
+- **El paquete pasa de 1,6 MB a 384 kB** (7,1 MB → 1,6 MB desempaquetado).
+- Las 9 entradas ahora comparten código en vez de duplicarlo. Antes, mezclar
+  `import { Button } from 'neogestify-ui-components'` con
+  `import { SaveIcon } from 'neogestify-ui-components/icons'` se llevaba dos
+  copias completas de los iconos y del sistema de temas; ahora hay una sola.
+- Se dejan de publicar los sourcemaps, que eran la mayor parte del peso.
+- `sideEffects: false`, para que los bundlers puedan descartar lo que no uses.
+- `prepublishOnly` reconstruye `dist` antes de publicar. Como `dist` está en
+  `.gitignore`, hasta ahora un build obsoleto podía salir a npm sin aviso.
+
+### Nueva subruta
+
+- `neogestify-ui-components/element-library-builder`. Ya se compilaba y se
+  publicaba, pero no estaba declarada en `exports`, así que solo era alcanzable
+  desde la raíz.
+- El README documenta ahora **todas** las subrutas disponibles, que hasta ahora
+  no aparecían en ningún sitio.
+
+### Interno
+
+- Eliminado `.npmignore`, que contradecía al campo `files` (excluía `src/`, que
+  es justo lo que Tailwind necesita escanear).
+- Eliminado el campo `exports-tailwind`, que no era estándar y no hacía nada.
+
 ## 3.0.0
 
 Four things landed in this release: a calendar, a colour system, a batch of new

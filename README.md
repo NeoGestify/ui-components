@@ -511,6 +511,32 @@ import {
 > **Note:** the alert functions keep their original Spanish names (`AlertaExito`,
 > `AlertaError`, …) as part of the public API.
 
+### Subpath imports
+
+Everything is available from the root entry point, which is what most projects
+want. If you prefer to import only one area, each one also has its own subpath:
+
+| Subpath | Contains |
+|---------|----------|
+| `neogestify-ui-components` | Everything below |
+| `neogestify-ui-components/html` | `Button`, `Input`, `Table`, `Modal`, `Card`, `Tabs`, `Tooltip`… |
+| `neogestify-ui-components/icons` | The ~98 SVG icons |
+| `neogestify-ui-components/alerts` | `Alerta*` (SweetAlert2) and `InfoAlert` |
+| `neogestify-ui-components/theme` | `ThemeProvider`, `useTheme`, `ThemeToggle` |
+| `neogestify-ui-components/tokens` | Colour tokens and motion helpers (`bg`, `text`, `applyNuiColors`, `motion`…) |
+| `neogestify-ui-components/calendar` | `Calendar`, `DatePicker`, date utilities |
+| `neogestify-ui-components/venue-map` | `VenueMapEditor`, `VenueMapViewer`, its hooks and utilities |
+| `neogestify-ui-components/element-library-builder` | `ElementLibraryBuilder` |
+
+```tsx
+import { Button } from 'neogestify-ui-components/html';
+import { SaveIcon } from 'neogestify-ui-components/icons';
+```
+
+Both styles produce the same bundle: the entry points share their code, so mixing
+root and subpath imports does **not** ship anything twice. Pick whichever reads
+better in your project.
+
 ---
 
 ## HTML Components
@@ -2216,6 +2242,8 @@ A visual interface to create JSON element libraries for the VenueMapEditor:
 
 ```tsx
 import { ElementLibraryBuilder } from 'neogestify-ui-components';
+// or, from its own subpath:
+import { ElementLibraryBuilder } from 'neogestify-ui-components/element-library-builder';
 
 function App() {
   return (
