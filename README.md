@@ -993,9 +993,17 @@ Props:
 - `closeOnBackdrop`: Close when clicking outside the modal (boolean, default: `false`)
 - `closeOnEsc`: Close when pressing Escape (boolean, default: `false`)
 - `showCloseButton`: Shows a close button (boolean, default: `true`)
-- `zIndex`: Modal z-index (number, default: `50`)
+- `zIndex`: **Deprecated, no effect.** The dialog opens with `showModal()`, which
+  puts it in the browser's *top layer* — always above everything else, no matter
+  what `z-index` anything on the page has. Still accepted so existing code keeps
+  compiling
 - `animate`: `false` opens and closes instantly (boolean)
 - `className`: Extra classes for the panel
+
+The modal is a native `<dialog>` opened with `showModal()`, so the browser
+handles the focus trap, returns focus to whatever opened it, and marks the rest
+of the page `inert` — which also hides it from screen readers, not just from the
+tab order. Page scroll is locked while it is open.
 
 Ref methods (`ModalRef`):
 - `handleClose()`: Closes the modal with an animation

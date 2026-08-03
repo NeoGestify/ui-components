@@ -1,5 +1,40 @@
 # Changelog
 
+## 3.0.4
+
+`Modal` pasa a ser un diálogo modal de verdad.
+
+### El problema
+
+Se abría con el atributo `open`, que crea un diálogo **no modal**: sin *top
+layer*, sin `::backdrop` nativo y sin marcar el resto de la página como `inert`.
+El `aria-modal="true"` que llevaba afirmaba algo que el DOM no cumplía. La
+trampa de foco casera solo interceptaba el tabulador, así que un lector de
+pantalla seguía paseándose por el contenido de detrás, y la página de fondo se
+podía desplazar con el modal abierto.
+
+### El cambio
+
+Ahora se abre con `showModal()`. El navegador se encarga de atrapar el foco, de
+devolverlo a quien abrió el modal, del velo y de dejar el fondo inerte — de
+verdad, también para lectores de pantalla. Eso permitió **borrar la trampa de
+foco manual entera** y el listener de Escape: 40 líneas menos de código que
+imitaba a medias lo que el navegador ya hace.
+
+- Se bloquea el desplazamiento de la página mientras está abierto.
+- El Escape se reconduce por el evento nativo `cancel`, respetando `closeOnEsc`
+  y conservando la animación de salida.
+- El clic en el fondo sigue funcionando igual, con `closeOnBackdrop`.
+
+### Un cambio que quizá te afecte
+
+**`zIndex` deja de tener efecto.** La *top layer* está por encima de cualquier
+`z-index` de la página, así que ya no hay nada que ajustar. La prop se sigue
+aceptando y está marcada como obsoleta: el código existente compila igual.
+
+Los valores por defecto no cambian: `closeOnEsc` y `closeOnBackdrop` siguen en
+`false`, así que por defecto el modal solo se cierra por sus botones.
+
 ## 3.0.3
 
 Deuda técnica: animaciones que no seguían al sistema, un temporizador suelto y

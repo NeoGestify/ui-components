@@ -18,6 +18,11 @@ export interface ModalProps extends AnimatableProps {
     maxWidth?: string;
     size?: ModalSize;
     showCloseButton?: boolean;
+    /**
+     * @deprecated Sin efecto desde 3.1.0. El diálogo se abre con `showModal()`,
+     * que lo coloca en la *top layer* del navegador: siempre queda por encima de
+     * todo, al margen de cualquier `z-index`. Se acepta por compatibilidad.
+     */
     zIndex?: number;
     closeOnBackdrop?: boolean;
     closeOnEsc?: boolean;
@@ -58,7 +63,6 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     maxWidth,
     size,
     showCloseButton = true,
-    zIndex = 50,
     closeOnBackdrop = false,
     closeOnEsc = false,
     variant = 'default',
@@ -66,8 +70,7 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     className = '',
 }, ref) => {
     const [show, setShow] = useState(false);
-    const handleCloseRef = useRef<() => void>(() => {});
-    const panelRef = useRef<HTMLElement>(null);
+    const dialogRef = useRef<HTMLDialogElement>(null);
     const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
     const titleId = `modal-title-${useId()}`;
 
@@ -77,85 +80,83 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     const handleClose = () => {
         setShow(false);
         if (closeTimer.current) clearTimeout(closeTimer.current);
-        closeTimer.current = setTimeout(onClose, animate === false ? 0 : motionDuration());
+        closeTimer.current = setTimeout(() => {
+            dialogRef.current?.close?.();
+            onClose();
+        }, animate === false ? 0 : motionDuration());
     };
 
-    // Sin esto, cerrar y desmontar a la vez dejaba un `onClose` en vuelo que se
-    // ejecutaba sobre un componente que ya no existe.
-    useEffect(() => () => { if (closeTimer.current) clearTimeout(closeTimer.current); }, []);
-
+    // Se mantiene en una ref porque los listeners nativos se registran una sola
+    // vez y capturarían el `handleClose` del primer render.
+    const handleCloseRef = useRef(handleClose);
     handleCloseRef.current = handleClose;
 
-    useEffect(() => { setShow(true); }, []);
-
-    // El foco se lleva al panel y se mantiene dentro mientras el modal está
-    // abierto; al cerrarlo vuelve a donde estaba. Sin esto, tabular saca al
-    // usuario de teclado al contenido de detrás, que sigue siendo alcanzable.
+    // Abrir con `showModal()` y no con el atributo `open` es la diferencia entre
+    // un diálogo modal y uno que no lo es. El navegador se encarga entonces de
+    // la *top layer*, del velo `::backdrop`, de atrapar el foco, de devolverlo
+    // al cerrar y de marcar el resto de la página como `inert` — que es lo que
+    // de verdad faltaba: la trampa de foco manual solo capturaba el tabulador,
+    // así que un lector de pantalla seguía paseándose por el fondo.
     useEffect(() => {
-        const previouslyFocused = document.activeElement as HTMLElement | null;
-        const panel = panelRef.current;
-        const focusables = () => Array.from(
-            panel?.querySelectorAll<HTMLElement>(
-                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
-            ) ?? [],
-        ).filter(el => el.offsetParent !== null);
-
-        (focusables()[0] ?? panel)?.focus();
-
-        const onKeyDown = (e: KeyboardEvent) => {
-            if (e.key !== 'Tab') return;
-            const items = focusables();
-            if (!items.length) { e.preventDefault(); return; }
-            const first = items[0];
-            const last = items[items.length - 1];
-            const active = document.activeElement;
-            if (e.shiftKey && (active === first || !panel?.contains(active))) {
-                e.preventDefault();
-                last.focus();
-            } else if (!e.shiftKey && active === last) {
-                e.preventDefault();
-                first.focus();
-            }
-        };
-        document.addEventListener('keydown', onKeyDown);
-        return () => {
-            document.removeEventListener('keydown', onKeyDown);
-            previouslyFocused?.focus?.();
-        };
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        // El guardia de `open` no es cosmético: `showModal()` lanza
+        // `InvalidStateError` sobre un diálogo ya abierto, y en `StrictMode` el
+        // efecto se ejecuta dos veces. Sin él, la excepción cortaba el efecto
+        // antes del `setShow(true)` y el panel se quedaba invisible.
+        if (typeof dialog.showModal === 'function') {
+            if (!dialog.open) dialog.showModal();
+        } else {
+            dialog.setAttribute('open', ''); // navegador sin <dialog> modal
+        }
+        setShow(true);
+        return () => { if (closeTimer.current) clearTimeout(closeTimer.current); };
     }, []);
 
+    // El navegador no bloquea el desplazamiento de la página de detrás.
     useEffect(() => {
-        if (!closeOnEsc) return;
-        const handler = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') handleCloseRef.current();
+        const previous = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = previous; };
+    }, []);
+
+    // El Escape nativo cierra de golpe y sin animación, así que siempre se
+    // intercepta: si `closeOnEsc` está activo lo reconducimos por `handleClose`,
+    // y si no, se queda en nada.
+    useEffect(() => {
+        const dialog = dialogRef.current;
+        if (!dialog) return;
+        const onCancel = (e: Event) => {
+            e.preventDefault();
+            if (closeOnEsc) handleCloseRef.current();
         };
-        document.addEventListener('keydown', handler);
-        return () => document.removeEventListener('keydown', handler);
+        dialog.addEventListener('cancel', onCancel);
+        return () => dialog.removeEventListener('cancel', onCancel);
     }, [closeOnEsc]);
 
     useImperativeHandle(ref, () => ({ handleClose }));
 
     const widthCls = size ? SIZE_CLASS[size] : (maxWidth ?? 'max-w-2xl');
 
+    // Con `showModal()` el `<dialog>` ocupa toda la ventana, así que un clic
+    // fuera del panel aterriza en el propio diálogo.
     const handleBackdropClick = (e: React.MouseEvent) => {
         if (closeOnBackdrop && e.target === e.currentTarget) handleClose();
     };
 
     return (
         <dialog
-            open={show}
-            aria-modal="true"
+            ref={dialogRef}
             aria-labelledby={titleId}
-            style={{ zIndex: zIndex - 10, ...motionStyle(animate) }}
-            className={`fixed inset-0 w-full h-full flex items-center justify-center p-4 ${motion.fade} bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_60%,transparent)] backdrop-blur-sm ${show ? 'opacity-100' : 'opacity-0'}`}
+            style={motionStyle(animate)}
+            className={`fixed inset-0 m-0 max-w-none max-h-none w-full h-full border-none p-4 flex items-center justify-center ${motion.fade}
+                bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_60%,transparent)] backdrop-blur-sm
+                backdrop:bg-transparent ${show ? 'opacity-100' : 'opacity-0'}`}
             onClick={handleBackdropClick}
         >
             <article
-                ref={panelRef}
-                tabIndex={-1}
-                className={`relative focus:outline-none ${bg.surface} border ${border.subtle} rounded-lg shadow-2xl w-full ${widthCls} max-h-[90vh] flex flex-col overflow-hidden
+                className={`relative ${bg.surface} border ${border.subtle} rounded-lg shadow-2xl w-full ${widthCls} max-h-[90vh] flex flex-col overflow-hidden
                     ${motion.enter} ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'} ${className}`}
-                style={{ zIndex }}
             >
                 <header className={`shrink-0 px-6 py-4 flex items-center justify-between ${VARIANT_HEADER[variant]}`}>
                     <h2 id={titleId} className={`text-2xl font-bold ${VARIANT_TITLE[variant]}`}>{title}</h2>
