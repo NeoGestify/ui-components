@@ -1537,6 +1537,58 @@ container silences everything inside it.
 </Card>
 ```
 
+### Duration and blur
+
+Everything that moves reads three CSS variables, so you configure motion the
+same way you configure colors — by declaring variables, no `tailwind.config`
+and no CSS import.
+
+| Variable | Default | Controls |
+| --- | --- | --- |
+| `--nui-duration` | `200ms` | Normal transitions |
+| `--nui-duration-fast` | `120ms` | Short gestures (tooltip, menu) |
+| `--nui-blur` | `8px` | Backdrop blur on modals and drawers |
+
+Three ways to set them, widest to narrowest:
+
+```css
+/* In your CSS */
+:root { --nui-duration: 320ms; --nui-blur: 0px }
+```
+
+```tsx
+/* From JavaScript — returns an undo function */
+applyMotion({ duration: 320, blur: 12 });
+applyMotion(false);        // everything instant
+applyMotion(true);         // back to defaults
+
+/* Or for the whole app */
+<ThemeProvider motion={{ duration: 320, blur: 12 }}>
+```
+
+```tsx
+/* Per component — writes the same variables inline */
+<Modal animate={false} />            // instant
+<Modal animate={400} />              // 400ms, just this one
+<Drawer blur={false} />              // no backdrop blur
+<Drawer blur={20} animate={{ duration: 500 }} />
+```
+
+A bare number on `animate` sets both durations, keeping the 120/200 ratio
+between them — otherwise a high value would leave tooltips as slow as a modal.
+
+`blur={false}` resolves to `blur(0px)`, not `none`, on purpose: `none` isn't an
+interpolable value, so the veil would stop animating instead of animating to
+nothing.
+
+Since these are CSS variables they cascade — set them on a container and
+everything inside follows.
+
+`motionDuration()` and `motionBlur()` read back the effective values if you need
+to synchronise something in JS, and `motionToCss()` returns the equivalent CSS
+for server-side injection.
+
+
 ### Reduced motion
 
 Independently of all this, every transition carries

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { ThemeContext, type Theme } from './theme.types';
 import { applyNuiColors, type NuiColors } from '../../theme/colors';
-import { applyMotion } from '../../theme/motion';
+import { applyMotion, type MotionOptions } from '../../theme/motion';
 
 const isBrowser = typeof window !== 'undefined' && typeof document !== 'undefined';
 
@@ -52,6 +52,19 @@ export interface ThemeProviderProps {
    * Cada componente puede saltárselo con su prop `animate`.
    */
   animations?: boolean;
+  /**
+   * Ajustes finos del movimiento, para toda la aplicación.
+   *
+   * ```tsx
+   * <ThemeProvider motion={{ duration: 320, blur: 12 }}>
+   * <ThemeProvider motion={{ blur: false }}>   // sin desenfoque de fondo
+   * ```
+   *
+   * Se aplica **después** de `animations`, así que
+   * `animations={false} motion={{ blur: 0 }}` deja todo instantáneo y sin
+   * desenfoque, y no se pisan entre sí.
+   */
+  motion?: MotionOptions;
 }
 
 export function ThemeProvider({
@@ -61,6 +74,7 @@ export function ThemeProvider({
   storageKey = 'theme',
   colors,
   animations = true,
+  motion,
 }: ThemeProviderProps) {
   // No se lee localStorage durante el render inicial: en SSR no existe y
   // provocaría un mismatch de hidratación. Se sincroniza en el primer efecto.
@@ -106,6 +120,14 @@ export function ThemeProvider({
     if (!isBrowser || animations) return;
     return applyMotion(false);
   }, [animations]);
+
+  // Se serializa igual que los colores, para no reaplicar en cada render
+  // cuando el consumidor pasa un literal nuevo con el mismo contenido.
+  const motionKey = motion ? JSON.stringify(motion) : '';
+  useEffect(() => {
+    if (!isBrowser || !motionKey) return;
+    return applyMotion(JSON.parse(motionKey) as MotionOptions);
+  }, [motionKey]);
 
   // ── Sincronización entre pestañas ──────────────────────────────────────────
   useEffect(() => {

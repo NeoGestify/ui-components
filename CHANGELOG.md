@@ -1,5 +1,157 @@
 # Changelog
 
+## 3.7.0
+
+La duración y el desenfoque pasan a ser configurables, por la misma vía que los
+colores.
+
+Hasta ahora la duración solo se podía encender o apagar (`applyMotion(false)`,
+`animate={false}`) y el desenfoque estaba quemado en `backdrop-blur-sm`.
+
+### Tres variables
+
+| Variable | Por defecto | Qué controla |
+| --- | --- | --- |
+| `--nui-duration` | `200ms` | Transiciones normales |
+| `--nui-duration-fast` | `120ms` | Gestos cortos (tooltip, menú) |
+| `--nui-blur` | `8px` | Desenfoque del velo de modales y cajones |
+
+### Tres formas de tocarlas
+
+```css
+:root { --nui-duration: 320ms; --nui-blur: 0px }
+```
+
+```tsx
+applyMotion({ duration: 320, blur: 12 });   // devuelve una función que deshace
+<ThemeProvider motion={{ duration: 320, blur: 12 }}>
+```
+
+```tsx
+<Modal animate={400} />                  // solo este, 400 ms
+<Drawer blur={false} />                  // sin desenfoque
+<Drawer blur={20} animate={{ duration: 500 }} />
+```
+
+`animate` pasa de `boolean` a `boolean | number | MotionOptions`, y `Modal` y
+`Drawer` ganan una prop `blur`. Todo lo anterior sigue compilando igual.
+
+Un número suelto en `animate` ajusta **las dos** duraciones manteniendo la
+proporción 120/200 que traen por defecto: si no, un valor alto dejaría los
+tooltips tan lentos como un modal.
+
+`blur={false}` se resuelve a `blur(0px)` y no a `none` a propósito — `none` no
+es interpolable, así que el velo dejaría de animarse en vez de animarse hacia
+nada.
+
+### También
+
+- `motionBlur()` para leer el desenfoque efectivo, junto al `motionDuration()`
+  que ya existía.
+- `motionToCss()` acepta ajustes además de un booleano, para inyectarlos desde
+  el servidor.
+- `applyMotion(true)` limpia las variables y vuelve a los valores por defecto.
+- Los velos de `Loading` y de la hoja móvil del `DatePicker` también leen la
+  variable, así que un solo mando los gobierna todos.
+- Sección «Movimiento configurable» en el showcase para probarlo en vivo.
+
+## 3.6.4
+
+El desenfoque del fondo ahora entra fundiéndose.
+
+### El problema
+
+El velo de `Modal` y `Drawer` llevaba `backdrop-blur-sm` fijo y solo animaba la
+opacidad:
+
+```
+transition-property: opacity        ← lo que había
+backdrop-filter: blur(8px)          ← constante desde el primer frame
+```
+
+Y resulta que **Chrome aplica `backdrop-filter` a plena potencia aunque el
+elemento esté a `opacity: 0`**: el filtro se resuelve sobre el fondo antes de
+componer la opacidad. Así que el tinte entraba fundiéndose, sí, pero el fondo
+aparecía desenfocado de golpe en el primer frame. Medido: opacidad `0.00` con el
+desenfoque ya en `blur(8px)`.
+
+### El cambio
+
+Se anima el filtro en sí. Nuevo token `motion.scrim`:
+
+```
+transition-[opacity,backdrop-filter]
+opacity-0 backdrop-blur-[0px]   →   opacity-100 backdrop-blur-sm
+```
+
+Se interpola desde `blur(0px)` y no desde `none` a propósito: `none` no es un
+valor interpolable y la transición no llegaría a arrancar.
+
+### Nota de método
+
+Las mediciones desde automatización daban valores estáticos y engañosos porque
+**el reloj de animación de una pestaña que no está componiendo se congela**:
+`getAnimations()` devolvía las transiciones en `running` pero con
+`currentTime: 0` medio segundo después de arrancar. Lo que se comprueba de
+verdad es la lista de propiedades en transición y el valor del estado inicial.
+
+## 3.6.3
+
+Las animaciones de entrada no se ejecutaban. Tres causas distintas, todas
+invisibles para el compilador.
+
+### 1. El estilo de partida nunca se calculaba
+
+`Modal` y `Drawer` hacían esto al abrirse:
+
+```js
+dialog.showModal();   // pasa de display:none a visible
+setShow(true);        // …y en el MISMO commit lo pone en su sitio
+```
+
+Una transición necesita dos estilos calculados entre los que interpolar. Aquí el
+navegador nunca llegaba a resolver el estado de partida —el panel desplazado
+fuera, el modal a `scale-95`— así que saltaba directamente al final. Lo único
+que se veía era el fundido del diálogo, idéntico para los cuatro lados: de ahí
+la sensación de que todos usaban la misma animación.
+
+Se arregla forzando un reflujo (`void dialog.offsetHeight`) entre las dos cosas.
+
+### 2. `overflow-hidden` convertía el diálogo en contenedor desplazable
+
+El arreglo de la 3.6.2 recortaba el panel, sí, pero `hidden` **crea un
+contenedor de desplazamiento**. Al abrir, el navegador lleva el foco dentro y
+desplaza ese contenedor para hacer visible el panel, que estaba fuera. Ese salto
+era el «parpadea y aparece».
+
+Solo ocurría en `right` y `bottom`: hacia el lado positivo hay desbordamiento
+alcanzable, mientras que `left` y `top` el navegador los recorta sin más. Por
+eso el cajón de la izquierda se veía bien y los otros dos no.
+
+`overflow-clip` recorta igual pero no crea contenedor de desplazamiento, así que
+no hay nada que el navegador pueda mover.
+
+### 3. `motion.enter` no cubría las propiedades que cambiaban
+
+```
+transition-[opacity,transform]     ← antes
+```
+
+Tailwind 4 dejó de meterlo todo en `transform`: `scale-95` escribe la propiedad
+**`scale`** y `translate-x-full` la propiedad **`translate`**. La transición
+listaba `transform`, que ya no es la que cambia, así que el modal se desvanecía
+pero su escala saltaba de golpe.
+
+Ahora es `transition-[opacity,transform,translate,scale,rotate]`. Afecta a
+`Modal`, `Popover`, `Tooltip` y `Toast`.
+
+### Y el velo entra fundiéndose
+
+El `<dialog>` llevaba su propio `opacity-0 → 100` **encima** del velo, así que el
+panel se desvanecía a la vez que se deslizaba y el desenfoque aparecía de golpe
+con él. El diálogo ya no se atenúa: el velo se funde y el panel se desliza, cada
+uno lo suyo.
+
 ## 3.6.2
 
 `Drawer`: la barra de desplazamiento que aparecía y se iba sola.

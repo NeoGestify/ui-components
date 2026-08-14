@@ -307,7 +307,7 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
               va oculto visualmente, no ausente. */}
           <button
             type="button"
-            className={`absolute inset-0 bg-[color:color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_45%,transparent)] backdrop-blur-[1px]
+            className={`absolute inset-0 bg-[color:color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_45%,transparent)] backdrop-blur-[var(--nui-blur-sheet,1px)]
               ${motion.fade} ${shown ? 'opacity-100' : 'opacity-0'}`}
             onClick={() => setOpenState(false)}
           >

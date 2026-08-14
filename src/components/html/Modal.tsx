@@ -1,7 +1,7 @@
 import { Button } from './Button';
 import { CloseIcon } from '../icons/icons';
 import { bg, border, text } from '../../theme/tokens';
-import { motion, motionDuration, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { blurStyle, motion, motionDuration, motionStyle, type AnimatableProps } from '../../theme/motion';
 import { cn } from '../../internal/cn';
 import { useScrollLock } from '../../internal/useScrollLock';
 import { useMessage } from '../../context/config/NuiConfigProvider';
@@ -30,6 +30,11 @@ export interface ModalProps extends AnimatableProps {
     closeOnBackdrop?: boolean;
     closeOnEsc?: boolean;
     variant?: ModalVariant;
+    /**
+     * Desenfoque del fondo, en píxeles. `false` lo quita.
+     * Por defecto, el valor global (`--nui-blur`, 8 px).
+     */
+    blur?: number | false;
 }
 
 export interface ModalRef {
@@ -70,6 +75,7 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     closeOnEsc = false,
     variant = 'default',
     animate,
+    blur,
     className = '',
 }, ref) => {
     const closeLabel = useMessage('close');
@@ -113,6 +119,11 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
         } else {
             dialog.setAttribute('open', ''); // navegador sin <dialog> modal
         }
+        // El reflujo forzado hace que el navegador CALCULE el estilo de partida
+        // ahora que el diálogo ya está visible. Sin él, el estado inicial
+        // (`opacity-0 scale-95`) y el final se resolvían en el mismo cálculo y
+        // no había nada entre lo que interpolar: el modal aparecía de golpe.
+        void dialog.offsetHeight;
         setShow(true);
         return () => { if (closeTimer.current) clearTimeout(closeTimer.current); };
     }, []);
@@ -156,12 +167,12 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
         <dialog
             ref={dialogRef}
             aria-labelledby={titleId}
-            style={motionStyle(animate)}
+            style={{ ...motionStyle(animate), ...blurStyle(blur) }}
             className={cn(
                 'fixed inset-0 m-0 max-w-none max-h-none w-full h-full border-none p-4 flex items-center justify-center',
-                motion.fade,
-                'bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_60%,transparent)] backdrop-blur-sm backdrop:bg-transparent',
-                show ? 'opacity-100' : 'opacity-0',
+                motion.scrim,
+                'bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_60%,transparent)] backdrop:bg-transparent',
+                show ? 'opacity-100 backdrop-blur-[var(--nui-blur,8px)]' : 'opacity-0 backdrop-blur-[0px]',
             )}
             onClick={handleBackdropClick}
         >

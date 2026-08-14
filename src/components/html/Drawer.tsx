@@ -5,7 +5,7 @@ import {
 import { Button } from './Button';
 import { CloseIcon } from '../icons/icons';
 import { bg, border, text } from '../../theme/tokens';
-import { motion, motionDuration, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { blurStyle, motion, motionDuration, motionStyle, type AnimatableProps } from '../../theme/motion';
 import { cn } from '../../internal/cn';
 import { useScrollLock } from '../../internal/useScrollLock';
 import { useMessage } from '../../context/config/NuiConfigProvider';
@@ -24,6 +24,11 @@ export interface DrawerProps extends AnimatableProps {
   showCloseButton?: boolean;
   closeOnBackdrop?: boolean;
   closeOnEsc?: boolean;
+  /**
+   * Desenfoque del fondo, en píxeles. `false` lo quita.
+   * Por defecto, el valor global (`--nui-blur`, 8 px).
+   */
+  blur?: number | false;
   className?: string;
 }
 
@@ -91,6 +96,7 @@ export const Drawer = forwardRef<DrawerRef, DrawerProps>(({
   closeOnBackdrop = true,
   closeOnEsc = true,
   animate,
+  blur,
   className = '',
 }, ref) => {
   const closeLabel = useMessage('close');
@@ -121,8 +127,18 @@ export const Drawer = forwardRef<DrawerRef, DrawerProps>(({
     } else {
       dialog.setAttribute('open', '');
     }
+    // Este reflujo forzado NO es supersticioso. El diálogo acaba de pasar de
+    // `display: none` a visible, y una transición solo arranca si el navegador
+    // ha llegado a CALCULAR el estilo de partida. Sin esto, el estado inicial
+    // (el panel desplazado fuera) y el final se resolvían en el mismo cálculo,
+    // así que no había nada entre lo que interpolar: el panel aparecía ya
+    // colocado y lo único que se veía era el fundido del diálogo — idéntico
+    // para los cuatro lados, de ahí que parecieran todos la misma animación.
+    //
+    // Leer `offsetHeight` obliga a resolver el estilo aquí y ahora; el cambio
+    // de clase que viene después ya es una transición de verdad.
+    void dialog.offsetHeight;
     setShow(true);
-    return () => { if (closeTimer.current) clearTimeout(closeTimer.current); };
   }, []);
 
   useScrollLock();
@@ -150,21 +166,29 @@ export const Drawer = forwardRef<DrawerRef, DrawerProps>(({
     <dialog
       ref={dialogRef}
       aria-labelledby={titleId}
-      style={motionStyle(animate)}
+      style={{ ...motionStyle(animate), ...blurStyle(blur) }}
       onClick={e => { if (closeOnBackdrop && e.target === e.currentTarget) handleClose(); }}
       className={cn(
         'fixed inset-0 m-0 h-full max-h-none w-full max-w-none border-none bg-transparent p-0',
-        // `overflow-hidden` NO es cosmético: un <dialog> trae `overflow: auto`
-        // del navegador, y el panel arranca desplazado un 100 % fuera de él
-        // para poder entrar deslizándose. Ese trozo que sobresale cuenta como
-        // desbordamiento desplazable, así que el diálogo pintaba una barra
-        // durante la animación —y otra al cerrarse— que aparecía y se iba sola.
-        // El desplazamiento del contenido vive en el <div> interior del panel,
-        // así que recortar aquí no quita nada.
-        'overflow-hidden',
-        motion.fade,
+        // `overflow-clip`, y no `overflow-hidden`, a propósito. Los dos recortan,
+        // pero `hidden` convierte al diálogo en CONTENEDOR DESPLAZABLE. El panel
+        // arranca desplazado un 100 % fuera para poder entrar deslizándose, y
+        // al abrir el navegador mueve el foco dentro y desplaza el contenedor
+        // para hacerlo visible: un salto brusco justo antes de la animación.
+        //
+        // Solo pasaba en `right` y `bottom` —hacia el lado positivo hay
+        // desbordamiento alcanzable— y no en `left` ni `top`, que el navegador
+        // recorta sin más. Por eso el cajón de la izquierda se veía bien y los
+        // otros dos «parpadeaban».
+        //
+        // `clip` no crea contenedor de desplazamiento, así que no hay nada que
+        // el navegador pueda mover.
+        'overflow-clip',
         'backdrop:bg-transparent',
-        show ? 'opacity-100' : 'opacity-0',
+        // El diálogo NO se atenúa. Antes llevaba su propio `opacity-0 → 100`
+        // encima del velo, así que el panel también se desvanecía y el
+        // desenfoque entraba de golpe con él. Ahora cada parte hace lo suyo: el
+        // velo se funde y el panel se desliza.
       )}
     >
       {/* El velo va aparte del panel para que solo él se atenúe; si fuera el
@@ -172,9 +196,9 @@ export const Drawer = forwardRef<DrawerRef, DrawerProps>(({
       <span
         aria-hidden="true"
         className={cn(
-          'absolute inset-0 bg-[color:color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_55%,transparent)] backdrop-blur-sm',
-          motion.fade,
-          show ? 'opacity-100' : 'opacity-0',
+          'absolute inset-0 bg-[color:color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_55%,transparent)]',
+          motion.scrim,
+          show ? 'opacity-100 backdrop-blur-[var(--nui-blur,8px)]' : 'opacity-0 backdrop-blur-[0px]',
         )}
       />
 

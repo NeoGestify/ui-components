@@ -11,6 +11,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Flotantes } from './demos/Flotantes';
 import { Controles } from './demos/Controles';
 import { Datos } from './demos/Datos';
+import { Movimiento } from './demos/Movimiento';
 
 // ─── Demo «elemento clickeable» ────────────────────────────────────────────────
 // El tipo INFO trae `clickable: true` por defecto: en el visor responde al clic;
@@ -720,6 +721,14 @@ function App() {
               }
             />
           </div>
+        </section>
+
+        {/* Duración y desenfoque configurables */}
+        <section className="mb-8 sm:mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Movimiento configurable
+          </h2>
+          <Movimiento />
         </section>
 
         {/* Selección, paneles y piezas de composición */}

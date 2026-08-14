@@ -101,7 +101,7 @@ export const Loading: FC<LoadingProps> = ({
 
   if (fullPage) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_50%,transparent)] backdrop-blur-sm">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_50%,transparent)] backdrop-blur-[var(--nui-blur,8px)]">
         {inner}
       </div>
     );
@@ -109,7 +109,7 @@ export const Loading: FC<LoadingProps> = ({
 
   if (overlay) {
     return (
-      <div className="absolute inset-0 z-10 flex items-center justify-center bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_40%,transparent)] backdrop-blur-sm rounded-[inherit]">
+      <div className="absolute inset-0 z-10 flex items-center justify-center bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_40%,transparent)] backdrop-blur-[var(--nui-blur,8px)] rounded-[inherit]">
         {inner}
       </div>
     );
