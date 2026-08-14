@@ -1,5 +1,38 @@
 # Changelog
 
+## 3.6.2
+
+`Drawer`: la barra de desplazamiento que aparecía y se iba sola.
+
+### El problema
+
+Un `<dialog>` trae `overflow: auto` del navegador. El panel del cajón arranca
+desplazado un 100 % **fuera** del diálogo para poder entrar deslizándose, y ese
+trozo que sobresale cuenta como desbordamiento desplazable: el diálogo pintaba
+una barra durante la animación de entrada, y otra al cerrarse.
+
+Se veía en los cajones de la izquierda y de abajo, no en el de la derecha — un
+desplazamiento hacia la derecha o hacia abajo genera desbordamiento alcanzable,
+y por eso saltaba la barra; hacia la izquierda el navegador lo recorta.
+
+Medido con el cajón abierto: **384 px** de desbordamiento horizontal, justo el
+ancho del panel.
+
+### El cambio
+
+`overflow-hidden` en el `<dialog>`. El desplazamiento del contenido vive en el
+`<div>` interior del panel, así que recortar ahí no quita nada.
+
+### De paso: las tallas verticales
+
+`sm`/`md`/`lg`/`xl` para `top` y `bottom` eran las mismas medidas que los anchos
+laterales, y no se comportan igual: en un panel lateral la cabecera y el pie se
+reparten el alto de la pantalla y no se notan, pero en uno horizontal se comen
+un trozo fijo de unos 115 px. Con `h-64` como talla media quedaban ~140 px
+útiles y cualquier formulario salía ya con su propia barra.
+
+La escala vertical pasa a `h-56` / `22rem` / `30rem` / `38rem`.
+
 ## 3.6.1
 
 Integración continua. No cambia nada de lo que se publica.

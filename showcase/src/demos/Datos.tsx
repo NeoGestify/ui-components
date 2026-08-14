@@ -88,7 +88,9 @@ export function Datos() {
         {cajon && (
           <Drawer
             side={cajon}
-            size={cajon === 'bottom' ? 'md' : 'md'}
+            // Un panel horizontal reparte su alto entre cabecera, cuerpo y pie,
+            // así que este formulario necesita una talla más que en los laterales.
+            size={cajon === 'bottom' ? 'lg' : 'md'}
             title="Filtros avanzados"
             onClose={() => setCajon(null)}
             footer={

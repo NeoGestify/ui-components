@@ -31,12 +31,20 @@ export interface DrawerRef {
   handleClose: () => void;
 }
 
-/** Ancho para los laterales, alto para los de arriba y abajo. */
+/**
+ * Ancho para los laterales, alto para los de arriba y abajo.
+ *
+ * La escala vertical es más generosa que la horizontal a propósito: en un panel
+ * lateral la cabecera y el pie se reparten el alto de la pantalla y no se notan,
+ * pero en uno horizontal se comen un trozo fijo de unos 115 px del total. Con
+ * `h-64` como talla media quedaban ~140 px útiles y cualquier formulario salía
+ * ya con su propia barra de desplazamiento.
+ */
 const SIZE: Record<DrawerSide, Record<DrawerSize, string>> = {
-  left:   { sm: 'w-72',  md: 'w-96',  lg: 'w-[32rem]', xl: 'w-[44rem]', full: 'w-screen' },
-  right:  { sm: 'w-72',  md: 'w-96',  lg: 'w-[32rem]', xl: 'w-[44rem]', full: 'w-screen' },
-  top:    { sm: 'h-40',  md: 'h-64',  lg: 'h-96',      xl: 'h-[32rem]', full: 'h-screen' },
-  bottom: { sm: 'h-40',  md: 'h-64',  lg: 'h-96',      xl: 'h-[32rem]', full: 'h-screen' },
+  left:   { sm: 'w-72',  md: 'w-96',      lg: 'w-[32rem]',  xl: 'w-[44rem]',  full: 'w-screen' },
+  right:  { sm: 'w-72',  md: 'w-96',      lg: 'w-[32rem]',  xl: 'w-[44rem]',  full: 'w-screen' },
+  top:    { sm: 'h-56',  md: 'h-[22rem]', lg: 'h-[30rem]',  xl: 'h-[38rem]',  full: 'h-screen' },
+  bottom: { sm: 'h-56',  md: 'h-[22rem]', lg: 'h-[30rem]',  xl: 'h-[38rem]',  full: 'h-screen' },
 };
 
 const ANCLA: Record<DrawerSide, string> = {
@@ -146,6 +154,14 @@ export const Drawer = forwardRef<DrawerRef, DrawerProps>(({
       onClick={e => { if (closeOnBackdrop && e.target === e.currentTarget) handleClose(); }}
       className={cn(
         'fixed inset-0 m-0 h-full max-h-none w-full max-w-none border-none bg-transparent p-0',
+        // `overflow-hidden` NO es cosmético: un <dialog> trae `overflow: auto`
+        // del navegador, y el panel arranca desplazado un 100 % fuera de él
+        // para poder entrar deslizándose. Ese trozo que sobresale cuenta como
+        // desbordamiento desplazable, así que el diálogo pintaba una barra
+        // durante la animación —y otra al cerrarse— que aparecía y se iba sola.
+        // El desplazamiento del contenido vive en el <div> interior del panel,
+        // así que recortar aquí no quita nada.
+        'overflow-hidden',
         motion.fade,
         'backdrop:bg-transparent',
         show ? 'opacity-100' : 'opacity-0',
