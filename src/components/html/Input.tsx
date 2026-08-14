@@ -9,6 +9,7 @@ import {
 } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
 import { cn } from '../../internal/cn';
+import { useMessage } from '../../context/config/NuiConfigProvider';
 
 type InputVariant = 'default' | 'outline' | 'filled' | 'minimal';
 type InputSize = 'sm' | 'md' | 'lg';
@@ -28,7 +29,7 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
    * controlar; en el segundo caso el componente vigila el valor del DOM.
    */
   clearable?: boolean;
-  /** Texto accesible del botón de limpiar. */
+  /** Texto accesible del botón de limpiar. Por defecto, el del `NuiConfigProvider`. */
   clearLabel?: string;
   onClear?: () => void;
 }
@@ -57,7 +58,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   prefix,
   suffix,
   clearable = false,
-  clearLabel = 'Limpiar',
+  clearLabel,
   onClear,
   className = '',
   id,
@@ -69,6 +70,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   disabled,
   ...props
 }, ref) => {
+  const clearText = useMessage('clear', clearLabel);
   const autoId = useId();
   const inputId = id || `input-${autoId}`;
   const errorId = `${inputId}-error`;
@@ -260,7 +262,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
               type="button"
               onClick={handleClear}
               tabIndex={-1}
-              aria-label={clearLabel}
+              aria-label={clearText}
               className={`absolute inset-y-0 right-0 z-10 flex items-center pr-3 ${text.faint} ${textHover.muted}`}
             >
               <CloseIcon className="w-4 h-4" />

@@ -1,14 +1,21 @@
 import {
-  useCallback, useEffect, useId, useRef, useState,
+  useCallback, useEffect, useId, useRef,
   type FC, type KeyboardEvent as ReactKeyboardEvent, type ReactNode,
 } from 'react';
 import { ChevronDownIcon } from '../icons/icons';
 import { bg, bgHover, border, focusVisibleRing, text } from '../../theme/tokens';
 import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { useControllableState } from '../../internal/useControllableState';
 import { cn } from '../../internal/cn';
 
 export interface AccordionItem {
-  /** Identificador estable. Si falta se usa el índice. */
+  /**
+   * Identificador estable.
+   *
+   * Si falta se usa el índice, y el índice **no identifica un panel**: en cuanto
+   * la lista se reordena o se filtra, el que estaba abierto pasa a ser otro.
+   * Dalo siempre que `items` no sea una constante.
+   */
   id?: string;
   title: ReactNode;
   content: ReactNode;
@@ -85,8 +92,11 @@ export const Accordion: FC<AccordionProps> = ({
 }) => {
   const autoId = useId();
   const baseId = id || `accordion-${autoId}`;
-  const [inner, setInner] = useState<string[]>(defaultValue ?? []);
-  const open = value ?? inner;
+  const [open, setOpen] = useControllableState<string[]>({
+    value,
+    defaultValue: defaultValue ?? [],
+    onChange: onValueChange,
+  });
   const listRef = useRef<HTMLDivElement>(null);
 
   const keyOf = useCallback((item: AccordionItem, i: number) => item.id ?? `${baseId}-${i}`, [baseId]);
@@ -99,9 +109,8 @@ export const Accordion: FC<AccordionProps> = ({
     } else {
       next = isOpen ? (collapsible ? [] : open) : [key];
     }
-    if (value === undefined) setInner(next);
-    onValueChange?.(next);
-  }, [open, type, collapsible, value, onValueChange]);
+    setOpen(next);
+  }, [open, type, collapsible, setOpen]);
 
   /** Patrón de acordeón: las flechas mueven el foco entre cabeceras. */
   const onKeyDown = useCallback((e: ReactKeyboardEvent<HTMLButtonElement>) => {

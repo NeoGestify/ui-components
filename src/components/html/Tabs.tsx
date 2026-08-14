@@ -4,6 +4,7 @@ import {
 } from 'react';
 import { bg, bgHover, border, focusVisibleRing, text, textHover } from '../../theme/tokens';
 import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { useControllableState } from '../../internal/useControllableState';
 import { cn } from '../../internal/cn';
 
 export interface TabItem {
@@ -81,8 +82,11 @@ export const Tabs: FC<TabsProps> = ({
   const autoId = useId();
   const baseId = id || `tabs-${autoId}`;
   const first = items.find(i => !i.disabled)?.id ?? items[0]?.id ?? '';
-  const [inner, setInner] = useState(defaultValue ?? first);
-  const active = value ?? inner;
+  const [active, setActive] = useControllableState<string>({
+    value,
+    defaultValue: defaultValue ?? first,
+    onChange,
+  });
   const listRef = useRef<HTMLDivElement>(null);
   const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null);
 
@@ -104,10 +108,7 @@ export const Tabs: FC<TabsProps> = ({
     return () => ro.disconnect();
   }, [variant, active, items]);
 
-  const select = useCallback((tabId: string) => {
-    if (value === undefined) setInner(tabId);
-    onChange?.(tabId);
-  }, [value, onChange]);
+  const select = useCallback((tabId: string) => setActive(tabId), [setActive]);
 
   const onKeyDown = useCallback((e: ReactKeyboardEvent<HTMLButtonElement>) => {
     const nav = ['ArrowRight', 'ArrowLeft', 'Home', 'End'];

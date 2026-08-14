@@ -1,6 +1,7 @@
-import { useCallback, useId, useState, type FC, type ReactNode } from 'react';
+import { useCallback, useId, type FC, type ReactNode } from 'react';
 import { bg, border, focusVisibleRing, ringOffset, text } from '../../theme/tokens';
 import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { useControllableState } from '../../internal/useControllableState';
 import { cn } from '../../internal/cn';
 
 type SwitchSize = 'sm' | 'md' | 'lg';
@@ -73,15 +74,16 @@ export const Switch: FC<SwitchProps> = ({
   const autoId = useId();
   const switchId = id || `switch-${autoId}`;
   const descId = `${switchId}-desc`;
-  const [inner, setInner] = useState(defaultChecked);
-  const isOn = checked ?? inner;
+  const [isOn, setIsOn] = useControllableState<boolean>({
+    value: checked,
+    defaultValue: defaultChecked,
+    onChange,
+  });
 
   const toggle = useCallback(() => {
     if (disabled) return;
-    const next = !isOn;
-    if (checked === undefined) setInner(next);
-    onChange?.(next);
-  }, [disabled, isOn, checked, onChange]);
+    setIsOn(prev => !prev);
+  }, [disabled, setIsOn]);
 
   const control = (
     <button

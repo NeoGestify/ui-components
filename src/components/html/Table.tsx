@@ -120,6 +120,21 @@ export interface TableProps {
 
     /** Callback al hacer click en un th sortable */
     onSort?: (key: string) => void;
+
+    /**
+     * Identidad estable de cada fila, para la `key` de React.
+     *
+     * Sin esto la `key` es el índice, y el índice **no identifica una fila**:
+     * al ordenar, filtrar o borrar, React reutiliza el `<tr>` de la posición N
+     * para un registro distinto. Lo visible se corrige al repintar, pero el
+     * estado que viva dentro de una celda (un input a medio escribir, un menú
+     * abierto, el foco) se queda en la fila equivocada.
+     *
+     * ```tsx
+     * <Table rows={filas} getRowKey={i => usuarios[i].id} />
+     * ```
+     */
+    getRowKey?: (rowIndex: number) => string | number;
 }
 
 // ─── Lookup tables ────────────────────────────────────────────────────────────
@@ -298,6 +313,7 @@ export function Table({
     footerRows,
     loading = false,
     loadingRows = 4,
+    getRowKey,
     getRowStyle,
     rounded = false,
     shadow = false,
@@ -390,7 +406,7 @@ export function Table({
                     ) : (
                         rows.map((row, rowIndex) => (
                             <tr
-                                key={rowIndex}
+                                key={getRowKey?.(rowIndex) ?? rowIndex}
                                 className={resolvedTrClass(rowIndex)}
                                 style={getRowStyle?.(rowIndex)}
                                 onClick={onRowClick ? () => onRowClick(rowIndex) : undefined}

@@ -3,6 +3,8 @@ import { CloseIcon } from '../icons/icons';
 import { bg, border, text } from '../../theme/tokens';
 import { motion, motionDuration, motionStyle, type AnimatableProps } from '../../theme/motion';
 import { cn } from '../../internal/cn';
+import { useScrollLock } from '../../internal/useScrollLock';
+import { useMessage } from '../../context/config/NuiConfigProvider';
 import React, { useEffect, useId, useState, useRef, forwardRef, useImperativeHandle } from 'react';
 
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -70,6 +72,7 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     animate,
     className = '',
 }, ref) => {
+    const closeLabel = useMessage('close');
     const [show, setShow] = useState(false);
     const dialogRef = useRef<HTMLDialogElement>(null);
     const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -114,12 +117,12 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
         return () => { if (closeTimer.current) clearTimeout(closeTimer.current); };
     }, []);
 
-    // El navegador no bloquea el desplazamiento de la página de detrás.
-    useEffect(() => {
-        const previous = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
-        return () => { document.body.style.overflow = previous; };
-    }, []);
+    // El navegador no bloquea el desplazamiento de la página de detrás. Va por
+    // `useScrollLock`, con contador: la versión anterior guardaba el `overflow`
+    // previo en una variable local, así que con dos modales encimados el
+    // segundo leía `'hidden'` como valor «anterior» y al cerrarse lo restauraba
+    // — dejando la página bloqueada con todo cerrado.
+    useScrollLock();
 
     // El Escape nativo cierra de golpe y sin animación, así que siempre se
     // intercepta: si `closeOnEsc` está activo lo reconducimos por `handleClose`,
@@ -172,8 +175,8 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
                         <Button
                             variant="icon"
                             onClick={handleClose}
-                            aria-label="Cerrar"
-                            title="Cerrar"
+                            aria-label={closeLabel}
+                            title={closeLabel}
                             className={`${text.faint} hover:text-[var(--nui-text-muted,oklch(37.3%_.034_259.733))] dark:hover:text-[var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))]`}
                         >
                             <CloseIcon className="w-5 h-5" />

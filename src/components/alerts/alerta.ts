@@ -1,5 +1,25 @@
 import Swal from "sweetalert2";
 import { activeScheme, resolveColor } from "../../theme/colors";
+import { DEFAULT_MESSAGES, type NuiMessages } from "../../context/config/config.types";
+
+/**
+ * Los alerts son funciones sueltas, no componentes, así que no pueden leer el
+ * `NuiConfigProvider` por contexto. Sus textos se configuran una vez al arrancar
+ * la aplicación:
+ *
+ * ```ts
+ * configureAlertas({ confirm: 'OK', cancel: 'Cancel' });
+ * ```
+ */
+let alertMessages: Pick<NuiMessages, 'confirm' | 'cancel' | 'deny'> = {
+    confirm: DEFAULT_MESSAGES.confirm,
+    cancel: DEFAULT_MESSAGES.cancel,
+    deny: DEFAULT_MESSAGES.deny,
+};
+
+export function configureAlertas(messages: Partial<typeof alertMessages>): void {
+    alertMessages = { ...alertMessages, ...messages };
+}
 
 export interface AlertaOptions {
     title: string;
@@ -41,11 +61,11 @@ export async function Alerta(options: AlertaOptions) {
         title: options.title,
         text: options.text,
         icon: options.icon,
-        confirmButtonText: options.confirmButtonText || 'Aceptar',
+        confirmButtonText: options.confirmButtonText || alertMessages.confirm,
         showCancelButton: options.showCancelButton || false,
-        cancelButtonText: options.cancelButtonText || 'Cancelar',
+        cancelButtonText: options.cancelButtonText || alertMessages.cancel,
         showDenyButton: options.showDenyButton || false,
-        denyButtonText: options.denyButtonText || 'No',
+        denyButtonText: options.denyButtonText || alertMessages.deny,
         background: color('surface-muted'),
         color: color('text'),
         confirmButtonColor: color('accent'),

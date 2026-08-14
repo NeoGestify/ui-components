@@ -1,5 +1,86 @@
 # Changelog
 
+## 3.3.0
+
+Una capa de primitivas debajo de los componentes, y los tres fallos que salieron
+al escribirla.
+
+### El tooltip ya no se sale de la pantalla
+
+`Tooltip` calculaba su posición y ya está. Uno con `placement="top"` en la
+primera fila de la página se salía por arriba, y uno ancho cerca del borde
+derecho se cortaba.
+
+Ahora hay un colocador de verdad (`computePosition`) que **voltea** al lado
+contrario si no cabe y **desplaza** a lo largo del eje transversal para meterlo
+en pantalla sin despegarlo de su anclaje. `placement` pasa a aceptar también
+alineación: `'bottom-start'`, `'right-end'`…
+
+De paso, el globo ya no aparece antes de saber dónde va: antes se pintaba una
+fracción de segundo en la esquina y se le veía saltar a su sitio.
+
+### Dos modales encimados ya no dejan la página bloqueada
+
+El bloqueo de desplazamiento vivía dentro de `Modal` y guardaba el `overflow`
+anterior en una variable local:
+
+```ts
+const previous = document.body.style.overflow;   // 'hidden' si ya había otro
+document.body.style.overflow = 'hidden';
+return () => { document.body.style.overflow = previous; };
+```
+
+Con un modal que abre un diálogo de confirmación, el segundo leía `'hidden'`
+como valor «anterior» y al cerrarse lo restauraba. Se cerraba todo y la página
+se quedaba sin poder desplazarse. `useScrollLock` lleva contador: guarda el
+valor original al pasar de cero a uno y lo restaura al volver a cero. También
+compensa el ancho de la barra, así que la página ya no da el salto lateral al
+abrir un modal.
+
+### `Table` acepta identidad de fila
+
+```tsx
+<Table rows={filas} getRowKey={i => usuarios[i].id} />
+```
+
+La `key` era el índice, y el índice no identifica una fila: al ordenar o
+filtrar, React reutiliza el `<tr>` de la posición N para otro registro. Lo
+visible se corrige al repintar, pero el estado que viva dentro de una celda —un
+input a medio escribir, el foco— se queda en la fila equivocada.
+
+`AccordionItem.id` tenía el mismo problema y ahora lo dice su documentación.
+
+### Textos configurables
+
+Los textos de la librería estaban en español y quemados en el código:
+`'Cargando...'` en `Button`, `'Cerrar'` en `Modal`, `'Limpiar'` en `Input`,
+`'Aceptar'`/`'Cancelar'` en los alerts.
+
+```tsx
+import { NuiConfigProvider, EN_MESSAGES } from 'neogestify-ui-components/config';
+
+<NuiConfigProvider messages={EN_MESSAGES}>
+  <App />
+</NuiConfigProvider>
+```
+
+Se mezcla con lo que haya, así que se puede cambiar un solo texto, y los
+proveedores se anidan. Las props sueltas (`loadingText`, `clearLabel`) siguen
+ganando sobre el diccionario. Los alerts, que son funciones y no componentes, se
+configuran una vez con `configureAlertas({ confirm: 'OK' })`.
+
+Sin proveedor todo sigue exactamente igual que antes.
+
+### Nuevas primitivas internas
+
+- `useControllableState` — el patrón controlado/no controlado estaba copiado a
+  mano en `Tabs`, `Accordion` y `Switch`. Además fija el modo al montar, en vez
+  de recalcularlo en cada render.
+- `useScrollLock`, `useDismiss` (clic fuera y Escape), `useAnchoredPosition`,
+  `Portal`, `mergeRefs` y `computePosition`.
+
+Son la base de los componentes flotantes que vienen después.
+
 ## 3.2.0
 
 `className` por fin gana siempre.

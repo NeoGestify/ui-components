@@ -5,6 +5,7 @@ import {
 } from '../../theme/tokens';
 import { motion, withMotionStyle, type AnimatableProps } from '../../theme/motion';
 import { cn } from '../../internal/cn';
+import { useMessage } from '../../context/config/NuiConfigProvider';
 
 type ButtonVariant = 'primary' | 'secondary' | 'icon' | 'danger' | 'success' | 'outline' | 'nav' | 'custom' | 'link' | 'warning' | 'toggle' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -78,6 +79,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   type = 'button',
   ...props
 }, ref) => {
+  const loadingLabel = useMessage('loading', loadingText);
+
   const sizeCls = variant === 'icon'
     ? SIZE_ICON_PAD[size]
     : variant === 'nav' || variant === 'link' || variant === 'custom'
@@ -122,7 +125,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
       {isLoading ? (
         <>
           <AnimateSpin className="h-4 w-4 shrink-0 text-current" />
-          {loadingText ?? 'Cargando...'}
+          {loadingLabel}
         </>
       ) : (
         <>
