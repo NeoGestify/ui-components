@@ -18,8 +18,16 @@
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true
+    "noFallthroughCasesInSwitch": true,
+
+    /* La librería se resuelve contra su código fuente, igual que en el alias
+       de Vite. Sin esto TypeScript buscaría el paquete en node_modules, donde
+       ya no está instalado. */
+    "baseUrl": ".",
+    "paths": {
+      "neogestify-ui-components": ["../src/index.ts"]
+    }
   },
-  "include": ["src"],
+  "include": ["src", "../src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

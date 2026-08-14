@@ -1247,6 +1247,91 @@ or a modal, not just at page level.
 `onChange`, `label`, `description`, `labelPosition`, `size` (`sm | md | lg`),
 `disabled`, `required`, `name` (hidden input for forms), `value`.
 
+### RadioGroup
+
+```tsx
+<RadioGroup
+  label="Shipping method"
+  variant="card"
+  options={[
+    { value: 'std', label: 'Standard', description: '3-5 business days' },
+    { value: 'exp', label: 'Express', description: 'Tomorrow before 2pm' },
+  ]}
+  value={shipping}
+  onChange={setShipping}
+/>
+```
+
+A loose `Input type="radio"` doesn't make a group: no shared label, no
+`role="radiogroup"`, and Tab stops on **every** circle. Here the group is a
+single tab stop and arrows move within it — and moving focus selects, like the
+native control.
+
+Props: `options`, `value` / `defaultValue` / `onChange`, `label`, `description`,
+`error`, `name` (hidden input), `required`, `disabled`, `orientation`
+(`vertical | horizontal`), `variant` (`plain | card`).
+
+### CheckboxGroup
+
+```tsx
+<CheckboxGroup
+  label="Permissions"
+  selectAllLabel="Select all"
+  options={permissions}
+  value={granted}
+  onChange={setGranted}
+/>
+```
+
+Same idea for checkboxes, plus `selectAllLabel`: a header checkbox with a **real
+indeterminate state** (`aria-checked="mixed"`), not a yes/no that lies when half
+the list is ticked. "Select all" leaves disabled options alone — they aren't the
+user's to change.
+
+### SegmentedControl
+
+```tsx
+<SegmentedControl
+  options={[{ value: 'day', label: 'Day' }, { value: 'month', label: 'Month' }]}
+  value={range}
+  onChange={setRange}
+/>
+```
+
+For picking a **value**, not a view — it's a `radiogroup`, not tabs. If what
+changes is the page content, use `Tabs`. The pill is measured from the active
+button so it slides instead of jumping.
+
+Props: `options` (`value`, `label`, `icon`, `disabled`), `size`, `fullWidth`,
+`disabled`, `aria-label`.
+
+### Combobox
+
+```tsx
+<Combobox label="Country" options={countries} value={country} onChange={setCountry} />
+
+<Combobox multiple label="Tags" options={tags} value={active} onChange={setActive} />
+```
+
+`Select` wraps the native `<select>`, which can't search and has no usable
+multiple mode. Reach for `Combobox` once the list passes a dozen entries — below
+that the native one is still better, since on mobile it opens the system picker.
+
+- **Accent-insensitive filtering**: typing `peru` finds `Perú`. It searches
+  `description` too, not just the label.
+- Options grouped via `group`, keeping the order they arrive in.
+- Multiple mode shows chips with `maxTags` and a `+N` summary;
+  <kbd>Backspace</kbd> on an empty field removes the last one.
+
+Follows the `combobox` ARIA pattern: **focus never moves to the list**, the
+highlighted option is announced through `aria-activedescendant`. If focus
+jumped, you couldn't keep typing — which is the whole point.
+
+Props: `options` (`value`, `label`, `description`, `disabled`, `group`),
+`multiple`, `value` / `defaultValue` / `onChange`, `label`, `placeholder`,
+`helperText`, `error`, `clearable`, `filter`, `emptyState`, `maxListHeight`,
+`maxTags`, `name`, `disabled`, `required`.
+
 ### Tooltip
 
 ```tsx
@@ -1266,6 +1351,146 @@ Props: `content`, `placement` (`top | bottom | left | right`), `delay` (ms),
 own `aria-label`.
 
 ---
+
+
+## Floating layers
+
+All three share one positioner: they **flip** to the opposite side when they
+don't fit and **shift** along the cross axis to stay on screen, and they live in
+a portal so no ancestor's `overflow: hidden` can clip them.
+
+`placement` accepts a side (`top`, `bottom`, `left`, `right`) optionally with an
+alignment (`bottom-start`, `right-end`…).
+
+### Dropdown
+
+```tsx
+<Dropdown
+  trigger={<Button variant="icon"><MenuIcon /></Button>}
+  items={[
+    { id: 'edit', label: 'Edit', icon: <EditIcon />, shortcut: '⌘E' },
+    { id: 'del',  label: 'Delete', danger: true, separatorBefore: true },
+  ]}
+  onSelect={id => …}
+/>
+```
+
+Full keyboard: arrows, Home, End, Escape, Tab to close, and **typeahead** —
+typing `de` jumps to "Delete", with the one-second reset a native `<select>`
+uses.
+
+Focus does **not** travel between items with Tab: a menu is a single tab stop
+and you move inside it with arrows, which is what a screen reader expects from
+a `role="menu"`.
+
+Item props: `id`, `label`, `icon`, `shortcut` (decorative — it doesn't register
+the binding), `disabled`, `danger`, `separatorBefore`, `onSelect`.
+
+### Popover
+
+```tsx
+<Popover trigger={<Button>Filters</Button>} placement="bottom-start">
+  <Form>…</Form>
+</Popover>
+```
+
+Unlike `Tooltip` it opens on click and **accepts focus inside**, so it can hold
+fields and buttons. Closes on outside click or Escape and returns focus to the
+trigger. `unstyled` drops the default padding and surface when you want to paint
+the whole panel yourself.
+
+### Toast
+
+```tsx
+<ToastProvider position="bottom-right">
+  <App />
+</ToastProvider>
+
+const { toast, dismiss, dismissAll } = useToast();
+
+toast({ title: 'Saved', variant: 'success' });
+toast({
+  title: 'Record deleted',
+  action: { label: 'Undo', onClick: restore },
+  duration: 8000,
+});
+```
+
+**The timer pauses** while the pointer is over the stack or anything inside has
+focus — otherwise a toast with an "Undo" button vanishes exactly as you reach
+for it. `limit` (4 by default) drops the oldest on overflow; an uncapped stack
+ends up covering the app.
+
+`role="alert"` only on the `danger` variant, which interrupts the screen reader;
+`role="status"` for the rest.
+
+Options: `title`, `description`, `variant` (`info | success | warning | danger`),
+`duration` (`0` = stays until dismissed), `action`, `dismissible`, `onDismiss`.
+Provider: `position` (6 corners), `duration`, `limit`, `aria-label`.
+
+### Drawer
+
+```tsx
+{open && (
+  <Drawer title="Filters" side="right" onClose={() => setOpen(false)}>
+    <Form>…</Form>
+  </Drawer>
+)}
+```
+
+A `<dialog>` opened with `showModal()`, same as `Modal`, so it inherits the same
+things from the browser: top layer above any `z-index`, a real focus trap, the
+rest of the page `inert` — for screen readers too — and focus restored on close.
+
+Props: `side` (`left | right | top | bottom`), `size` (`sm | md | lg | xl |
+full`), `title`, `footer`, `showCloseButton`, `closeOnBackdrop`, `closeOnEsc`.
+Controlled by mounting/unmounting, like `Modal`; `onClose` fires when the exit
+animation finishes.
+
+## Composition pieces
+
+### Divider
+
+```tsx
+<Divider />
+<Divider label="or" />
+<Divider orientation="vertical" />
+```
+
+Without a label it's a semantic `<hr>`. With one it becomes a
+`role="separator"` carrying text — the `──── or ────` between two blocks.
+
+### EmptyState
+
+```tsx
+<EmptyState
+  icon={<BoxIcon className="h-10 w-10" />}
+  title="No orders yet"
+  description="The first one will show up here."
+  action={<Button>Create order</Button>}
+/>
+```
+
+An empty list without this is indistinguishable from one that failed to load.
+Pass `action`: there's almost always something the user can do — create the
+first record, clear a filter — and without it the screen is a dead end.
+
+### Stat
+
+```tsx
+<Stat label="Cost per order" value="€3.41" delta={-8} invertDelta hint="vs. last month" />
+```
+
+`delta` is colored by its sign, except with `invertDelta` for metrics where down
+is good: −8% on costs is green, not red. `tabular` (on by default) keeps digits
+the same width so the figure doesn't jitter as it updates.
+
+### Kbd
+
+```tsx
+<Kbd>⌘</Kbd> <Kbd>K</Kbd>
+```
+
 
 ## Animations
 
@@ -2408,6 +2633,21 @@ bun dev
 ```
 
 Open http://localhost:5173 in your browser.
+
+The showcase resolves the library from **its source** (`../src`), through an
+alias in `vite.config.ts` and a matching `paths` entry in `tsconfig.json`. Two
+consequences worth knowing:
+
+- You don't need to run `bun run build` in the library to see your changes —
+  edits show up on the next hot reload.
+- It exercises the source, not the published package. The `exports` map, the
+  `"use client"` directives and the compiled `dist` are verified by CI instead.
+
+It used to be a path dependency (`"neogestify-ui-components": "../.."`), which
+**hangs `bun install`**: bun treats a bare path as a folder and copies the whole
+directory — including `.git`, `node_modules` and `showcase/` itself, which
+points straight back here. The install recursed into itself and never reached
+`dist`.
 
 ## Development
 

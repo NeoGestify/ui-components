@@ -6,8 +6,11 @@ import {
 } from 'neogestify-ui-components';
 import type { NuiColors, VenuePaletteOverride } from 'neogestify-ui-components';
 import type { DomainConfig, DateRange } from 'neogestify-ui-components';
+import { ToastProvider } from 'neogestify-ui-components';
 import { useState, useRef, useEffect } from 'react';
 import { Flotantes } from './demos/Flotantes';
+import { Controles } from './demos/Controles';
+import { Datos } from './demos/Datos';
 
 // ─── Demo «elemento clickeable» ────────────────────────────────────────────────
 // El tipo INFO trae `clickable: true` por defecto: en el visor responde al clic;
@@ -124,6 +127,9 @@ function App() {
   };
 
   return (
+    // El proveedor envuelve toda la aplicación: `useToast()` funciona desde
+    // cualquier punto del árbol que quede por debajo.
+    <ToastProvider position="bottom-right">
     <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200`}>
       <div className="max-w-7xl mx-auto p-4 sm:p-6 lg:p-8">
         {/* Header */}
@@ -716,6 +722,30 @@ function App() {
           </div>
         </section>
 
+        {/* Selección, paneles y piezas de composición */}
+        <section className="mb-8 sm:mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Selección y composición
+          </h2>
+          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+            Lo que hace falta cuando la lista pasa de una docena de opciones, y
+            las piezas pequeñas que cada aplicación acababa reescribiendo.
+          </p>
+          <Datos />
+        </section>
+
+        {/* Controles de formulario y avisos */}
+        <section className="mb-8 sm:mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Controles y avisos
+          </h2>
+          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+            Los grupos que un <code>input</code> suelto no forma, y un sistema de
+            avisos propio que no depende de SweetAlert.
+          </p>
+          <Controles />
+        </section>
+
         {/* Capas flotantes: Dropdown, Popover, Tooltip */}
         <section className="mb-8 sm:mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
           <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -752,6 +782,7 @@ function App() {
         </section>
       </div>
     </div>
+    </ToastProvider>
   );
 }
 

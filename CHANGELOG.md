@@ -1,5 +1,133 @@
 # Changelog
 
+## 3.6.1
+
+Integración continua. No cambia nada de lo que se publica.
+
+No había ninguna. Ahora se comprueban tipos, linter y pruebas en cada empujón, y
+el empaquetado verifica dos cosas que ya se han roto una vez y que **compilan
+perfectamente estando mal**:
+
+- Que `"use client"` es la **primera** sentencia de los ficheros de `dist`. Una
+  directiva fuera del prólogo del módulo es una expresión muerta que nadie ve.
+- Que `theme/` **no** la lleva: `nuiColorsToCss()` y `motionToCss()` existen
+  para llamarse desde el servidor.
+
+## 3.6.0
+
+Búsqueda, paneles laterales y las piezas pequeñas.
+
+### `Combobox`
+
+`Select` envuelve el `<select>` nativo, que no busca ni admite selección
+múltiple usable. Este lo sustituye cuando la lista pasa de una docena de
+opciones — para tres o cuatro sigue siendo mejor el nativo, que en móvil abre la
+rueda del sistema.
+
+```tsx
+<Combobox label="País" options={paises} value={pais} onChange={setPais} />
+<Combobox multiple label="Etiquetas" options={etiquetas} value={activas} onChange={setActivas} />
+```
+
+- **El filtro ignora acentos**: escribir «peru» encuentra «Perú». Busca también
+  en `description`, no solo en la etiqueta.
+- Opciones agrupadas por `group`, conservando el orden en que llegan.
+- En el múltiple, fichas con `maxTags` y resumen «+N», y <kbd>⌫</kbd> con el
+  campo vacío quita la última — como cualquier campo de etiquetas.
+
+Sigue el patrón ARIA de `combobox`: **el foco no se mueve a la lista**, se dice
+cuál está resaltada con `aria-activedescendant`. Si el foco saltara, dejaría de
+poder escribirse, que es el punto entero del componente.
+
+Las opciones responden a `pointerdown` y no a `click`: el `click` llega después
+del `blur` del campo, que ya habría cerrado la lista.
+
+### `Drawer`
+
+Panel que entra desde cualquier borde. Es un `<dialog>` con `showModal()`, igual
+que `Modal`, así que hereda lo mismo del navegador: *top layer*, foco atrapado
+de verdad, resto de la página `inert` y foco devuelto al cerrar.
+
+El velo va en un elemento aparte del panel; si fuera el fondo del `<dialog>`, el
+panel heredaría su transparencia.
+
+### `Divider`, `EmptyState`, `Stat`, `Kbd`
+
+Las que cada aplicación acababa reescribiendo.
+
+`Stat` colorea el `delta` por su signo, con `invertDelta` para las métricas
+donde bajar es lo bueno: un −8 % en costes es verde, no rojo. `EmptyState`
+lleva `action` porque una lista vacía sin salida es un callejón — y sin él es
+indistinguible de una que no ha cargado.
+
+### En el showcase
+
+Sección «Selección y composición» con los seis.
+
+## 3.5.0
+
+Avisos propios y los grupos de formulario que faltaban.
+
+### `ToastProvider` / `useToast`
+
+Notificaciones efímeras sin pasar por SweetAlert, que hasta ahora era la única
+forma de avisar de algo y arrastraba un peer completo al camino crítico.
+
+```tsx
+<ToastProvider position="bottom-right">
+  <App />
+</ToastProvider>
+
+const { toast } = useToast();
+toast({ title: 'Guardado', variant: 'success' });
+toast({
+  title: 'Registro eliminado',
+  action: { label: 'Deshacer', onClick: restaurar },
+  duration: 8000,
+});
+```
+
+Dos decisiones que se notan al usarlo:
+
+- **El temporizador se pausa** mientras el ratón está encima o algo dentro tiene
+  el foco. Sin eso, un aviso con «Deshacer» desaparece justo cuando vas a
+  pulsarlo.
+- **`limit` (4 por defecto)** retira el más antiguo al desbordarse. Una pila sin
+  tope acaba tapando la aplicación.
+
+`role="alert"` solo en la variante `danger` —que interrumpe al lector de
+pantalla— y `role="status"` en el resto. El contenedor es
+`pointer-events-none` y cada aviso `auto`: la región ocupa una franja entera de
+la pantalla y sin eso bloquearía los clics de todo lo que tiene debajo.
+
+### `RadioGroup`
+
+Un `Input type="radio"` suelto no forma un grupo: no comparte etiqueta, no
+expone `role="radiogroup"` y el tabulador para en **cada** círculo. Ahora el
+grupo es una sola parada de tabulación, dentro se mueve con las flechas y mover
+el foco selecciona — como el nativo.
+
+Con `variant="card"`, `orientation`, `description` por opción, y `error`
+asociado al grupo entero.
+
+### `CheckboxGroup`
+
+Lo mismo para las casillas, más `selectAllLabel`: una casilla de cabecera con
+**estado intermedio de verdad** (`aria-checked="mixed"`), no un sí/no que
+miente cuando hay media selección. Respeta las opciones deshabilitadas: marcar
+«todas» no toca lo que el usuario no puede tocar.
+
+### `SegmentedControl`
+
+Selector de pocas opciones, todas visibles. Es un `radiogroup`, no unas
+pestañas: cambia un **valor**, no la vista. La pastilla se mide del botón activo
+y se desliza en vez de saltar.
+
+### En el showcase
+
+Sección «Controles y avisos» con los cuatro, y la sección «Capas flotantes» de
+la versión anterior. La aplicación de ejemplo va envuelta en `ToastProvider`.
+
 ## 3.4.0
 
 `Dropdown` y `Popover`, y tres fallos que solo aparecieron al probarlos en un
