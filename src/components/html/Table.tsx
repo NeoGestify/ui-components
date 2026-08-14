@@ -2,6 +2,7 @@ import { type ReactNode, type CSSProperties } from 'react';
 import { bg, bgHover, border, divide, text } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
 import { SortAscIcon, SortDescIcon, SortBothIcon } from '../icons/icons';
+import { cn } from '../../internal/cn';
 
 type TableVariant =
     | 'default'
@@ -16,12 +17,12 @@ type TableVariant =
 
 type TableSize = 'sm' | 'md' | 'lg';
 
-interface SortState {
+export interface SortState {
     key: string;
     direction: 'asc' | 'desc';
 }
 
-interface ColumnDef {
+export interface ColumnDef {
     /** Contenido del encabezado */
     header: ReactNode;
     /** Clase CSS adicional para toda la columna (th + td) */
@@ -44,7 +45,7 @@ interface ColumnDef {
     key?: string;
 }
 
-interface TableProps {
+export interface TableProps {
     /**
      * Definición de columnas. Acepta strings simples o ColumnDef para
      * configuración avanzada (ancho, sticky, sort, etc.).
@@ -312,20 +313,20 @@ export function Table({
         const hoverCls = hoverable ? `${VARIANT_TR_HOVER[variant]} ${motion.colors}` : '';
         const clickCls = onRowClick ? 'cursor-pointer' : '';
         const customCls = typeof trClassName === 'function' ? trClassName(i) : (trClassName ?? '');
-        return [baseCls, hoverCls, clickCls, customCls].filter(Boolean).join(' ');
+        return cn(baseCls, hoverCls, clickCls, customCls);
     };
 
-    const wrapperCls = [
+    const wrapperCls = cn(
         'overflow-x-auto w-full',
         rounded ? 'rounded-lg overflow-hidden' : '',
         shadow ? 'shadow-md' : '',
         className,
-    ].filter(Boolean).join(' ');
+    );
 
-    const theadCls = [
+    const theadCls = cn(
         VARIANT_THEAD[variant],
         stickyHeader ? 'sticky top-0 z-20' : '',
-    ].filter(Boolean).join(' ');
+    );
 
     const stickyColCls = 'sticky left-0 z-10 bg-inherit';
 
@@ -351,7 +352,7 @@ export function Table({
                                     <th
                                         key={i}
                                         scope="col"
-                                        className={[
+                                        className={cn(
                                             SIZE_TH[size],
                                             VARIANT_TH[variant],
                                             ALIGN_CLASS[col.align ?? 'left'],
@@ -359,7 +360,7 @@ export function Table({
                                             thClassName,
                                             col.sticky ? stickyColCls : '',
                                             isSortable ? 'cursor-pointer select-none' : '',
-                                        ].filter(Boolean).join(' ')}
+                                        )}
                                         style={{ ...colSizeStyle(col), ...(col.thStyle ?? {}) }}
                                         onClick={isSortable ? () => onSort?.(col.key!) : undefined}
                                     >
@@ -399,14 +400,14 @@ export function Table({
                                     return (
                                         <td
                                             key={cellIndex}
-                                            className={[
+                                            className={cn(
                                                 SIZE_TD[size],
                                                 VARIANT_TD[variant],
                                                 ALIGN_CLASS[col?.align ?? 'left'],
                                                 col?.className ?? '',
                                                 tdClassName,
                                                 col?.sticky ? stickyColCls : '',
-                                            ].filter(Boolean).join(' ')}
+                                            )}
                                             style={{
                                                 ...(col ? colSizeStyle(col) : {}),
                                                 ...(col?.tdStyle ?? {}),
@@ -430,13 +431,13 @@ export function Table({
                                     return (
                                         <td
                                             key={cellIndex}
-                                            className={[
+                                            className={cn(
                                                 SIZE_TD[size],
                                                 `font-medium ${text.muted}`,
                                                 ALIGN_CLASS[col?.align ?? 'left'],
                                                 col?.className ?? '',
                                                 tdClassName,
-                                            ].filter(Boolean).join(' ')}
+                                            )}
                                             style={col?.tdStyle}
                                         >
                                             {cell}

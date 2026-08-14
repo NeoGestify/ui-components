@@ -1,6 +1,7 @@
 import { type FC, type HTMLAttributes, type ReactNode } from 'react';
 import { bg, text } from '../../theme/tokens';
 import { motion, withMotionStyle, type AnimatableProps } from '../../theme/motion';
+import { cn } from '../../internal/cn';
 
 type ProgressVariant = 'accent' | 'success' | 'warning' | 'danger' | 'info';
 type ProgressSize = 'xs' | 'sm' | 'md' | 'lg';
@@ -47,7 +48,7 @@ export const Progress: FC<ProgressProps> = ({
   const pct = Math.round((clamped / safeMax) * 100);
 
   return (
-    <div className={`w-full ${className}`} style={withMotionStyle(animate, style)} {...props}>
+    <div className={cn('w-full', className)} style={withMotionStyle(animate, style)} {...props}>
       {(label !== undefined || showValue) && (
         <div className="mb-1.5 flex items-baseline justify-between gap-2">
           {label !== undefined && <span className={`text-sm font-medium ${text.muted}`}>{label}</span>}

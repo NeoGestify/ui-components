@@ -1,6 +1,7 @@
 import { type FC, type HTMLAttributes, type ReactNode } from 'react';
 import { bg, bgHover, border, focusVisibleRing, text } from '../../theme/tokens';
 import { motion, withMotionStyle, type AnimatableProps } from '../../theme/motion';
+import { cn } from '../../internal/cn';
 
 type CardVariant = 'default' | 'outlined' | 'elevated' | 'ghost' | 'custom';
 type CardPadding = 'none' | 'sm' | 'md' | 'lg';
@@ -72,7 +73,7 @@ export const Card: FC<CardProps> = ({
 }) => {
   const clickable = interactive || !!href;
 
-  const classes = [
+  const classes = cn(
     'rounded-xl overflow-hidden',
     // Las tarjetas pulsables se levantan un poco: da la pista de que responden
     // sin mover el resto de la rejilla.
@@ -81,7 +82,7 @@ export const Card: FC<CardProps> = ({
     fullHeight ? 'flex flex-col h-full' : '',
     clickable ? `cursor-pointer ${bgHover.surface} ${focusVisibleRing}` : '',
     className,
-  ].filter(Boolean).join(' ');
+  );
 
   const rootStyle = withMotionStyle(animate, style);
 
@@ -94,11 +95,11 @@ export const Card: FC<CardProps> = ({
         <CardHeader padding={padding} title={title} description={description} action={action} />
       )}
       {children !== undefined && (
-        <div className={[
+        <div className={cn(
           PADDING[padding],
           hasHeader ? 'pt-0' : '',
           fullHeight ? 'flex-1' : '',
-        ].filter(Boolean).join(' ')}>
+        )}>
           {children}
         </div>
       )}
@@ -138,7 +139,7 @@ export interface CardHeaderProps extends Omit<CardSectionProps, 'title'> {
 export const CardHeader: FC<CardHeaderProps> = ({
   padding = 'md', title, description, action, className = '', children, ...props
 }) => (
-  <div className={`flex items-start justify-between gap-3 ${PADDING[padding]} ${className}`} {...props}>
+  <div className={cn('flex items-start justify-between gap-3', PADDING[padding], className)} {...props}>
     <div className="min-w-0 flex-1">
       {typeof title === 'string' || typeof title === 'number'
         ? <h3 className={`truncate text-base font-semibold ${text.base}`}>{title}</h3>
@@ -156,13 +157,13 @@ export const CardHeader: FC<CardHeaderProps> = ({
 
 /** Cuerpo de la tarjeta cuando necesitas controlarlo tú. */
 export const CardBody: FC<CardSectionProps> = ({ padding = 'md', className = '', children, ...props }) => (
-  <div className={`${PADDING[padding]} ${className}`} {...props}>{children}</div>
+  <div className={cn(PADDING[padding], className)} {...props}>{children}</div>
 );
 
 /** Pie de la tarjeta, con separador y fondo tenue. */
 export const CardFooter: FC<CardSectionProps> = ({ padding = 'md', className = '', children, ...props }) => (
   <div
-    className={`border-t ${border.subtle} ${bg.surfaceBand} ${PADDING[padding]} ${className}`}
+    className={cn('border-t', border.subtle, bg.surfaceBand, PADDING[padding], className)}
     {...props}
   >
     {children}

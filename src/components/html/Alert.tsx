@@ -1,6 +1,7 @@
 import { type FC, type FunctionComponent, type HTMLAttributes, type ReactNode } from 'react';
 import { CheckCircleIcon, CloseIcon, ErrorIcon, InfoIcon, WarningIcon } from '../icons/icons';
 import { border, focusVisibleRing, text } from '../../theme/tokens';
+import { cn } from '../../internal/cn';
 
 type AlertVariant = 'info' | 'success' | 'warning' | 'danger' | 'neutral';
 
@@ -64,7 +65,7 @@ export const Alert: FC<AlertProps> = ({
     // `alert` interrumpe al lector de pantalla; para lo informativo basta con
     // anunciarlo cuando termine lo que esté leyendo.
     role={variant === 'danger' ? 'alert' : 'status'}
-    className={`flex gap-3 rounded-lg border p-4 text-sm ${TINT[variant]} ${className}`}
+    className={cn('flex gap-3 rounded-lg border p-4 text-sm', TINT[variant], className)}
     {...props}
   >
     {icon !== false && (

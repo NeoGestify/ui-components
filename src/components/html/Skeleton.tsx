@@ -1,5 +1,6 @@
 import { type CSSProperties, type FC, type HTMLAttributes } from 'react';
 import { bg } from '../../theme/tokens';
+import { cn } from '../../internal/cn';
 
 type SkeletonVariant = 'text' | 'circle' | 'rect' | 'rounded';
 
@@ -37,11 +38,11 @@ export const Skeleton: FC<SkeletonProps> = ({
   variant = 'text', width, height, lines = 1, animated = true,
   className = '', style, ...props
 }) => {
-  const base = [
+  const base = cn(
     bg.skeleton,
     SHAPE[variant],
     animated ? 'motion-safe:animate-pulse' : '',
-  ].filter(Boolean).join(' ');
+  );
 
   const dims: CSSProperties = {
     width: size(width),
@@ -51,7 +52,7 @@ export const Skeleton: FC<SkeletonProps> = ({
 
   if (variant === 'text' && lines > 1) {
     return (
-      <div className={`flex flex-col gap-2 ${className}`} aria-hidden="true" {...props}>
+      <div className={cn('flex flex-col gap-2', className)} aria-hidden="true" {...props}>
         {Array.from({ length: lines }, (_, i) => (
           <div
             key={i}
@@ -65,7 +66,7 @@ export const Skeleton: FC<SkeletonProps> = ({
 
   return (
     <div
-      className={`${base} ${variant === 'text' ? 'h-3.5' : ''} ${className}`}
+      className={cn(base, variant === 'text' ? 'h-3.5' : '', className)}
       style={dims}
       aria-hidden="true"
       {...props}

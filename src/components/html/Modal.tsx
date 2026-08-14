@@ -2,6 +2,7 @@ import { Button } from './Button';
 import { CloseIcon } from '../icons/icons';
 import { bg, border, text } from '../../theme/tokens';
 import { motion, motionDuration, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { cn } from '../../internal/cn';
 import React, { useEffect, useId, useState, useRef, forwardRef, useImperativeHandle } from 'react';
 
 type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full';
@@ -9,7 +10,7 @@ type ModalVariant = 'default' | 'danger' | 'success' | 'warning';
 
 export interface ModalProps extends AnimatableProps {
     onClose: () => void;
-    /** Clases extra para el panel. Se añaden al final, así que ganan. */
+    /** Clases extra para el panel. Ganan sobre las de la librería (ver `cn`). */
     className?: string;
     title: React.ReactNode;
     children: React.ReactNode;
@@ -19,7 +20,7 @@ export interface ModalProps extends AnimatableProps {
     size?: ModalSize;
     showCloseButton?: boolean;
     /**
-     * @deprecated Sin efecto desde 3.1.0. El diálogo se abre con `showModal()`,
+     * @deprecated Sin efecto desde 3.0.4. El diálogo se abre con `showModal()`,
      * que lo coloca en la *top layer* del navegador: siempre queda por encima de
      * todo, al margen de cualquier `z-index`. Se acepta por compatibilidad.
      */
@@ -149,14 +150,21 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
             ref={dialogRef}
             aria-labelledby={titleId}
             style={motionStyle(animate)}
-            className={`fixed inset-0 m-0 max-w-none max-h-none w-full h-full border-none p-4 flex items-center justify-center ${motion.fade}
-                bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_60%,transparent)] backdrop-blur-sm
-                backdrop:bg-transparent ${show ? 'opacity-100' : 'opacity-0'}`}
+            className={cn(
+                'fixed inset-0 m-0 max-w-none max-h-none w-full h-full border-none p-4 flex items-center justify-center',
+                motion.fade,
+                'bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_60%,transparent)] backdrop-blur-sm backdrop:bg-transparent',
+                show ? 'opacity-100' : 'opacity-0',
+            )}
             onClick={handleBackdropClick}
         >
             <article
-                className={`relative ${bg.surface} border ${border.subtle} rounded-lg shadow-2xl w-full ${widthCls} max-h-[90vh] flex flex-col overflow-hidden
-                    ${motion.enter} ${show ? 'opacity-100 scale-100' : 'opacity-0 scale-95'} ${className}`}
+                className={cn(
+                    'relative border rounded-lg shadow-2xl w-full max-h-[90vh] flex flex-col overflow-hidden',
+                    bg.surface, border.subtle, widthCls, motion.enter,
+                    show ? 'opacity-100 scale-100' : 'opacity-0 scale-95',
+                    className,
+                )}
             >
                 <header className={`shrink-0 px-6 py-4 flex items-center justify-between ${VARIANT_HEADER[variant]}`}>
                     <h2 id={titleId} className={`text-2xl font-bold ${VARIANT_TITLE[variant]}`}>{title}</h2>

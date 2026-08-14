@@ -1,5 +1,128 @@
 # Changelog
 
+## 3.2.0
+
+`className` por fin gana siempre.
+
+### El problema
+
+Toda la librería componía clases con `[...].filter(Boolean).join(' ')`, y el
+comentario que acompañaba a la prop decía que las del consumidor «se añaden al
+final, así que ganan». **Eso es falso.** Con la misma especificidad no gana la
+que va última en el atributo, gana la que va última en la hoja de estilos que
+genera Tailwind. Así que esto:
+
+```tsx
+<Button size="md" className="px-6" />   // px-3 del tamaño md + px-6
+```
+
+daba un resultado u otro según cómo hubiera ordenado Tailwind su CSS. Con dos
+clases del mismo grupo peleando, el resultado era una lotería — y por eso a
+veces «no me coge el padding» y a veces sí.
+
+### El cambio
+
+Entra `cn()`, sobre `tailwind-merge`: detecta que `px-6` y `px-3` son el mismo
+grupo y deja solo la última. Está aplicada en **59 puntos** de 22 ficheros, que
+son todos los sitios donde se mezclaban clases.
+
+Entiende variantes y valores arbitrarios, que es de lo que están hechos los
+tokens de esta librería:
+
+```ts
+cn('px-3 py-2', 'px-6')                            // → 'py-2 px-6'
+cn('bg-[var(--nui-surface,#fff)]', 'bg-red-500')   // → 'bg-red-500'
+cn('dark:bg-blue-500 bg-white', 'dark:bg-green-500')  // → 'bg-white dark:bg-green-500'
+```
+
+Acepta lo mismo que `clsx` — cadenas, arrays, condicionales y objetos:
+
+```ts
+cn('rounded-md', activo && 'ring-2', { 'opacity-50': disabled }, className)
+```
+
+### Se exporta
+
+`cn` sale por el paquete raíz y por `./tokens`, para envolver componentes sin
+volver a tener el problema:
+
+```tsx
+import { cn } from 'neogestify-ui-components';
+
+const BotonGuardar = ({ className, ...props }) => (
+  <Button className={cn('min-w-32', className)} {...props} />
+);
+```
+
+Vive en `theme/` a propósito: `tailwind-merge` es manipulación de cadenas pura,
+no toca el DOM, así que `cn` sigue siendo utilizable en el servidor.
+
+### Nota
+
+`tailwind-merge` pasa a ser la primera dependencia de runtime de la librería
+(~7 KB comprimidos). No requiere que Tailwind esté instalado: si el proyecto no
+lo usa, `cn` devuelve la misma cadena que devolvía antes.
+
+## 3.1.0
+
+Lo que hacía falta para poder consumir la librería desde fuera sin pelearse con
+ella. Nada de esto cambia cómo se ve un componente; cambia si se puede usar.
+
+### `"use client"`
+
+Ningún fichero la llevaba. En el App Router de Next.js eso significa que
+importar `Button`, `Modal` o `Tabs` desde un Server Component reventaba con
+*«useState only works in a Client Component»*. Ahora la directiva se aplica en
+`dist` después de compilar.
+
+`theme/` (el subpath `./tokens`) queda **fuera** a propósito: `nuiColorsToCss()`
+y `motionToCss()` existen precisamente para llamarse desde el servidor y
+escupir el `<style>` que evita el parpadeo de color antes de hidratar.
+
+Dos detalles del empaquetado que salieron de aquí y valen por sí solos:
+
+- `treeshake: true` está desactivado. Esa opción añade una pasada de Rollup por
+  encima de esbuild que **borra las directivas de módulo** — avisaba con
+  *«Module level directives cause errors when bundled»* y se ignoraba.
+- Las dos configuraciones de tsup corren en paralelo, así que `clean: true` en
+  una borraba lo que la otra acababa de escribir. La limpieza pasó al script.
+
+### `ref` en los campos de formulario
+
+`Button`, `Input`, `Select` y `TextArea` pasan a `forwardRef`. Sin esto,
+`react-hook-form` con `{...register('email')}` no funcionaba, no se podía
+enfocar un campo tras validar ni medirlo. Antes solo `Modal` aceptaba `ref`.
+
+### `<Button>` ya no envía el formulario sin querer
+
+Faltaba el `type` por defecto, así que el navegador asumía `submit` y un
+`<Button>Cancelar</Button>` dentro de un `<Form>` lo enviaba. Ahora es
+`type="button"`; quien quiera enviar pone `type="submit"`.
+
+### Tipos de props exportados
+
+`InputProps`, `SelectProps`, `SelectOption`, `TextAreaProps`, `FormProps`,
+`TableProps`, `ColumnDef`, `SortState` y `LoadingProps` eran `interface` sin
+`export`. Justo los componentes que más se envuelven, y no se podía tipar el
+envoltorio. `Option` sigue exportándose como alias obsoleto de `SelectOption`.
+
+### El error ya se anuncia con su campo
+
+`Input` y `TextArea` pintaban `<p role="alert">` sin `id` y sin
+`aria-describedby`, así que un lector de pantalla leía el mensaje suelto sin
+saber de qué campo era. Ahora va cableado, con `aria-invalid`, igual que ya
+hacía `Select`.
+
+### `clearable` funciona sin controlar el campo
+
+La X exigía `value !== undefined`, así que en modo no controlado no aparecía
+nunca. Ahora el componente vigila si hay contenido y, al limpiar, vacía el nodo
+por el *setter* nativo y dispara un `input` real — asignar `el.value` a secas no
+sirve: React recuerda el último valor que vio y no llamaría a `onChange`.
+
+También: `aria-busy` mientras `isLoading`, y el texto del botón de limpiar es
+configurable con `clearLabel`.
+
 ## 3.0.4
 
 `Modal` pasa a ser un diálogo modal de verdad.

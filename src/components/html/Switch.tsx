@@ -1,6 +1,7 @@
 import { useCallback, useId, useState, type FC, type ReactNode } from 'react';
 import { bg, border, focusVisibleRing, ringOffset, text } from '../../theme/tokens';
 import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { cn } from '../../internal/cn';
 
 type SwitchSize = 'sm' | 'md' | 'lg';
 
@@ -93,23 +94,23 @@ export const Switch: FC<SwitchProps> = ({
       aria-required={required || undefined}
       disabled={disabled}
       onClick={toggle}
-      className={[
+      className={cn(
         'relative inline-flex shrink-0 cursor-pointer items-center rounded-full p-0.5 touch-manipulation',
         motion.colors,
         'disabled:cursor-not-allowed disabled:opacity-50',
         TRACK[size],
         isOn ? bg.accent : `${bg.surfaceMuted} border ${border.base}`,
         focusVisibleRing, ringOffset,
-      ].join(' ')}
+      )}
     >
       <span
         aria-hidden="true"
-        className={[
+        className={cn(
           'pointer-events-none inline-block rounded-full bg-white shadow-sm ring-0',
           motion.transform,
           THUMB[size],
           isOn ? TRANSLATE[size] : 'translate-x-0',
-        ].join(' ')}
+        )}
       />
     </button>
   );
@@ -131,7 +132,7 @@ export const Switch: FC<SwitchProps> = ({
   return (
     <div
       style={motionStyle(animate)}
-      className={`flex items-start gap-3 ${labelPosition === 'left' ? 'flex-row-reverse justify-end' : ''} ${className}`}
+      className={cn('flex items-start gap-3', labelPosition === 'left' ? 'flex-row-reverse justify-end' : '', className)}
     >
       {control}
       {texts}

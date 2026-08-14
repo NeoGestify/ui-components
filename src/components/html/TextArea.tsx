@@ -1,12 +1,16 @@
-import { type TextareaHTMLAttributes, type FC, type ReactNode, useRef, useEffect, useId } from 'react';
+import {
+  forwardRef, useEffect, useId, useRef,
+  type FormEvent, type ReactNode, type TextareaHTMLAttributes,
+} from 'react';
 import { bg, border, focusBorder, focusRing, focusRingOf, placeholder, text } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
+import { mergeRefs } from '../../internal/mergeRefs';
 
 type TextAreaVariant = 'default' | 'outline' | 'filled' | 'minimal';
 type TextAreaSize = 'small' | 'medium' | 'large';
 type ResizeOption = 'vertical' | 'horizontal' | 'both' | 'none';
 
-interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string | ReactNode;
   error?: string;
   helperText?: string;
@@ -37,7 +41,7 @@ const RESIZE_CLASSES: Record<ResizeOption, string> = {
   none:       'resize-none',
 };
 
-export const TextArea: FC<TextAreaProps> = ({
+export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(({
   label,
   error,
   helperText,
@@ -50,9 +54,11 @@ export const TextArea: FC<TextAreaProps> = ({
   id,
   onInput: propsOnInput,
   ...props
-}) => {
+}, ref) => {
   const autoId = useId();
   const textAreaId = id || `textarea-${autoId}`;
+  const errorId = `${textAreaId}-error`;
+  const helperId = `${textAreaId}-helper`;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const adjustHeight = () => {
@@ -66,7 +72,7 @@ export const TextArea: FC<TextAreaProps> = ({
     if (autoResize) adjustHeight();
   }, [autoResize, props.value]);
 
-  const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
+  const handleInput = (e: FormEvent<HTMLTextAreaElement>) => {
     if (autoResize) adjustHeight();
     propsOnInput?.(e);
   };
@@ -107,18 +113,22 @@ export const TextArea: FC<TextAreaProps> = ({
         </div>
       )}
       <textarea
-        ref={textareaRef}
+        ref={mergeRefs(ref, textareaRef)}
         id={textAreaId}
         className={classes}
         onInput={handleInput}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : helperText ? helperId : undefined}
         {...props}
       />
       {error && (
-        <p className={`text-sm ${text.danger}`} role="alert">{error}</p>
+        <p id={errorId} className={`text-sm ${text.danger}`} role="alert">{error}</p>
       )}
       {helperText && !error && (
-        <p className={`text-sm ${text.subtle}`}>{helperText}</p>
+        <p id={helperId} className={`text-sm ${text.subtle}`}>{helperText}</p>
       )}
     </div>
   );
-};
+});
+
+TextArea.displayName = 'TextArea';

@@ -4,6 +4,7 @@ import {
 } from 'react';
 import { bg, bgHover, border, focusVisibleRing, text, textHover } from '../../theme/tokens';
 import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { cn } from '../../internal/cn';
 
 export interface TabItem {
   /** Identificador estable, el que viaja en `value`/`onChange`. */
@@ -167,7 +168,7 @@ export const Tabs: FC<TabsProps> = ({
     // intrínseco es el de todas las pestañas juntas. Sin esto, al colocar
     // `Tabs` dentro de una rejilla o un flex, la columna crece hasta ese ancho
     // y desborda la página en móvil en vez de dejar que la barra se desplace.
-    <div className={`min-w-0 ${className}`} style={motionStyle(animate)}>
+    <div className={cn('min-w-0', className)} style={motionStyle(animate)}>
       <div
         ref={listRef}
         role="tablist"

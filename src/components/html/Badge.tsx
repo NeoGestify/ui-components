@@ -1,6 +1,7 @@
 import { type FC, type HTMLAttributes, type ReactNode } from 'react';
 import { CloseIcon } from '../icons/icons';
 import { bg, border, focusVisibleRing, text } from '../../theme/tokens';
+import { cn } from '../../internal/cn';
 
 type BadgeVariant = 'neutral' | 'accent' | 'success' | 'warning' | 'danger' | 'info' | 'outline' | 'solid';
 type BadgeSize = 'sm' | 'md' | 'lg';
@@ -65,11 +66,11 @@ export const Badge: FC<BadgeProps> = ({
   onRemove, removeLabel = 'Quitar', className = '', children, ...props
 }) => (
   <span
-    className={[
+    className={cn(
       'inline-flex items-center font-medium whitespace-nowrap align-middle',
       pill ? 'rounded-full' : 'rounded-md',
       SIZE[size], VARIANT[variant], className,
-    ].filter(Boolean).join(' ')}
+    )}
     {...props}
   >
     {dot && <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${DOT[variant]}`} aria-hidden="true" />}

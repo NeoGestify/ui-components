@@ -10,6 +10,7 @@ import { parseSvgMarkup } from '../utils/svgParser';
 import { motion } from '../../../theme/motion';
 import { sanitizeImageSrc } from '../utils/imageSrc';
 import { bg, bgHover, border, borderHover, focusVisibleRing, ringAccent, text, textHover } from '../../../theme/tokens';
+import { cn } from '../../../internal/cn';
 
 // ─── ToolButton ───────────────────────────────────────────────────────────────
 
@@ -39,14 +40,14 @@ function ToolButton({ active, disabled, title, onClick, children, large }: ToolB
       aria-pressed={active}
       onClick={onClick}
       disabled={disabled}
-      className={[
+      className={cn(
         `flex items-center justify-center rounded ${motion.colors} shrink-0 disabled:opacity-30 disabled:cursor-not-allowed`,
         FOCUS_CLS,
         large ? 'w-10 h-10' : 'w-8 h-8',
         active
           ? `${bg.accentSoft} ${text.accent} ring-1 ${ringAccent}`
           : `${text.muted} ${bgHover.surface} ${textHover.base}`,
-      ].join(' ')}
+      )}
     >
       {children}
     </button>
@@ -123,13 +124,13 @@ function TypeChip({ typeDef, active, onClick }: TypeChipProps) {
       title={typeDef.label}
       aria-pressed={active}
       onClick={onClick}
-      className={[
+      className={cn(
         `flex items-center gap-1.5 px-2 py-1 rounded border text-xs whitespace-nowrap ${motion.colors}`,
         FOCUS_CLS,
         active
           ? `${border.accent} ${bg.accentSoft} ${text.accent} font-medium`
           : `${border.subtle} ${bg.surface} ${text.muted} ${borderHover.base} ${bgHover.surface}`,
-      ].join(' ')}
+      )}
     >
       {imageHref ? (
         <img
@@ -294,23 +295,23 @@ export function Toolbar({
             {paletteGroups.map(group => (
               <div
                 key={group.id}
-                className={[
+                className={cn(
                   `flex items-center shrink-0 rounded-t border-x border-t ${motion.colors}`,
                   group.id === activeGroupId
                     ? `${bg.surface} ${border.subtle} -mb-px`
                     : `${bg.surfaceMuted} border-transparent`,
-                ].join(' ')}
+                )}
               >
                 <button
                   type="button"
                   onClick={() => setActiveGroupId(group.id)}
-                  className={[
+                  className={cn(
                     `px-3 py-1 text-xs font-medium ${motion.colors} whitespace-nowrap rounded-t`,
                     FOCUS_CLS,
                     group.id === activeGroupId
                       ? `${text.base}`
                       : `${text.faint} ${textHover.muted}`,
-                  ].join(' ')}
+                  )}
                 >
                   {group.name || 'Sin nombre'}
                 </button>
@@ -332,12 +333,12 @@ export function Toolbar({
           {/* Active group chips */}
           {activeGroup && (
             <div
-              className={[
+              className={cn(
                 `flex items-center gap-1 px-2 py-1.5 ${bg.surface} min-h-[36px]`,
                 // En compacto la paleta no se envuelve (comería el lienzo):
                 // se desplaza en una sola fila.
                 compact ? 'flex-nowrap overflow-x-auto' : 'flex-wrap',
-              ].join(' ')}
+              )}
             >
               {activeGroup.types.map(typeDef => (
                 <TypeChip

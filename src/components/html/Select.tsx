@@ -1,21 +1,25 @@
-import { useId, type SelectHTMLAttributes, type FC, type ReactNode } from 'react';
+import { forwardRef, useId, type SelectHTMLAttributes, type ReactNode } from 'react';
 import { ChevronDownIcon } from '../icons/icons';
 // `placeholder` se renombra: el componente ya tiene una prop con ese nombre.
 import { bg, border, focusBorder, focusRing, focusRingOf, placeholder as placeholderCls, text } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
+import { cn } from '../../internal/cn';
 
 type SelectVariant = 'default' | 'outline' | 'filled' | 'minimal' | 'custom' | 'small';
 type SelectSize = 'sm' | 'md' | 'lg';
 
-interface Option {
+export interface SelectOption {
   value: string | number;
   label: string;
   disabled?: boolean;
   selected?: boolean;
 }
 
-interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
-  options: Option[];
+/** @deprecated Usa `SelectOption`. Se mantiene por compatibilidad. */
+export type Option = SelectOption;
+
+export interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'size'> {
+  options: SelectOption[];
   placeholder?: string;
   variant?: SelectVariant;
   size?: SelectSize;
@@ -39,7 +43,7 @@ const VARIANT_CLASSES: Record<Exclude<SelectVariant, 'small'>, string> = {
   custom:  '',
 };
 
-export const Select: FC<SelectProps> = ({
+export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
   options,
   placeholder,
   variant = 'default',
@@ -51,7 +55,7 @@ export const Select: FC<SelectProps> = ({
   className = '',
   id,
   ...props
-}) => {
+}, ref) => {
   const autoId = useId();
   const selectId = id || `select-${autoId}`;
   const describedById = `${selectId}-desc`;
@@ -84,14 +88,14 @@ export const Select: FC<SelectProps> = ({
     ? `${border.dangerSubtle} ${focusRingOf.danger} ${focusBorder.danger}`
     : '';
 
-  const selectCls = [
+  const selectCls = cn(
     baseCls,
     SIZE_CLASSES[effectiveSize],
     VARIANT_CLASSES[effectiveVariant],
     errorCls,
     icon ? 'pl-9' : '',
     className,
-  ].filter(Boolean).join(' ');
+  );
 
   const helpNode = errorMsg
     ? <p id={describedById} className={`text-sm ${text.danger}`} role="alert">{errorMsg}</p>
@@ -116,6 +120,7 @@ export const Select: FC<SelectProps> = ({
           </div>
         )}
         <select
+          ref={ref}
           id={selectId}
           className={selectCls}
           defaultValue={computedDefaultValue}
@@ -147,4 +152,6 @@ export const Select: FC<SelectProps> = ({
       {helpNode}
     </div>
   );
-};
+});
+
+Select.displayName = 'Select';

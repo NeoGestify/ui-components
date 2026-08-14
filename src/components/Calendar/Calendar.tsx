@@ -17,6 +17,7 @@ import {
   bg, bgHover, border, focusRing, focusVisibleRing, text, textHover,
 } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
+import { cn } from '../../internal/cn';
 
 // ─── Tamaños ────────────────────────────────────────────────────────────────
 
@@ -405,7 +406,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
               ? `${bg.accentSoft} ${bandStart ? 'rounded-l-full' : ''} ${bandEnd ? 'rounded-r-full' : ''}`
               : '';
 
-            const btnCls = [
+            const btnCls = cn(
               'flex h-full w-full items-center justify-center rounded-full font-medium leading-none',
               `${motion.colors} touch-manipulation select-none`,
               focusVisibleRing,
@@ -422,7 +423,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
                       : `${text.muted} ${bgHover.surface}`,
               !selected && isToday ? `ring-1 ring-inset ${ringAccentSoft}` : '',
               readOnly && !dayDisabled ? 'cursor-default' : '',
-            ].filter(Boolean).join(' ');
+            );
 
             const state: DayState = {
               date: day, today: isToday, selected, inRange: inBand,
@@ -482,13 +483,13 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
     <div
       ref={rootRef}
       id={rootId}
-      className={[
+      className={cn(
         'inline-block w-full max-w-full rounded-xl border',
         border.subtle, bg.surface, text.base,
         disabled ? 'opacity-60' : '',
         sz.gap,
         className,
-      ].filter(Boolean).join(' ')}
+      )}
       aria-label={ariaLabel ?? (mode === 'range' ? labels.selectRange : labels.selectDate)}
       aria-disabled={disabled || undefined}
     >

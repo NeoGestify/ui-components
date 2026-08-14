@@ -7,6 +7,7 @@ import { useDrag } from '../hooks/useDrag';
 import { snapToGrid } from '../utils/snapUtils';
 import { parseSvgMarkup } from '../utils/svgParser';
 import { sanitizeImageSrc } from '../utils/imageSrc';
+import { cn } from '../../../internal/cn';
 
 // ─── Arrow shape ──────────────────────────────────────────────────────────────
 
@@ -15,7 +16,7 @@ function arrowPath(x: number, y: number, w: number, h: number): string {
   const tailH = h * 0.45;
   const yt = y + (h - tailH) / 2;
   const yb = y + (h + tailH) / 2;
-  return [
+  return cn(
     `M ${x} ${yt}`,
     `L ${x + w - headW} ${yt}`,
     `L ${x + w - headW} ${y}`,
@@ -24,7 +25,7 @@ function arrowPath(x: number, y: number, w: number, h: number): string {
     `L ${x + w - headW} ${yb}`,
     `L ${x} ${yb}`,
     'Z',
-  ].join(' ');
+  );
 }
 
 // ─── Resize-handle geometry ───────────────────────────────────────────────────

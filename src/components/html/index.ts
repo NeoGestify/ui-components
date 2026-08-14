@@ -1,11 +1,11 @@
 export { Button, type ButtonProps } from './Button';
-export { Input } from './Input';
-export { TextArea } from './TextArea';
-export { Form } from './Form';
-export { Select } from './Select';
-export { Table } from './Table';
+export { Input, type InputProps } from './Input';
+export { TextArea, type TextAreaProps } from './TextArea';
+export { Form, type FormProps } from './Form';
+export { Select, type SelectProps, type SelectOption, type Option } from './Select';
+export { Table, type TableProps, type ColumnDef, type SortState } from './Table';
 export { Modal, type ModalProps, type ModalRef } from './Modal';
-export { Loading } from './Loading';
+export { Loading, type LoadingProps } from './Loading';
 
 // ─── Presentación ───────────────────────────────────────────────────────────
 export {

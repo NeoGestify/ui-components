@@ -1,8 +1,9 @@
 import { type FC } from 'react';
 import { QuarterSpinnerIcon, RingSpinnerIcon } from '../icons/icons';
 import { text } from '../../theme/tokens';
+import { cn } from '../../internal/cn';
 
-interface LoadingProps {
+export interface LoadingProps {
   variant?: 'spinner' | 'dots' | 'pulse' | 'bars' | 'ring' | 'cube';
   size?: 'small' | 'medium' | 'large' | 'xl';
   color?: 'primary' | 'white' | 'gray' | 'success' | 'danger' | 'warning';
@@ -90,7 +91,7 @@ export const Loading: FC<LoadingProps> = ({
   };
 
   const inner = (
-    <div className={`flex flex-col items-center justify-center ${className}`} role="status">
+    <div className={cn('flex flex-col items-center justify-center', className)} role="status">
       {renderIcon()}
       {label && (
         <span className={`mt-3 text-sm font-medium ${colorClasses[color]}`}>{label}</span>
@@ -115,7 +116,7 @@ export const Loading: FC<LoadingProps> = ({
   }
 
   return (
-    <div className={`flex flex-col items-center justify-center w-full h-full min-h-[inherit] ${className}`} role="status">
+    <div className={cn('flex flex-col items-center justify-center w-full h-full min-h-[inherit]', className)} role="status">
       {renderIcon()}
       {label && (
         <span className={`mt-3 text-sm font-medium ${colorClasses[color]}`}>{label}</span>

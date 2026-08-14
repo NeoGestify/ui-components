@@ -4,6 +4,7 @@ import {
 } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { cn } from '../../internal/cn';
 
 type TooltipPlacement = 'top' | 'bottom' | 'left' | 'right';
 
@@ -166,12 +167,12 @@ export const Tooltip: FC<TooltipProps> = ({
           id={tipId}
           role="tooltip"
           style={{ top: pos.top, left: pos.left, transform, maxWidth, ...motionStyle(animate) }}
-          className={[
+          className={cn(
             'pointer-events-none fixed z-[70] rounded-md px-2 py-1 text-xs font-medium shadow-lg',
             'bg-[var(--nui-scrim,oklch(21%_.034_264.665))] text-white',
             motion.enterFast, visible ? 'opacity-100' : 'opacity-0',
             className,
-          ].filter(Boolean).join(' ')}
+          )}
         >
           {content}
         </div>,

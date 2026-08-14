@@ -28,6 +28,7 @@ import { useSelection } from './hooks/useSelection';
 import { genId } from './utils/idGen';
 import { containToFloor, pointInPolygon } from './utils/collision';
 import { isClickable } from './utils/interaction';
+import { cn } from '../../internal/cn';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -956,7 +957,7 @@ export function VenueMapEditor({
       // La clase `dark` se aplica al propio contenedor para que las variantes
       // `dark:` de Tailwind también funcionen cuando el tema se fuerza por
       // prop y el `<html>` de la página está en claro.
-      className={[theme === 'dark' ? 'dark' : '', className ?? ''].filter(Boolean).join(' ')}
+      className={cn(theme === 'dark' ? 'dark' : '', className ?? '')}
       style={containerStyle}
       // `tabIndex` permite que el contenedor reciba el foco y con él los
       // atajos de teclado, sin robárselos al resto de la página.

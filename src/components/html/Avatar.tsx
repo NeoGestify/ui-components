@@ -1,6 +1,7 @@
 import { useMemo, useState, type FC, type HTMLAttributes, type ReactNode } from 'react';
 import { UserIcon } from '../icons/icons';
 import { bg, border, text } from '../../theme/tokens';
+import { cn } from '../../internal/cn';
 
 type AvatarSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 type AvatarShape = 'circle' | 'square';
@@ -93,19 +94,19 @@ export const Avatar: FC<AvatarProps> = ({
 
   return (
     <div
-      className={[
+      className={cn(
         'relative inline-flex shrink-0 items-center justify-center overflow-visible select-none',
         SIZE[size], className,
-      ].filter(Boolean).join(' ')}
+      )}
       {...props}
     >
-      <div className={[
+      <div className={cn(
         'flex h-full w-full items-center justify-center overflow-hidden font-semibold',
         shapeCls,
         showImage ? '' : (name ? tint : bg.surfaceMuted),
         showImage ? '' : text.muted,
         ring ? `ring-2 ring-offset-2 ring-[var(--nui-border,oklch(87.2%_.01_258.338))] dark:ring-[var(--nui-border-dark,oklch(44.6%_.03_256.802))] ring-offset-[var(--nui-surface,#fff)] dark:ring-offset-[var(--nui-surface-dark,oklch(27.8%_.033_256.848))]` : '',
-      ].filter(Boolean).join(' ')}>
+      )}>
         {showImage ? (
           <img
             src={src}
@@ -124,11 +125,11 @@ export const Avatar: FC<AvatarProps> = ({
       {status && (
         <span
           title={STATUS_LABEL[status]}
-          className={[
+          className={cn(
             'absolute bottom-0 right-0 rounded-full ring-2',
             'ring-[var(--nui-surface,#fff)] dark:ring-[var(--nui-surface-dark,oklch(27.8%_.033_256.848))]',
             STATUS_SIZE[size], STATUS_COLOR[status],
-          ].join(' ')}
+          )}
         >
           <span className="sr-only">{STATUS_LABEL[status]}</span>
         </span>
@@ -160,7 +161,7 @@ export const AvatarGroup: FC<AvatarGroupProps> = ({
   const shapeCls = shape === 'circle' ? 'rounded-full' : 'rounded-lg';
 
   return (
-    <div className={`flex items-center ${className}`} {...props}>
+    <div className={cn('flex items-center', className)} {...props}>
       {shown.map((a, i) => (
         <div key={i} className={i > 0 ? '-ml-2' : ''}>
           <Avatar
@@ -172,12 +173,12 @@ export const AvatarGroup: FC<AvatarGroupProps> = ({
         </div>
       ))}
       {rest > 0 && (
-        <div className={[
+        <div className={cn(
           '-ml-2 flex items-center justify-center font-semibold',
           SIZE[size], shapeCls, bg.surfaceMuted, text.subtle,
           `border ${border.subtle}`,
           'ring-2 ring-[var(--nui-surface,#fff)] dark:ring-[var(--nui-surface-dark,oklch(27.8%_.033_256.848))]',
-        ].join(' ')}>
+        )}>
           +{rest}
         </div>
       )}

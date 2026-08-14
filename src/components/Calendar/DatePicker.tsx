@@ -11,6 +11,7 @@ import {
 // `text` se renombra: dentro del componente hay una variable local con ese nombre.
 import { bg, bgHover, border, focusRing, focusVisibleRing, text as textCls } from '../../theme/tokens';
 import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { cn } from '../../internal/cn';
 
 /** Ancho de ventana por debajo del cual el desplegable se abre como hoja inferior. */
 const SHEET_BREAKPOINT = 640;
@@ -216,7 +217,7 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
 
   const showClear = clearable && hasValue && !disabled && !readOnly;
 
-  const triggerCls = [
+  const triggerCls = cn(
     `relative flex w-full items-center gap-2 rounded-md border py-2 pl-3 text-left text-sm ${motion.colors}`,
     showClear ? 'pr-9' : 'pr-3',
     `${bg.surface} ${textCls.base}`,
@@ -224,7 +225,7 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
     'disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation',
     error ? border.dangerSubtle : border.base,
     inputClassName,
-  ].filter(Boolean).join(' ');
+  );
 
   const helpNode = error
     ? <p id={descId} className={`text-sm ${textCls.danger}`} role="alert">{error}</p>
@@ -233,7 +234,7 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
       : null;
 
   return (
-    <div ref={rootRef} className={`relative w-full space-y-1 ${className}`}>
+    <div ref={rootRef} className={cn('relative w-full space-y-1', className)}>
       {label && (
         typeof label === 'string' ? (
           <label htmlFor={fieldId} className={`block text-sm font-medium ${textCls.muted}`}>

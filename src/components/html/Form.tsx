@@ -1,7 +1,8 @@
 import { type FormHTMLAttributes, type FC, type FormEvent, type ReactNode, type CSSProperties } from 'react';
 import { bg, border } from '../../theme/tokens';
+import { cn } from '../../internal/cn';
 
-interface FormProps extends FormHTMLAttributes<HTMLFormElement> {
+export interface FormProps extends FormHTMLAttributes<HTMLFormElement> {
     children: ReactNode;
     onSubmit?: (e: FormEvent<HTMLFormElement>) => void;
     variant?: 'default' | 'modal' | 'card' | 'inline' | 'compact';
@@ -45,7 +46,7 @@ export const Form: FC<FormProps> = ({
         ? { display: 'grid', gridTemplateColumns: `repeat(${columns}, minmax(0, 1fr))`, gap: '1rem' }
         : {};
 
-    const combinedClassName = [getVariantClasses(), className].filter(Boolean).join(' ');
+    const combinedClassName = cn(getVariantClasses(), className);
     const combinedStyle: CSSProperties = { ...gridStyle, ...style };
 
     return (

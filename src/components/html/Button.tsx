@@ -1,9 +1,10 @@
 import { AnimateSpin } from '../icons/icons';
-import { type ButtonHTMLAttributes, type FC, type ReactNode } from 'react';
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import {
   bg, bgHover, bgHoverOf, border, borderSoft, focusRing, focusRingOf, ringOffset, text, textHover,
 } from '../../theme/tokens';
 import { motion, withMotionStyle, type AnimatableProps } from '../../theme/motion';
+import { cn } from '../../internal/cn';
 
 type ButtonVariant = 'primary' | 'secondary' | 'icon' | 'danger' | 'success' | 'outline' | 'nav' | 'custom' | 'link' | 'warning' | 'toggle' | 'ghost';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -57,7 +58,7 @@ const VARIANT_STYLE: Record<ButtonVariant, string> = {
   ghost:     `font-medium ${text.accent} bg-transparent border ${border.accentSubtle} ${bgHover.accentSoft} ${focusRing} ${ringOffset}`,
 };
 
-export const Button: FC<ButtonProps> = ({
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
   variant = 'primary',
   children,
   isLoading = false,
@@ -72,8 +73,11 @@ export const Button: FC<ButtonProps> = ({
   disabled,
   animate,
   style,
+  // Sin esto el navegador asume `submit`, así que un botón de «Cancelar»
+  // colocado dentro de un <form> lo enviaba. Quien quiera enviar lo pide.
+  type = 'button',
   ...props
-}) => {
+}, ref) => {
   const sizeCls = variant === 'icon'
     ? SIZE_ICON_PAD[size]
     : variant === 'nav' || variant === 'link' || variant === 'custom'
@@ -95,7 +99,7 @@ export const Button: FC<ButtonProps> = ({
       : `${bg.surfaceMuted} ${text.muted} ${border.base} ${bgHover.surface}`;
   }
 
-  const classes = [
+  const classes = cn(
     BASE,
     VARIANT_STYLE[variant],
     sizeCls,
@@ -103,13 +107,16 @@ export const Button: FC<ButtonProps> = ({
     stateCls,
     fullWidth ? 'w-full justify-center' : '',
     className,
-  ].filter(Boolean).join(' ');
+  );
 
   return (
     <button
+      ref={ref}
+      type={type}
       className={classes}
       style={withMotionStyle(animate, style)}
       disabled={disabled || isLoading}
+      aria-busy={isLoading || undefined}
       {...props}
     >
       {isLoading ? (
@@ -126,4 +133,6 @@ export const Button: FC<ButtonProps> = ({
       )}
     </button>
   );
-};
+});
+
+Button.displayName = 'Button';

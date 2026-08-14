@@ -4,6 +4,7 @@ import { Button, Input, Select, TextArea } from '../html';
 import { IMAGE_ACCEPT, fileToDataUri, sanitizeImageSrc } from '../VenueMapEditor/utils/imageSrc';
 import { useContainerSize } from '../VenueMapEditor/hooks/useContainerSize';
 import { bg, bgHover, border, focusVisibleRing, text } from '../../theme/tokens';
+import { cn } from '../../internal/cn';
 
 /**
  * Anchos (px del contenedor) en los que cambia la disposición.
@@ -220,7 +221,7 @@ export const ElementLibraryBuilder: React.FC = () => {
   return (
     <div
       ref={rootRef}
-      className={[
+      className={cn(
         `flex gap-4 p-4 h-full text-sm ${text.base} ${bg.surface}`,
         stackOutput
           // Apilado: el contenido crece más que el contenedor, así que éste es
@@ -228,24 +229,24 @@ export const ElementLibraryBuilder: React.FC = () => {
           // altura mínima y desborden sin barra.
           ? 'flex-col overflow-y-auto min-h-0'
           : 'flex-row min-h-[600px] overflow-hidden',
-      ].join(' ')}
+      )}
     >
       {/* Listas + editor. Con sitio de sobra este envoltorio es `contents`, así
           que sus hijos participan directamente en el flex de 3 columnas. */}
       <div
-        className={[
+        className={cn(
           stackOutput
             ? (stackAll ? 'flex flex-col gap-4 shrink-0' : 'flex flex-row gap-4 shrink-0')
             : 'contents',
-        ].join(' ')}
+        )}
       >
       {/* Sidebar columns for Groups and Elements */}
-      <div className={[
+      <div className={cn(
         'flex flex-col gap-4',
         stackAll
           ? `w-full shrink-0 border-b ${border.subtle} pb-4`
           : `w-1/4 shrink-0 min-h-0 border-r ${border.subtle} pr-4`,
-      ].join(' ')}>
+      )}>
         <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between">
             <h3 className="font-bold">Libraries (Groups)</h3>
@@ -316,10 +317,10 @@ export const ElementLibraryBuilder: React.FC = () => {
       </div>
 
       {/* Editor Section */}
-      <div className={[
+      <div className={cn(
         'flex-1 min-w-0 flex flex-col gap-4 px-2',
         stackOutput ? 'shrink-0' : 'min-h-0 overflow-y-auto',
-      ].join(' ')}>
+      )}>
         <h3 className="font-bold text-lg">Element Editor</h3>
         {activeElementIndex !== null ? (
           <div className="flex flex-col gap-4 w-full max-w-2xl">
@@ -532,12 +533,12 @@ export const ElementLibraryBuilder: React.FC = () => {
       </div>
 
       {/* output section */}
-      <div className={[
+      <div className={cn(
         'flex flex-col gap-2',
         stackOutput
           ? `w-full shrink-0 border-t ${border.subtle} pt-4`
           : `w-1/3 shrink-0 min-h-0 border-l ${border.subtle} pl-4 h-full max-h-full`,
-      ].join(' ')}>
+      )}>
         <div className={`flex gap-2 shrink-0 ${stackAll ? 'flex-col items-stretch' : 'items-center justify-between'}`}>
           <h3 className="font-bold">Output JSON</h3>
           <div className="flex items-center gap-2 flex-wrap">

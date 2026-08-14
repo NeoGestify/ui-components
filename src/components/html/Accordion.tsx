@@ -5,6 +5,7 @@ import {
 import { ChevronDownIcon } from '../icons/icons';
 import { bg, bgHover, border, focusVisibleRing, text } from '../../theme/tokens';
 import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { cn } from '../../internal/cn';
 
 export interface AccordionItem {
   /** Identificador estable. Si falta se usa el índice. */
@@ -130,7 +131,7 @@ export const Accordion: FC<AccordionProps> = ({
     : '';
 
   return (
-    <div ref={listRef} style={motionStyle(animate)} className={`${wrapper} ${className}`}>
+    <div ref={listRef} style={motionStyle(animate)} className={cn(wrapper, className)}>
       {items.map((item, i) => {
         const key = keyOf(item, i);
         const isOpen = open.includes(key);
@@ -149,12 +150,12 @@ export const Accordion: FC<AccordionProps> = ({
                 aria-controls={panelId}
                 onClick={() => toggle(key)}
                 onKeyDown={onKeyDown}
-                className={[
+                className={cn(
                   'flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium',
                   motion.colors,
                   text.base, bgHover.surface, focusVisibleRing,
                   'disabled:opacity-50 disabled:pointer-events-none touch-manipulation',
-                ].join(' ')}
+                )}
               >
                 {item.icon && <span className={`shrink-0 ${text.subtle}`} aria-hidden="true">{item.icon}</span>}
                 <span className="min-w-0 flex-1">{item.title}</span>

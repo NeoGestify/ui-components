@@ -4,6 +4,7 @@ import { useCoarsePointer } from '../hooks/usePointerCapabilities';
 import type { Floor } from '../types';
 import { bg, border, borderHover, focusVisibleRing, text, textHover } from '../../../theme/tokens';
 import { motion } from '../../../theme/motion';
+import { cn } from '../../../internal/cn';
 
 /**
  * Indicador de foco compartido. `focus-visible` para que el anillo aparezca al
@@ -121,14 +122,14 @@ export function FloorTabs({
             // Tabulador itinerante: solo la pestaña activa entra en el orden de
             // tabulación; entre pestañas se navega con las flechas.
             tabIndex={isActive ? 0 : -1}
-            className={[
+            className={cn(
               `flex items-center gap-0.5 px-2 rounded-t border ${motion.colors} shrink-0`,
               FOCUS_CLS,
               coarse ? 'py-2' : 'py-1',
               isActive
                 ? `${bg.surface} ${border.base} ${text.base} font-medium`
                 : `border-transparent ${text.subtle} ${textHover.muted} cursor-pointer`,
-            ].join(' ')}
+            )}
             onClick={() => !isActive && onSelect(floor.id)}
             onKeyDown={e => handleTabKeyDown(e, floor, idx)}
           >

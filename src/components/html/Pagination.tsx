@@ -2,6 +2,7 @@ import { useMemo, type FC, type HTMLAttributes } from 'react';
 import { ChevronLeftIcon, ChevronRightIcon } from '../icons/icons';
 import { bg, bgHover, border, focusVisibleRing, text } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
+import { cn } from '../../internal/cn';
 
 /**
  * Páginas visibles alrededor de la actual, con «…» donde se recorta.
@@ -66,11 +67,11 @@ export const Pagination: FC<PaginationProps> = ({
   if (totalPages <= 1) return null;
 
   const btn = size === 'sm' ? 'h-8 min-w-8 px-2 text-xs' : 'h-9 min-w-9 px-3 text-sm';
-  const baseBtn = [
+  const baseBtn = cn(
     `inline-flex items-center justify-center gap-1 rounded-md font-medium ${motion.colors}`,
     'disabled:opacity-40 disabled:pointer-events-none touch-manipulation',
     btn, focusVisibleRing,
-  ].join(' ');
+  );
 
   const go = (p: number) => () => onChange(Math.min(totalPages, Math.max(1, p)));
 
@@ -79,7 +80,7 @@ export const Pagination: FC<PaginationProps> = ({
       aria-label={ariaLabel}
       // Envuelve en vez de desbordar: con muchas páginas no cabe de una línea
       // en un móvil. `compact` sigue siendo la opción recomendada ahí.
-      className={`flex flex-wrap items-center gap-1 ${className}`}
+      className={cn('flex flex-wrap items-center gap-1', className)}
       {...props}
     >
       <button
@@ -109,12 +110,12 @@ export const Pagination: FC<PaginationProps> = ({
                   onClick={go(p)}
                   aria-current={p === page ? 'page' : undefined}
                   aria-label={`${l.page} ${p}`}
-                  className={[
+                  className={cn(
                     baseBtn, 'tabular-nums',
                     p === page
                       ? `${bg.accent} ${text.onAccent}`
                       : `border ${border.base} ${text.muted} ${bgHover.surface}`,
-                  ].join(' ')}
+                  )}
                 >
                   {p}
                 </button>
