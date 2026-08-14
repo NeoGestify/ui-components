@@ -1,4 +1,4 @@
-import { type FC, type HTMLAttributes, type ReactNode } from 'react';
+import { type FC, type HTMLAttributes, type KeyboardEvent as ReactKeyboardEvent, type ReactNode } from 'react';
 import { bg, bgHover, border, focusVisibleRing, text } from '../../theme/tokens';
 import { motion, withMotionStyle, type AnimatableProps } from '../../theme/motion';
 import { cn } from '../../internal/cn';
@@ -73,6 +73,14 @@ export const Card: FC<CardProps> = ({
 }) => {
   const clickable = interactive || !!href;
 
+  // Enter y Espacio son lo que activa un botón; un `div` no lo hace solo.
+  const handleKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    props.onKeyDown?.(e);
+    if (e.defaultPrevented || (e.key !== 'Enter' && e.key !== ' ')) return;
+    e.preventDefault();
+    e.currentTarget.click();
+  };
+
   const classes = cn(
     'rounded-xl overflow-hidden',
     // Las tarjetas pulsables se levantan un poco: da la pista de que responden
@@ -119,7 +127,17 @@ export const Card: FC<CardProps> = ({
   }
 
   return (
-    <div className={classes} style={rootStyle} tabIndex={clickable ? 0 : undefined} {...props}>
+    // Con `interactive` la tarjeta se comporta como un botón: sin `role` ni
+    // teclado era solo un `div` enfocable, y quien navegue con el tabulador
+    // llegaba a ella sin que nada le dijera qué es ni pudiera activarla.
+    <div
+      className={classes}
+      style={rootStyle}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={clickable ? handleKeyDown : props.onKeyDown}
+      {...props}
+    >
       {content}
     </div>
   );

@@ -8,14 +8,26 @@ const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffec
  * Mantiene un elemento flotante pegado a su anclaje, ya volteado y desplazado
  * para que quepa en pantalla.
  *
- * Se mide **después** de pintar (`useLayoutEffect`) porque hace falta el tamaño
- * real del flotante para saber si cabe: calcularlo antes obligaría a adivinarlo.
- * El primer frame se pinta con `null`, que el llamante usa para dejarlo oculto.
+ * `floatingEl` es el **elemento**, no una ref, y eso es a propósito. El panel
+ * vive dentro de un `<Portal>`, que no pinta nada hasta su propio efecto: en el
+ * render en que se abre, una ref todavía valdría `null`. Con una ref el efecto
+ * se ejecutaba una vez, no encontraba nodo que medir y no volvía a ejecutarse
+ * nunca — el panel se quedaba fuera de la pantalla, en `-9999`. Guardar el nodo
+ * en estado da un render cuando por fin existe, y ese render sí lo mide.
+ *
+ * ```tsx
+ * const [panel, setPanel] = useState<HTMLDivElement | null>(null);
+ * const pos = useAnchoredPosition(open, anchorRef, panel, { placement: 'bottom' });
+ * <div ref={setPanel} style={{ top: pos?.top, left: pos?.left }} />
+ * ```
+ *
+ * Se mide **después** de pintar porque hace falta el tamaño real del flotante
+ * para saber si cabe: calcularlo antes obligaría a adivinarlo.
  */
 export function useAnchoredPosition(
   open: boolean,
   anchorRef: RefObject<HTMLElement | null>,
-  floatingRef: RefObject<HTMLElement | null>,
+  floatingEl: HTMLElement | null,
   options: PositionOptions = {},
 ): PositionResult | null {
   const [pos, setPos] = useState<PositionResult | null>(null);
@@ -24,18 +36,17 @@ export function useAnchoredPosition(
 
   const update = useCallback(() => {
     const anchor = anchorRef.current;
-    const floating = floatingRef.current;
-    if (!anchor || !floating) return;
+    if (!anchor || !floatingEl) return;
 
     const a = anchor.getBoundingClientRect();
-    const f = floating.getBoundingClientRect();
+    const f = floatingEl.getBoundingClientRect();
 
     setPos(computePosition(
       { top: a.top, left: a.left, width: a.width, height: a.height },
       { width: f.width, height: f.height },
       { placement, gap, padding, flip, shift },
     ));
-  }, [anchorRef, floatingRef, placement, gap, padding, flip, shift]);
+  }, [anchorRef, floatingEl, placement, gap, padding, flip, shift]);
 
   useIsomorphicLayoutEffect(() => {
     if (!open) { setPos(null); return; }
@@ -43,7 +54,7 @@ export function useAnchoredPosition(
   }, [open, update]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !floatingEl) return;
 
     // `true` en la captura: hay que enterarse del scroll de CUALQUIER contenedor
     // con desbordamiento, no solo del de la ventana. Sin eso, un menú dentro de
@@ -56,7 +67,7 @@ export function useAnchoredPosition(
     let ro: ResizeObserver | undefined;
     if (typeof ResizeObserver !== 'undefined') {
       ro = new ResizeObserver(update);
-      if (floatingRef.current) ro.observe(floatingRef.current);
+      ro.observe(floatingEl);
       if (anchorRef.current) ro.observe(anchorRef.current);
     }
 
@@ -65,7 +76,7 @@ export function useAnchoredPosition(
       window.removeEventListener('resize', update);
       ro?.disconnect();
     };
-  }, [open, update, anchorRef, floatingRef]);
+  }, [open, update, anchorRef, floatingEl]);
 
   return pos;
 }

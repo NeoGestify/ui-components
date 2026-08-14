@@ -64,13 +64,15 @@ export const Tooltip: FC<TooltipProps> = ({
   // inicial y la transición arranca en el frame siguiente.
   const [visible, setVisible] = useState(false);
   const triggerRef = useRef<HTMLElement | null>(null);
-  const tipRef = useRef<HTMLDivElement | null>(null);
+  // El globo se guarda en estado, no en una ref: vive en un portal y no existe
+  // hasta el render siguiente. Ver `useAnchoredPosition`.
+  const [tipEl, setTipEl] = useState<HTMLDivElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Se mide tras pintar, con el tamaño real del globo, y se voltea o desplaza
   // solo si hace falta. Antes se colocaba a ciegas y un tooltip `top` en la
   // primera fila de la página se salía por arriba.
-  const pos = useAnchoredPosition(open, triggerRef, tipRef, { placement, gap: GAP });
+  const pos = useAnchoredPosition(open, triggerRef, tipEl, { placement, gap: GAP });
 
   const clearTimer = () => {
     if (timerRef.current) { clearTimeout(timerRef.current); timerRef.current = null; }
@@ -148,7 +150,7 @@ export const Tooltip: FC<TooltipProps> = ({
       {open && (
         <Portal>
           <div
-            ref={tipRef}
+            ref={setTipEl}
             id={tipId}
             role="tooltip"
             style={{

@@ -132,8 +132,8 @@ export const Accordion: FC<AccordionProps> = ({
   const wrapper = variant === 'separated'
     ? 'flex flex-col gap-2'
     : variant === 'bordered'
-      ? `rounded-xl border ${border.subtle} divide-y divide-[var(--nui-border-subtle,oklch(92.8%_.006_264.531))] dark:divide-[var(--nui-border-subtle-dark,oklch(37.3%_.034_259.733))] overflow-hidden`
-      : `divide-y divide-[var(--nui-border-subtle,oklch(92.8%_.006_264.531))] dark:divide-[var(--nui-border-subtle-dark,oklch(37.3%_.034_259.733))]`;
+      ? `rounded-xl border ${border.subtle} divide-y divide-[color:var(--nui-border-subtle,oklch(92.8%_.006_264.531))] dark:divide-[color:var(--nui-border-subtle-dark,oklch(37.3%_.034_259.733))] overflow-hidden`
+      : `divide-y divide-[color:var(--nui-border-subtle,oklch(92.8%_.006_264.531))] dark:divide-[color:var(--nui-border-subtle-dark,oklch(37.3%_.034_259.733))]`;
 
   const itemCls = variant === 'separated'
     ? `rounded-xl border ${border.subtle} ${bg.surface} overflow-hidden`

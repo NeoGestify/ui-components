@@ -256,8 +256,7 @@ export const ElementLibraryBuilder: React.FC = () => {
             {groups.map((group) => (
               <div
                 key={group.internalId}
-                className={`flex items-center justify-between p-2 rounded cursor-pointer ${activeGroupId === group.internalId ? `${bg.accentSoft} ${text.accent} font-semibold` : `${bgHover.surface}`}`}
-                onClick={() => handleSelectGroup(group.internalId)}
+                className={`flex items-center justify-between p-2 rounded ${activeGroupId === group.internalId ? `${bg.accentSoft} ${text.accent} font-semibold` : `${bgHover.surface}`}`}
               >
                 {editingGroupId === group.internalId ? (
                   <Input
@@ -270,7 +269,15 @@ export const ElementLibraryBuilder: React.FC = () => {
                     onKeyDown={(e) => e.key === 'Enter' && setEditingGroupId(null)}
                   />
                 ) : (
-                  <span onDoubleClick={() => setEditingGroupId(group.internalId)}>{group.name}</span>
+                  <button
+                    type="button"
+                    className={`min-w-0 flex-1 truncate text-left cursor-pointer ${FOCUS_CLS}`}
+                    aria-pressed={activeGroupId === group.internalId}
+                    onClick={() => handleSelectGroup(group.internalId)}
+                    onDoubleClick={() => setEditingGroupId(group.internalId)}
+                  >
+                    {group.name}
+                  </button>
                 )}
 
                 {groups.length > 1 && (
@@ -297,10 +304,16 @@ export const ElementLibraryBuilder: React.FC = () => {
             {activeGroup?.objects.map((el, i) => (
               <div
                 key={i}
-                className={`flex items-center justify-between p-2 rounded cursor-pointer ${activeElementIndex === i ? `${bg.accentSoft} ${text.accent} font-semibold` : `${bgHover.surface}`}`}
-                onClick={() => handleSelectElement(i)}
+                className={`flex items-center justify-between p-2 rounded ${activeElementIndex === i ? `${bg.accentSoft} ${text.accent} font-semibold` : `${bgHover.surface}`}`}
               >
-                <span>{el.id} ({el.shape})</span>
+                <button
+                  type="button"
+                  className={`min-w-0 flex-1 truncate text-left cursor-pointer ${FOCUS_CLS}`}
+                  aria-pressed={activeElementIndex === i}
+                  onClick={() => handleSelectElement(i)}
+                >
+                  {el.id} ({el.shape})
+                </button>
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); handleRemoveElement(i); }}
@@ -368,10 +381,11 @@ export const ElementLibraryBuilder: React.FC = () => {
 
             <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
               <div className="flex flex-col gap-1">
-                <label className={`text-xs font-semibold ${text.muted}`}>Fill Color</label>
+                <span className={`text-xs font-semibold ${text.muted}`}>Fill Color</span>
                 <div className="flex gap-2">
                   <input
                     type="color"
+                    aria-label="Fill Color"
                     className={`w-8 h-8 cursor-pointer rounded ${FOCUS_CLS}`}
                     value={currentElement.color}
                     onChange={(e) => handleFieldChange('color', e.target.value)}
@@ -383,10 +397,11 @@ export const ElementLibraryBuilder: React.FC = () => {
                 </div>
               </div>
               <div className="flex flex-col gap-1">
-                <label className={`text-xs font-semibold ${text.muted}`}>Stroke Color</label>
+                <span className={`text-xs font-semibold ${text.muted}`}>Stroke Color</span>
                 <div className="flex gap-2">
                   <input
                     type="color"
+                    aria-label="Stroke Color"
                     className={`w-8 h-8 cursor-pointer rounded ${FOCUS_CLS}`}
                     value={currentElement.strokeColor}
                     onChange={(e) => handleFieldChange('strokeColor', e.target.value)}
@@ -448,7 +463,7 @@ export const ElementLibraryBuilder: React.FC = () => {
             )}
 
             {currentElement.shape === 'svg' && (
-              <div className="flex flex-col gap-4 p-4 rounded border border-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_35%,transparent)] bg-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_10%,white)] dark:bg-[color-mix(in_oklab,var(--nui-warning-dark,oklch(79.5%_.184_86.047))_12%,transparent)]">
+              <div className="flex flex-col gap-4 p-4 rounded border border-[color:color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_35%,transparent)] bg-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_10%,white)] dark:bg-[color-mix(in_oklab,var(--nui-warning-dark,oklch(79.5%_.184_86.047))_12%,transparent)]">
                 <h4 className="font-semibold text-sm">SVG Markup (Autosanitized)</h4>
                 <p className={`text-xs ${text.warning}`}>
                   Paste your raw SVG here. Double quotes will be converted to single quotes automatically to safely embed the string in JSON.
@@ -464,7 +479,7 @@ export const ElementLibraryBuilder: React.FC = () => {
             )}
 
             {currentElement.shape === 'image' && (
-              <div className="flex flex-col gap-4 p-4 rounded border border-[color-mix(in_oklab,var(--nui-info,oklch(54.6%_.245_262.881))_35%,transparent)] bg-[color-mix(in_oklab,var(--nui-info,oklch(54.6%_.245_262.881))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-info-dark,oklch(62.3%_.214_259.815))_12%,transparent)]">
+              <div className="flex flex-col gap-4 p-4 rounded border border-[color:color-mix(in_oklab,var(--nui-info,oklch(54.6%_.245_262.881))_35%,transparent)] bg-[color-mix(in_oklab,var(--nui-info,oklch(54.6%_.245_262.881))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-info-dark,oklch(62.3%_.214_259.815))_12%,transparent)]">
                 <h4 className="font-semibold text-sm">Imagen (base64)</h4>
                 <p className={`text-xs ${text.info}`}>
                   El archivo se incrusta como data URI dentro del JSON, así que la

@@ -11,6 +11,7 @@ import {
 // `text` se renombra: dentro del componente hay una variable local con ese nombre.
 import { bg, bgHover, border, focusRing, focusVisibleRing, text as textCls } from '../../theme/tokens';
 import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { useMessage } from '../../context/config/NuiConfigProvider';
 import { cn } from '../../internal/cn';
 
 /** Ancho de ventana por debajo del cual el desplegable se abre como hoja inferior. */
@@ -65,6 +66,7 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
   const fieldId = id || `datepicker-${autoId}`;
   const descId = `${fieldId}-desc`;
 
+  const closeLabel = useMessage('close');
   const [open, setOpen] = useState(false);
   const [isSheet, setIsSheet] = useState(
     () => typeof window !== 'undefined' && window.innerWidth < SHEET_BREAKPOINT,
@@ -256,7 +258,9 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
           onClick={() => setOpenState(!open)}
           aria-haspopup="dialog"
           aria-expanded={open}
-          aria-invalid={!!error || undefined}
+          // Sin `aria-invalid`: no es un atributo válido en `role="button"`, que
+          // es el rol implícito de un <button>. El error se anuncia por el
+          // mensaje asociado, que además lleva `role="alert"`.
           aria-describedby={helpNode ? descId : undefined}
         >
           <CalendarIcon className={`h-4 w-4 shrink-0 ${textCls.faint}`} />
@@ -270,8 +274,8 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
             aria-label={labels.clear}
             onClick={() => handleChange(emptyValue)}
             className={`absolute inset-y-0 right-0 flex items-center rounded-md px-2 ${textCls.faint}
-              hover:text-[var(--nui-text-muted,oklch(37.3%_.034_259.733))]
-              dark:hover:text-[var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))] ${focusVisibleRing}`}
+              hover:text-[color:var(--nui-text-muted,oklch(37.3%_.034_259.733))]
+              dark:hover:text-[color:var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))] ${focusVisibleRing}`}
           >
             <CloseIcon className="h-4 w-4" />
           </button>
@@ -298,11 +302,17 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
 
       {open && isSheet && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[60] flex items-end justify-center" style={motionStyle(animate)}>
-          <div
-            className={`absolute inset-0 bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_45%,transparent)] backdrop-blur-[1px]
+          {/* Un <button> de verdad y no un <div> con `onClick`: así el velo
+              también responde al teclado y se anuncia como lo que es. El texto
+              va oculto visualmente, no ausente. */}
+          <button
+            type="button"
+            className={`absolute inset-0 bg-[color:color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_45%,transparent)] backdrop-blur-[1px]
               ${motion.fade} ${shown ? 'opacity-100' : 'opacity-0'}`}
             onClick={() => setOpenState(false)}
-          />
+          >
+            <span className="sr-only">{closeLabel}</span>
+          </button>
           <div
             ref={panelRef}
             role="dialog"
@@ -313,9 +323,14 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
               ${motion.enter} ${shown ? 'translate-y-0' : 'translate-y-full'}`}
           >
             {/* Asa: pista visual de que la hoja se puede cerrar. */}
-            <div className="flex justify-center pt-2" onClick={() => setOpenState(false)}>
+            <button
+              type="button"
+              className="flex w-full justify-center pt-2"
+              onClick={() => setOpenState(false)}
+            >
+              <span className="sr-only">{closeLabel}</span>
               <span className="h-1.5 w-10 rounded-full bg-[var(--nui-border,oklch(87.2%_.01_258.338))] dark:bg-[var(--nui-border-dark,oklch(44.6%_.03_256.802))]" />
-            </div>
+            </button>
             {calendar}
             <div className="flex gap-2 px-3 pb-3">
               <button

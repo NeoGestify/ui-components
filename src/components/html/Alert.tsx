@@ -7,10 +7,10 @@ type AlertVariant = 'info' | 'success' | 'warning' | 'danger' | 'neutral';
 
 /** Fondo y borde teñidos con el color semántico, sin tapar el texto. */
 const TINT: Record<AlertVariant, string> = {
-  info: 'bg-[color-mix(in_oklab,var(--nui-info,oklch(54.6%_.245_262.881))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-info-dark,oklch(62.3%_.214_259.815))_14%,transparent)] border-[color-mix(in_oklab,var(--nui-info,oklch(54.6%_.245_262.881))_30%,transparent)]',
-  success: 'bg-[color-mix(in_oklab,var(--nui-success,oklch(62.7%_.194_149.214))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-success-dark,oklch(72.3%_.219_149.579))_14%,transparent)] border-[color-mix(in_oklab,var(--nui-success,oklch(62.7%_.194_149.214))_30%,transparent)]',
-  warning: 'bg-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_10%,white)] dark:bg-[color-mix(in_oklab,var(--nui-warning-dark,oklch(79.5%_.184_86.047))_14%,transparent)] border-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_30%,transparent)]',
-  danger: 'bg-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-danger-dark,oklch(63.7%_.237_25.331))_14%,transparent)] border-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_30%,transparent)]',
+  info: 'bg-[color-mix(in_oklab,var(--nui-info,oklch(54.6%_.245_262.881))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-info-dark,oklch(62.3%_.214_259.815))_14%,transparent)] border-[color:color-mix(in_oklab,var(--nui-info,oklch(54.6%_.245_262.881))_30%,transparent)]',
+  success: 'bg-[color-mix(in_oklab,var(--nui-success,oklch(62.7%_.194_149.214))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-success-dark,oklch(72.3%_.219_149.579))_14%,transparent)] border-[color:color-mix(in_oklab,var(--nui-success,oklch(62.7%_.194_149.214))_30%,transparent)]',
+  warning: 'bg-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_10%,white)] dark:bg-[color-mix(in_oklab,var(--nui-warning-dark,oklch(79.5%_.184_86.047))_14%,transparent)] border-[color:color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_30%,transparent)]',
+  danger: 'bg-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-danger-dark,oklch(63.7%_.237_25.331))_14%,transparent)] border-[color:color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_30%,transparent)]',
   neutral: `bg-[var(--nui-surface-muted,oklch(98.5%_.002_247.839))] dark:bg-[var(--nui-surface-muted-dark,oklch(37.3%_.034_259.733))] ${border.subtle}`,
 };
 

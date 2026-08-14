@@ -105,7 +105,7 @@ export const Avatar: FC<AvatarProps> = ({
         shapeCls,
         showImage ? '' : (name ? tint : bg.surfaceMuted),
         showImage ? '' : text.muted,
-        ring ? `ring-2 ring-offset-2 ring-[var(--nui-border,oklch(87.2%_.01_258.338))] dark:ring-[var(--nui-border-dark,oklch(44.6%_.03_256.802))] ring-offset-[var(--nui-surface,#fff)] dark:ring-offset-[var(--nui-surface-dark,oklch(27.8%_.033_256.848))]` : '',
+        ring ? `ring-2 ring-offset-2 ring-[color:var(--nui-border,oklch(87.2%_.01_258.338))] dark:ring-[color:var(--nui-border-dark,oklch(44.6%_.03_256.802))] ring-offset-[color:var(--nui-surface,#fff)] dark:ring-offset-[color:var(--nui-surface-dark,oklch(27.8%_.033_256.848))]` : '',
       )}>
         {showImage ? (
           <img
@@ -127,7 +127,7 @@ export const Avatar: FC<AvatarProps> = ({
           title={STATUS_LABEL[status]}
           className={cn(
             'absolute bottom-0 right-0 rounded-full ring-2',
-            'ring-[var(--nui-surface,#fff)] dark:ring-[var(--nui-surface-dark,oklch(27.8%_.033_256.848))]',
+            'ring-[color:var(--nui-surface,#fff)] dark:ring-[color:var(--nui-surface-dark,oklch(27.8%_.033_256.848))]',
             STATUS_SIZE[size], STATUS_COLOR[status],
           )}
         >
@@ -168,7 +168,7 @@ export const AvatarGroup: FC<AvatarGroupProps> = ({
             {...a}
             size={size}
             shape={shape}
-            className={`ring-2 ring-[var(--nui-surface,#fff)] dark:ring-[var(--nui-surface-dark,oklch(27.8%_.033_256.848))] ${shapeCls}`}
+            className={`ring-2 ring-[color:var(--nui-surface,#fff)] dark:ring-[color:var(--nui-surface-dark,oklch(27.8%_.033_256.848))] ${shapeCls}`}
           />
         </div>
       ))}
@@ -177,7 +177,7 @@ export const AvatarGroup: FC<AvatarGroupProps> = ({
           '-ml-2 flex items-center justify-center font-semibold',
           SIZE[size], shapeCls, bg.surfaceMuted, text.subtle,
           `border ${border.subtle}`,
-          'ring-2 ring-[var(--nui-surface,#fff)] dark:ring-[var(--nui-surface-dark,oklch(27.8%_.033_256.848))]',
+          'ring-2 ring-[color:var(--nui-surface,#fff)] dark:ring-[color:var(--nui-surface-dark,oklch(27.8%_.033_256.848))]',
         )}>
           +{rest}
         </div>

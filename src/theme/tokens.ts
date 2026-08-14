@@ -109,6 +109,11 @@ export const bg = {
   info:          'bg-[var(--nui-info,oklch(54.6%_.245_262.881))] dark:bg-[var(--nui-info-dark,oklch(62.3%_.214_259.815))]',
   inverted:      'bg-[var(--nui-surface-inverted,oklch(27.8%_.033_256.848))] dark:bg-[var(--nui-surface-inverted-dark,oklch(21%_.034_264.665))]',
   skeleton:      'bg-[var(--nui-skeleton,oklch(92.8%_.006_264.531))] dark:bg-[var(--nui-skeleton-dark,oklch(37.3%_.034_259.733))]',
+  // Mismo color que `bgHover.surface` pero SIN la variante `hover:`. Lo piden
+  // los elementos resaltados por teclado (menús, listas de autocompletado):
+  // ahí el resaltado es estado, no una respuesta al ratón, y tiene que
+  // pintarse igual llegue el foco por donde llegue.
+  surfaceHover:  'bg-[var(--nui-surface-hover,oklch(96.7%_.003_264.542))] dark:bg-[var(--nui-surface-hover-dark,oklch(37.3%_.034_259.733))]',
 } as const;
 
 /** Fondos en `hover:`. */
@@ -121,37 +126,37 @@ export const bgHover = {
 
 /** Colores de texto. */
 export const text = {
-  base:      'text-[var(--nui-text,oklch(21%_.034_264.665))] dark:text-[var(--nui-text-dark,#fff)]',
-  muted:     'text-[var(--nui-text-muted,oklch(37.3%_.034_259.733))] dark:text-[var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))]',
-  subtle:    'text-[var(--nui-text-subtle,oklch(55.1%_.027_264.364))] dark:text-[var(--nui-text-subtle-dark,oklch(70.7%_.022_261.325))]',
-  faint:     'text-[var(--nui-text-faint,oklch(70.7%_.022_261.325))] dark:text-[var(--nui-text-faint-dark,oklch(55.1%_.027_264.364))]',
-  accent:    'text-[var(--nui-accent-text,oklch(51.1%_.262_276.966))] dark:text-[var(--nui-accent-text-dark,oklch(67.3%_.182_276.935))]',
-  onAccent:  'text-[var(--nui-accent-fg,#fff)] dark:text-[var(--nui-accent-fg-dark,#fff)]',
-  danger:    'text-[var(--nui-danger-text,oklch(57.7%_.245_27.325))] dark:text-[var(--nui-danger-text-dark,oklch(70.4%_.191_22.216))]',
-  success:   'text-[var(--nui-success-text,oklch(52.7%_.154_150.069))] dark:text-[var(--nui-success-text-dark,oklch(87.1%_.15_154.449))]',
-  warning:   'text-[var(--nui-warning-text,oklch(55.4%_.135_66.442))] dark:text-[var(--nui-warning-text-dark,oklch(90.5%_.182_98.111))]',
-  info:      'text-[var(--nui-info-text,oklch(48.8%_.243_264.376))] dark:text-[var(--nui-info-text-dark,oklch(70.7%_.165_254.624))]',
-  onInverted:'text-[var(--nui-text-on-inverted,oklch(96.7%_.003_264.542))] dark:text-[var(--nui-text-on-inverted-dark,oklch(96.7%_.003_264.542))]',
+  base:      'text-[color:var(--nui-text,oklch(21%_.034_264.665))] dark:text-[color:var(--nui-text-dark,#fff)]',
+  muted:     'text-[color:var(--nui-text-muted,oklch(37.3%_.034_259.733))] dark:text-[color:var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))]',
+  subtle:    'text-[color:var(--nui-text-subtle,oklch(55.1%_.027_264.364))] dark:text-[color:var(--nui-text-subtle-dark,oklch(70.7%_.022_261.325))]',
+  faint:     'text-[color:var(--nui-text-faint,oklch(70.7%_.022_261.325))] dark:text-[color:var(--nui-text-faint-dark,oklch(55.1%_.027_264.364))]',
+  accent:    'text-[color:var(--nui-accent-text,oklch(51.1%_.262_276.966))] dark:text-[color:var(--nui-accent-text-dark,oklch(67.3%_.182_276.935))]',
+  onAccent:  'text-[color:var(--nui-accent-fg,#fff)] dark:text-[color:var(--nui-accent-fg-dark,#fff)]',
+  danger:    'text-[color:var(--nui-danger-text,oklch(57.7%_.245_27.325))] dark:text-[color:var(--nui-danger-text-dark,oklch(70.4%_.191_22.216))]',
+  success:   'text-[color:var(--nui-success-text,oklch(52.7%_.154_150.069))] dark:text-[color:var(--nui-success-text-dark,oklch(87.1%_.15_154.449))]',
+  warning:   'text-[color:var(--nui-warning-text,oklch(55.4%_.135_66.442))] dark:text-[color:var(--nui-warning-text-dark,oklch(90.5%_.182_98.111))]',
+  info:      'text-[color:var(--nui-info-text,oklch(48.8%_.243_264.376))] dark:text-[color:var(--nui-info-text-dark,oklch(70.7%_.165_254.624))]',
+  onInverted:'text-[color:var(--nui-text-on-inverted,oklch(96.7%_.003_264.542))] dark:text-[color:var(--nui-text-on-inverted-dark,oklch(96.7%_.003_264.542))]',
 } as const;
 
 /** Colores de texto en `hover:`. */
 export const textHover = {
-  base:   'hover:text-[var(--nui-text,oklch(21%_.034_264.665))] dark:hover:text-[var(--nui-text-dark,#fff)]',
-  muted:  'hover:text-[var(--nui-text-muted,oklch(37.3%_.034_259.733))] dark:hover:text-[var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))]',
+  base:   'hover:text-[color:var(--nui-text,oklch(21%_.034_264.665))] dark:hover:text-[color:var(--nui-text-dark,#fff)]',
+  muted:  'hover:text-[color:var(--nui-text-muted,oklch(37.3%_.034_259.733))] dark:hover:text-[color:var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))]',
   // Ambos apuntaban en oscuro al MISMO token que en reposo (`*-text-dark`), así
   // que el hover no se veía. Van a su propio par, que en oscuro aclara.
-  accent: 'hover:text-[var(--nui-accent-text-hover,oklch(45.7%_.24_277.023))] dark:hover:text-[var(--nui-accent-text-hover-dark,oklch(78.5%_.115_274.713))]',
-  danger: 'hover:text-[var(--nui-danger-text-hover,oklch(50.5%_.213_27.518))] dark:hover:text-[var(--nui-danger-text-hover-dark,oklch(80.8%_.114_19.571))]',
+  accent: 'hover:text-[color:var(--nui-accent-text-hover,oklch(45.7%_.24_277.023))] dark:hover:text-[color:var(--nui-accent-text-hover-dark,oklch(78.5%_.115_274.713))]',
+  danger: 'hover:text-[color:var(--nui-danger-text-hover,oklch(50.5%_.213_27.518))] dark:hover:text-[color:var(--nui-danger-text-hover-dark,oklch(80.8%_.114_19.571))]',
 } as const;
 
 /** Bordes. */
 export const border = {
-  base:   'border-[var(--nui-border,oklch(87.2%_.01_258.338))] dark:border-[var(--nui-border-dark,oklch(44.6%_.03_256.802))]',
-  subtle: 'border-[var(--nui-border-subtle,oklch(92.8%_.006_264.531))] dark:border-[var(--nui-border-subtle-dark,oklch(37.3%_.034_259.733))]',
-  accent: 'border-[var(--nui-accent,oklch(51.1%_.262_276.966))] dark:border-[var(--nui-accent-dark,oklch(58.5%_.233_277.117))]',
-  danger: 'border-[var(--nui-danger,oklch(57.7%_.245_27.325))] dark:border-[var(--nui-danger-dark,oklch(63.7%_.237_25.331))]',
-  accentSubtle: 'border-[var(--nui-accent-subtle,oklch(93%_.034_272.788))] dark:border-[var(--nui-accent-subtle-dark,oklch(39.8%_.195_277.366))]',
-  dangerSubtle: 'border-[var(--nui-danger-subtle,oklch(80.8%_.114_19.571))] dark:border-[var(--nui-danger-subtle-dark,oklch(57.7%_.245_27.325))]',
+  base:   'border-[color:var(--nui-border,oklch(87.2%_.01_258.338))] dark:border-[color:var(--nui-border-dark,oklch(44.6%_.03_256.802))]',
+  subtle: 'border-[color:var(--nui-border-subtle,oklch(92.8%_.006_264.531))] dark:border-[color:var(--nui-border-subtle-dark,oklch(37.3%_.034_259.733))]',
+  accent: 'border-[color:var(--nui-accent,oklch(51.1%_.262_276.966))] dark:border-[color:var(--nui-accent-dark,oklch(58.5%_.233_277.117))]',
+  danger: 'border-[color:var(--nui-danger,oklch(57.7%_.245_27.325))] dark:border-[color:var(--nui-danger-dark,oklch(63.7%_.237_25.331))]',
+  accentSubtle: 'border-[color:var(--nui-accent-subtle,oklch(93%_.034_272.788))] dark:border-[color:var(--nui-accent-subtle-dark,oklch(39.8%_.195_277.366))]',
+  dangerSubtle: 'border-[color:var(--nui-danger-subtle,oklch(80.8%_.114_19.571))] dark:border-[color:var(--nui-danger-subtle-dark,oklch(57.7%_.245_27.325))]',
 } as const;
 
 /** Color del texto de sugerencia de los campos. */
@@ -160,8 +165,8 @@ export const placeholder =
 
 /** Borde al enfocar. */
 export const focusBorder = {
-  accent: 'focus:border-[var(--nui-ring,oklch(58.5%_.233_277.117))] dark:focus:border-[var(--nui-ring-dark,oklch(67.3%_.182_276.935))]',
-  danger: 'focus:border-[var(--nui-danger,oklch(57.7%_.245_27.325))] dark:focus:border-[var(--nui-danger-dark,oklch(63.7%_.237_25.331))]',
+  accent: 'focus:border-[color:var(--nui-ring,oklch(58.5%_.233_277.117))] dark:focus:border-[color:var(--nui-ring-dark,oklch(67.3%_.182_276.935))]',
+  danger: 'focus:border-[color:var(--nui-danger,oklch(57.7%_.245_27.325))] dark:focus:border-[color:var(--nui-danger-dark,oklch(63.7%_.237_25.331))]',
 } as const;
 
 /**
@@ -169,38 +174,38 @@ export const focusBorder = {
  * que hace que un botón sólido tenga un borde apenas más oscuro que su relleno.
  */
 export const borderSoft = {
-  accent:  'border-[color-mix(in_oklab,var(--nui-accent,oklch(51.1%_.262_276.966))_20%,transparent)] dark:border-[color-mix(in_oklab,var(--nui-accent-dark,oklch(58.5%_.233_277.117))_20%,transparent)]',
-  danger:  'border-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_20%,transparent)] dark:border-[color-mix(in_oklab,var(--nui-danger-dark,oklch(63.7%_.237_25.331))_20%,transparent)]',
-  success: 'border-[color-mix(in_oklab,var(--nui-success,oklch(62.7%_.194_149.214))_20%,transparent)] dark:border-[color-mix(in_oklab,var(--nui-success-dark,oklch(72.3%_.219_149.579))_20%,transparent)]',
-  warning: 'border-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_20%,transparent)] dark:border-[color-mix(in_oklab,var(--nui-warning-dark,oklch(79.5%_.184_86.047))_20%,transparent)]',
+  accent:  'border-[color:color-mix(in_oklab,var(--nui-accent,oklch(51.1%_.262_276.966))_20%,transparent)] dark:border-[color:color-mix(in_oklab,var(--nui-accent-dark,oklch(58.5%_.233_277.117))_20%,transparent)]',
+  danger:  'border-[color:color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_20%,transparent)] dark:border-[color:color-mix(in_oklab,var(--nui-danger-dark,oklch(63.7%_.237_25.331))_20%,transparent)]',
+  success: 'border-[color:color-mix(in_oklab,var(--nui-success,oklch(62.7%_.194_149.214))_20%,transparent)] dark:border-[color:color-mix(in_oklab,var(--nui-success-dark,oklch(72.3%_.219_149.579))_20%,transparent)]',
+  warning: 'border-[color:color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_20%,transparent)] dark:border-[color:color-mix(in_oklab,var(--nui-warning-dark,oklch(79.5%_.184_86.047))_20%,transparent)]',
 } as const;
 
 /** Bordes en `hover:`. */
 export const borderHover = {
-  base:   'hover:border-[var(--nui-border,oklch(87.2%_.01_258.338))] dark:hover:border-[var(--nui-border-dark,oklch(44.6%_.03_256.802))]',
-  accent: 'hover:border-[var(--nui-accent,oklch(51.1%_.262_276.966))] dark:hover:border-[var(--nui-accent-dark,oklch(58.5%_.233_277.117))]',
+  base:   'hover:border-[color:var(--nui-border,oklch(87.2%_.01_258.338))] dark:hover:border-[color:var(--nui-border-dark,oklch(44.6%_.03_256.802))]',
+  accent: 'hover:border-[color:var(--nui-accent,oklch(51.1%_.262_276.966))] dark:hover:border-[color:var(--nui-accent-dark,oklch(58.5%_.233_277.117))]',
 } as const;
 
 /** Líneas divisorias de listas y tablas. */
 export const divide = {
-  base:   'divide-[var(--nui-border-subtle,oklch(92.8%_.006_264.531))] dark:divide-[var(--nui-border-subtle-dark,oklch(37.3%_.034_259.733))]',
+  base:   'divide-[color:var(--nui-border-subtle,oklch(92.8%_.006_264.531))] dark:divide-[color:var(--nui-border-subtle-dark,oklch(37.3%_.034_259.733))]',
 } as const;
 
 /** Color de la separación entre el control y su anillo de foco. */
 export const ringOffset =
-  'focus:ring-offset-2 focus:ring-offset-[var(--nui-ring-offset,oklch(98.5%_.002_247.839))] ' +
-  'dark:focus:ring-offset-[var(--nui-ring-offset-dark,oklch(21%_.034_264.665))]';
+  'focus:ring-offset-2 focus:ring-offset-[color:var(--nui-ring-offset,oklch(98.5%_.002_247.839))] ' +
+  'dark:focus:ring-offset-[color:var(--nui-ring-offset-dark,oklch(21%_.034_264.665))]';
 
 /** Anillo de foco completo, listo para pegar en cualquier control. */
 export const focusRing =
-  'focus:outline-none focus:ring-2 focus:ring-[var(--nui-ring,oklch(58.5%_.233_277.117))] ' +
-  'dark:focus:ring-[var(--nui-ring-dark,oklch(67.3%_.182_276.935))]';
+  'focus:outline-none focus:ring-2 focus:ring-[color:var(--nui-ring,oklch(58.5%_.233_277.117))] ' +
+  'dark:focus:ring-[color:var(--nui-ring-dark,oklch(67.3%_.182_276.935))]';
 
 /** Anillo de foco teñido con el color de cada variante. */
 export const focusRingOf = {
-  danger:  'focus:outline-none focus:ring-2 focus:ring-[var(--nui-danger,oklch(57.7%_.245_27.325))] dark:focus:ring-[var(--nui-danger-dark,oklch(63.7%_.237_25.331))]',
-  success: 'focus:outline-none focus:ring-2 focus:ring-[var(--nui-success,oklch(62.7%_.194_149.214))] dark:focus:ring-[var(--nui-success-dark,oklch(72.3%_.219_149.579))]',
-  warning: 'focus:outline-none focus:ring-2 focus:ring-[var(--nui-warning,oklch(68.1%_.162_75.834))] dark:focus:ring-[var(--nui-warning-dark,oklch(79.5%_.184_86.047))]',
+  danger:  'focus:outline-none focus:ring-2 focus:ring-[color:var(--nui-danger,oklch(57.7%_.245_27.325))] dark:focus:ring-[color:var(--nui-danger-dark,oklch(63.7%_.237_25.331))]',
+  success: 'focus:outline-none focus:ring-2 focus:ring-[color:var(--nui-success,oklch(62.7%_.194_149.214))] dark:focus:ring-[color:var(--nui-success-dark,oklch(72.3%_.219_149.579))]',
+  warning: 'focus:outline-none focus:ring-2 focus:ring-[color:var(--nui-warning,oklch(68.1%_.162_75.834))] dark:focus:ring-[color:var(--nui-warning-dark,oklch(79.5%_.184_86.047))]',
 } as const;
 
 /**
@@ -218,12 +223,12 @@ export const bgHoverOf = {
 
 /** Igual que `focusRing` pero solo con teclado. */
 export const focusVisibleRing =
-  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--nui-ring,oklch(58.5%_.233_277.117))] ' +
-  'dark:focus-visible:ring-[var(--nui-ring-dark,oklch(67.3%_.182_276.935))]';
+  'focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--nui-ring,oklch(58.5%_.233_277.117))] ' +
+  'dark:focus-visible:ring-[color:var(--nui-ring-dark,oklch(67.3%_.182_276.935))]';
 
 /** Anillo del acento en `focus:ring-*` sin el resto del bloque. */
 export const ringAccent =
-  'ring-[var(--nui-ring,oklch(58.5%_.233_277.117))] dark:ring-[var(--nui-ring-dark,oklch(67.3%_.182_276.935))]';
+  'ring-[color:var(--nui-ring,oklch(58.5%_.233_277.117))] dark:ring-[color:var(--nui-ring-dark,oklch(67.3%_.182_276.935))]';
 
 /** Todo junto, por comodidad al importar. */
 export const t = { bg, bgHover, bgHoverOf, text, textHover, border, borderHover, borderSoft, divide, placeholder, focusBorder, ringOffset, focusRing, focusRingOf, focusVisibleRing, ringAccent } as const;

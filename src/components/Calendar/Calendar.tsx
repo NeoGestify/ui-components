@@ -44,8 +44,8 @@ const SWIPE_PX = 45;
 
 /** Anillo tenue que marca el día de hoy. */
 const ringAccentSoft =
-  'ring-[color-mix(in_oklab,var(--nui-accent,oklch(51.1%_.262_276.966))_60%,transparent)] ' +
-  'dark:ring-[color-mix(in_oklab,var(--nui-accent-dark,oklch(58.5%_.233_277.117))_70%,transparent)]';
+  'ring-[color:color-mix(in_oklab,var(--nui-accent,oklch(51.1%_.262_276.966))_60%,transparent)] ' +
+  'dark:ring-[color:color-mix(in_oklab,var(--nui-accent-dark,oklch(58.5%_.233_277.117))_70%,transparent)]';
 
 type View = 'days' | 'months' | 'years';
 
@@ -410,7 +410,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
               'flex h-full w-full items-center justify-center rounded-full font-medium leading-none',
               `${motion.colors} touch-manipulation select-none`,
               focusVisibleRing,
-              'focus-visible:ring-offset-1 focus-visible:ring-offset-[var(--nui-surface,#fff)] dark:focus-visible:ring-offset-[var(--nui-surface-dark,oklch(27.8%_.033_256.848))]',
+              'focus-visible:ring-offset-1 focus-visible:ring-offset-[color:var(--nui-surface,#fff)] dark:focus-visible:ring-offset-[color:var(--nui-surface-dark,oklch(27.8%_.033_256.848))]',
               sz.text,
               selected
                 ? `${bg.accent} ${text.onAccent} ${bgHover.accent} shadow-sm`

@@ -4,7 +4,8 @@ import {
 } from 'react';
 import { bg, border, focusBorder, focusRing, focusRingOf, placeholder, text } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
-import { mergeRefs } from '../../internal/mergeRefs';
+import { useMergedRefs } from '../../internal/mergeRefs';
+import { cn } from '../../internal/cn';
 
 type TextAreaVariant = 'default' | 'outline' | 'filled' | 'minimal';
 type TextAreaSize = 'small' | 'medium' | 'large';
@@ -60,6 +61,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(({
   const errorId = `${textAreaId}-error`;
   const helperId = `${textAreaId}-helper`;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const setTextArea = useMergedRefs<HTMLTextAreaElement>(ref, textareaRef);
 
   const adjustHeight = () => {
     const el = textareaRef.current;
@@ -81,8 +83,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(({
   const errorCls = error ? `${border.dangerSubtle} ${focusRingOf.danger} ${focusBorder.danger}` : '';
   const resizeCls = autoResize ? 'resize-none overflow-hidden' : RESIZE_CLASSES[resize];
 
-  const classes = [baseCls, SIZE_CLASSES[size], VARIANT_CLASSES[variant], errorCls, resizeCls, className]
-    .filter(Boolean).join(' ');
+  const classes = cn(baseCls, SIZE_CLASSES[size], VARIANT_CLASSES[variant], errorCls, resizeCls, className);
 
   const maxLength = typeof props.maxLength === 'number' ? props.maxLength : undefined;
   const currentLength =
@@ -113,7 +114,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(({
         </div>
       )}
       <textarea
-        ref={mergeRefs(ref, textareaRef)}
+        ref={setTextArea}
         id={textAreaId}
         className={classes}
         onInput={handleInput}

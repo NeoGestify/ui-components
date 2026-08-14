@@ -2,7 +2,7 @@ import {
   forwardRef, useCallback, useId, useRef, useState,
   type ChangeEvent, type InputHTMLAttributes, type ReactNode,
 } from 'react';
-import { mergeRefs } from '../../internal/mergeRefs';
+import { useMergedRefs } from '../../internal/mergeRefs';
 import { CloseIcon } from '../icons/icons';
 import {
   bg, border, focusBorder, focusRing, focusRingOf, placeholder, text, textHover,
@@ -83,6 +83,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   const filled = isControlled ? String(value) !== '' : hasText;
 
   const innerRef = useRef<HTMLInputElement | null>(null);
+  const setInput = useMergedRefs<HTMLInputElement>(ref, innerRef);
 
   const handleChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     if (!isControlled) setHasText(e.target.value !== '');
@@ -143,7 +144,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
     `h-4 w-4 ${type === 'radio' ? 'rounded-full' : 'rounded'} border ${border.base} ${bg.surface} [color-scheme:light] dark:[color-scheme:dark]`,
     'accent-[var(--nui-accent,oklch(51.1%_.262_276.966))] dark:accent-[var(--nui-accent-dark,oklch(58.5%_.233_277.117))]',
     `${text.accent} ${focusRing}`,
-    'focus:ring-offset-2 focus:ring-offset-[var(--nui-surface,#fff)] dark:focus:ring-offset-[var(--nui-surface-sunken-dark,oklch(21%_.034_264.665))]',
+    'focus:ring-offset-2 focus:ring-offset-[color:var(--nui-surface,#fff)] dark:focus:ring-offset-[color:var(--nui-surface-sunken-dark,oklch(21%_.034_264.665))]',
     `disabled:opacity-50 disabled:cursor-not-allowed ${motion.colors} cursor-pointer`,
     error ? `${border.dangerSubtle} ${focusRingOf.danger}` : '',
   );
@@ -155,7 +156,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
     `disabled:opacity-50 disabled:cursor-not-allowed ${motion.colors}`,
     'file:mr-4 file:py-2 file:px-4 file:rounded-l-md file:border-0 file:text-sm file:font-medium',
     'file:bg-[var(--nui-accent-soft,oklch(96.2%_.018_272.314))] dark:file:bg-[var(--nui-accent-soft-dark,oklch(58.5%_.233_277.117_/_.15))]',
-    'file:text-[var(--nui-accent-text,oklch(51.1%_.262_276.966))] dark:file:text-[var(--nui-accent-text-dark,oklch(67.3%_.182_276.935))]',
+    'file:text-[color:var(--nui-accent-text,oklch(51.1%_.262_276.966))] dark:file:text-[color:var(--nui-accent-text-dark,oklch(67.3%_.182_276.935))]',
     'file:transition-colors file:duration-[var(--nui-duration-fast,120ms)] motion-reduce:file:transition-none file:cursor-pointer',
     SIZE_CLASSES[size],
     error ? `${border.dangerSubtle} ${focusRingOf.danger}` : border.base,
@@ -242,7 +243,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
             </div>
           )}
           <input
-            ref={mergeRefs(ref, innerRef)}
+            ref={setInput}
             id={inputId}
             className={inputCls}
             type={type}

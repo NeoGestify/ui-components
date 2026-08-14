@@ -46,9 +46,9 @@ const SIZE_CLASS: Record<ModalSize, string> = {
 
 const VARIANT_HEADER: Record<ModalVariant, string> = {
     default: `${bg.surfaceBand} border-b ${border.subtle}`,
-    danger:  'bg-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-danger-dark,oklch(63.7%_.237_25.331))_25%,transparent)] border-b border-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_25%,transparent)]',
-    success: 'bg-[color-mix(in_oklab,var(--nui-success,oklch(62.7%_.194_149.214))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-success-dark,oklch(72.3%_.219_149.579))_25%,transparent)] border-b border-[color-mix(in_oklab,var(--nui-success,oklch(62.7%_.194_149.214))_25%,transparent)]',
-    warning: 'bg-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-warning-dark,oklch(79.5%_.184_86.047))_25%,transparent)] border-b border-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_25%,transparent)]',
+    danger:  'bg-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-danger-dark,oklch(63.7%_.237_25.331))_25%,transparent)] border-b border-[color:color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_25%,transparent)]',
+    success: 'bg-[color-mix(in_oklab,var(--nui-success,oklch(62.7%_.194_149.214))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-success-dark,oklch(72.3%_.219_149.579))_25%,transparent)] border-b border-[color:color-mix(in_oklab,var(--nui-success,oklch(62.7%_.194_149.214))_25%,transparent)]',
+    warning: 'bg-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-warning-dark,oklch(79.5%_.184_86.047))_25%,transparent)] border-b border-[color:color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_25%,transparent)]',
 };
 
 const VARIANT_TITLE: Record<ModalVariant, string> = {
@@ -149,6 +149,10 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     };
 
     return (
+        // El equivalente por teclado del clic en el velo no es un listener aquí:
+        // es el Escape, que ya se atiende por el evento nativo `cancel`, y
+        // además siempre hay un botón de cerrar enfocable.
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
         <dialog
             ref={dialogRef}
             aria-labelledby={titleId}
@@ -177,7 +181,7 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
                             onClick={handleClose}
                             aria-label={closeLabel}
                             title={closeLabel}
-                            className={`${text.faint} hover:text-[var(--nui-text-muted,oklch(37.3%_.034_259.733))] dark:hover:text-[var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))]`}
+                            className={`${text.faint} hover:text-[color:var(--nui-text-muted,oklch(37.3%_.034_259.733))] dark:hover:text-[color:var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))]`}
                         >
                             <CloseIcon className="w-5 h-5" />
                         </Button>

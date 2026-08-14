@@ -7,6 +7,7 @@ import {
 import type { NuiColors, VenuePaletteOverride } from 'neogestify-ui-components';
 import type { DomainConfig, DateRange } from 'neogestify-ui-components';
 import { useState, useRef, useEffect } from 'react';
+import { Flotantes } from './demos/Flotantes';
 
 // ─── Demo «elemento clickeable» ────────────────────────────────────────────────
 // El tipo INFO trae `clickable: true` por defecto: en el visor responde al clic;
@@ -713,6 +714,19 @@ function App() {
               }
             />
           </div>
+        </section>
+
+        {/* Capas flotantes: Dropdown, Popover, Tooltip */}
+        <section className="mb-8 sm:mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Capas flotantes
+          </h2>
+          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+            Todas comparten el mismo colocador: se voltean y se desplazan solas
+            para no salirse de la pantalla, y viven en un portal para que ningún
+            <code className="mx-1">overflow: hidden</code> las recorte.
+          </p>
+          <Flotantes />
         </section>
 
         {/* Alerts Section */}

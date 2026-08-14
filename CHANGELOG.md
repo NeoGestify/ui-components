@@ -1,5 +1,106 @@
 # Changelog
 
+## 3.4.0
+
+`Dropdown` y `Popover`, y tres fallos que solo aparecieron al probarlos en un
+navegador de verdad. Dos de ellos los había metido yo en 3.2.0 y 3.3.0.
+
+### `Dropdown`
+
+Menú de acciones anclado a un botón, con el teclado completo: flechas, Inicio,
+Fin, Escape, Tab para cerrar y **escritura rápida** (teclear «el» salta a
+«Eliminar», con el corte de un segundo que usa un `<select>` nativo).
+
+```tsx
+<Dropdown
+  trigger={<Button variant="icon"><MenuIcon /></Button>}
+  items={[
+    { id: 'edit', label: 'Editar', icon: <EditIcon />, shortcut: '⌘E' },
+    { id: 'del',  label: 'Eliminar', danger: true, separatorBefore: true },
+  ]}
+  onSelect={id => …}
+/>
+```
+
+El foco no viaja con Tab entre los elementos: un menú es **una sola** parada de
+tabulación y dentro se navega con flechas, que es lo que espera un lector de
+pantalla al encontrarse un `role="menu"`.
+
+### `Popover`
+
+La capa flotante genérica: se abre al pulsar y admite el foco dentro, así que
+puede llevar campos y botones. Cierra al pulsar fuera o con Escape, y devuelve
+el foco al disparador.
+
+### Corrección: `cn()` se comía las clases de tamaño (regresión de 3.2.0)
+
+La grave. `tailwind-merge` no puede adivinar el tipo de un valor arbitrario:
+`border-[var(--x)]` tanto podría ser un color como un grosor, y `text-[var(--x)]`
+un color o un tamaño de letra. Elegía grosor y tamaño — que es lo contrario de
+lo que son todos los tokens de esta librería — así que:
+
+```ts
+cn('border', border.subtle)   // → se quedaba SIN `border`: 0px de borde
+cn('text-sm', text.base)      // → se quedaba SIN `text-sm`
+```
+
+Se veía a simple vista: el panel del `Popover` salía sin borde ninguno.
+
+Arreglado en el origen, anotando el tipo en los 112 valores arbitrarios de
+color: `border-[color:var(--x)]`. Es sintaxis estándar de Tailwind (3.0+), no
+cambia ni un píxel del CSS generado, y ahora `tailwind-merge` los clasifica
+bien. Hay pruebas de regresión que fallan si alguien quita la anotación.
+
+### Corrección: bucle de render en las capas flotantes
+
+`mergeRefs()` devuelve una función nueva en cada render. React compara esa
+función entre renders y, si cambia, llama a la ref con `null` y luego otra vez
+con el nodo. Cuando una de las refs unidas es un `setState` —como pasó al
+guardar el panel en estado— el ciclo se cierra sobre sí mismo:
+
+```
+render → ref nueva → React reconecta → setState(null) → setState(nodo) → render → …
+```
+
+`Popover` y `Dropdown` renderizaban sin parar y el panel se quedaba congelado en
+`opacity-0`: la animación de entrada se cancelaba en cada vuelta. Ahora hay
+`useMergedRefs`, con identidad estable, y se usa también en `Input` y `TextArea`.
+
+### Corrección: el portal llegaba tarde
+
+El colocador recibía una **ref** al elemento flotante, pero ese elemento vive en
+un `<Portal>` que no pinta hasta su propio efecto: en el render en que se abría,
+la ref todavía valía `null`, el efecto no encontraba nada que medir y no volvía
+a ejecutarse. Mismo origen del fallo por el que el foco no entraba en el menú.
+
+`useAnchoredPosition` recibe ahora el **elemento**, no la ref, así que el render
+en que aparece es el que lo mide.
+
+### Linter con `react-hooks` y `jsx-a11y`
+
+Solo estaban `eslint:recommended` y `@typescript-eslint`. Al añadir los dos
+plugins salieron **18 errores de accesibilidad reales**, todos corregidos:
+
+- `Card` con `interactive` era un `div` enfocable sin `role` ni teclado: llegabas
+  a él con el tabulador y no había forma de activarlo. Ahora es `role="button"`
+  con Enter y Espacio.
+- En `ElementLibraryBuilder`, las filas de grupos y elementos se seleccionaban
+  con un `onClick` sobre un `div`: inalcanzables con el teclado. Ahora son
+  botones de verdad, sin anidar el de borrar dentro (que era HTML inválido).
+- El velo y el asa de la hoja móvil del `DatePicker`, igual.
+- `aria-invalid` en el disparador del `DatePicker`: no es un atributo válido en
+  `role="button"`.
+- Etiquetas `<label>` sin campo asociado en el editor de mapas.
+
+Quedan 9 avisos de `exhaustive-deps` en `Calendar` y `EditorCanvas`, sin revisar
+todavía. No rompen la compilación.
+
+### Pruebas
+
+Arranca la suite: `bun test`, con 21 pruebas sobre el colocador y sobre `cn()`.
+Nuevos scripts: `bun run typecheck`, `bun run test` y `bun run check` (los tres
+seguidos).
+
 ## 3.3.0
 
 Una capa de primitivas debajo de los componentes, y los tres fallos que salieron

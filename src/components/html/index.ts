@@ -27,3 +27,8 @@ export { Pagination, pageRange, type PaginationProps } from './Pagination';
 // ─── Controles ──────────────────────────────────────────────────────────────
 export { Switch, type SwitchProps } from './Switch';
 export { Tooltip, type TooltipProps } from './Tooltip';
+
+// ─── Capas flotantes ────────────────────────────────────────────────────────
+export { Popover, type PopoverProps } from './Popover';
+export { Dropdown, type DropdownProps, type DropdownItem } from './Dropdown';
+export type { Placement, Side, Align } from '../../internal/position';

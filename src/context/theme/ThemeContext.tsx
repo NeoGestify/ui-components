@@ -73,6 +73,7 @@ export function ThemeProvider({
     else if (enableSystem) setThemeState(systemTheme());
     // Solo al montar: a partir de aquí manda la elección del usuario, así que
     // `storageKey`/`enableSystem` no deben re-disparar la sincronización.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Aplicar al DOM ─────────────────────────────────────────────────────────

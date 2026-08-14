@@ -64,7 +64,7 @@ const DANGER_BTN_CLS =
   'w-full text-xs px-3 py-1.5 rounded ' +
   'bg-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_8%,white)] ' +
   'dark:bg-[color-mix(in_oklab,var(--nui-danger-dark,oklch(63.7%_.237_25.331))_18%,transparent)] ' +
-  'border border-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_25%,transparent)] ' +
+  'border border-[color:color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_25%,transparent)] ' +
   `${text.danger} ${motion.colors} ` +
   FOCUS_CLS;
 
@@ -371,8 +371,10 @@ export function PropertiesPanel({
         {/* Rotation */}
         <div className="grid grid-cols-2 gap-2">
           <NumField label="Rotación °" value={el.rotation} onChange={v => setGeom({ r: v })} step={15} />
-          <label className="flex flex-col gap-0.5">
-            <span className={FIELD_LABEL_CLS}>&nbsp;</span>
+          {/* Un <div> y no un <label>: una etiqueta describe un campo de
+              formulario, y aquí dentro solo hay un botón. */}
+          <div className="flex flex-col gap-0.5">
+            <span className={FIELD_LABEL_CLS} aria-hidden="true">&nbsp;</span>
             <button
               type="button"
               onClick={() => setGeom({ r: 0 })}
@@ -380,7 +382,7 @@ export function PropertiesPanel({
             >
               Resetear
             </button>
-          </label>
+          </div>
         </div>
 
         {/* Clickable */}
