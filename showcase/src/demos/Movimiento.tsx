@@ -24,6 +24,10 @@ export function Movimiento() {
   const [cajon, setCajon] = useState(false);
   const [modal, setModal] = useState(false);
   const [efectivo, setEfectivo] = useState<{ ms: number; px: number } | null>(null);
+  const [conZIndex, setConZIndex] = useState(false);
+  const [zModal, setZModal] = useState('40');
+  const [zBanda, setZBanda] = useState('50');
+  const [enTopLayer, setEnTopLayer] = useState(false);
 
   /** Escribe las variables en `<html>`: afecta a toda la página. */
   const aplicarGlobal = () => {
@@ -111,6 +115,86 @@ export function Movimiento() {
             </p>
           </div>
         </Drawer>
+      )}
+
+      {/* ── zIndex: algo propio por encima del modal ─────────────────── */}
+      <Divider label="zIndex" />
+      <div className="space-y-4">
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Un <code>&lt;dialog&gt;</code> con <code>showModal()</code> vive en la
+          <em> top layer</em>, por encima de todo el documento y al margen de
+          cualquier <code>z-index</code>. Pasando <code>zIndex</code> el modal se
+          sale de esa capa y vuelve a obedecer al apilamiento normal — la
+          modalidad se conserva marcando <code>inert</code> el resto de la página.
+        </p>
+
+        <div className="grid max-w-xl gap-4 sm:grid-cols-2">
+          <Input
+            type="number"
+            label="z-index del modal"
+            value={zModal}
+            onChange={e => setZModal(e.target.value)}
+            helperText="La prop zIndex del componente"
+          />
+          <Input
+            type="number"
+            label="z-index de la banda verde"
+            value={zBanda}
+            onChange={e => setZBanda(e.target.value)}
+            helperText="Un div corriente, ajeno a la librería"
+          />
+        </div>
+
+        <Switch
+          label="Modal en la top layer"
+          description="Con esto activado el z-index deja de importar: la top layer gana siempre"
+          checked={enTopLayer}
+          onChange={setEnTopLayer}
+        />
+
+        <div className="flex flex-wrap items-center gap-3">
+          <Button variant="secondary" onClick={() => setConZIndex(true)}>
+            Abrir modal
+          </Button>
+          <Badge variant={enTopLayer ? 'warning' : Number(zBanda) > Number(zModal) ? 'success' : 'danger'}>
+            {enTopLayer
+              ? 'En la top layer: la banda quedará debajo'
+              : Number(zBanda) > Number(zModal)
+                ? `La banda gana (${zBanda} > ${zModal})`
+                : `El modal gana (${zModal} ≥ ${zBanda})`}
+          </Badge>
+        </div>
+      </div>
+
+      {conZIndex && (
+        <>
+          <Modal
+            title={enTopLayer ? 'Modal en la top layer' : `Modal a z-${zModal}`}
+            zIndex={Number(zModal)}
+            topLayer={enTopLayer}
+            onClose={() => setConZIndex(false)}
+            footer={<Button onClick={() => setConZIndex(false)}>Cerrar</Button>}
+          >
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Modal a <code>z-index: {zModal}</code>, banda a{' '}
+              <code>z-index: {zBanda}</code>.
+              {enTopLayer
+                ? ' Pero está en la top layer, así que ningún z-index de la página puede ponerse por encima.'
+                : Number(zBanda) > Number(zModal)
+                  ? ' La banda debería verse nítida sobre el velo.'
+                  : ' La banda debería quedar debajo, atenuada y desenfocada.'}
+            </p>
+          </Modal>
+
+          {/* Deliberadamente un elemento cualquiera, no un componente nuestro. */}
+          <div
+            style={{ zIndex: Number(zBanda) }}
+            className="fixed inset-x-0 bottom-0 bg-emerald-600 px-4 py-3 text-center text-sm font-medium text-white"
+          >
+            Banda ajena a la librería · z-index {zBanda}
+            <button className="ml-3 underline" onClick={() => setConZIndex(false)}>cerrar</button>
+          </div>
+        </>
       )}
 
       {modal && (

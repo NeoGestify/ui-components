@@ -202,6 +202,29 @@ export const ToastProvider: FC<ToastProviderProps> = ({
   const onDismissRef = useRef(new Map<string, () => void>());
   const [pausado, setPausado] = useState(false);
 
+  /**
+   * Los avisos NO se portalizan dentro del modal abierto, a diferencia del
+   * resto de capas flotantes: tienen que sobrevivir a que ese modal se cierre.
+   * Un «guardado con éxito» lanzado desde un formulario dentro de un modal se
+   * iría con él justo al cerrarlo, que es cuando hay que leerlo.
+   *
+   * Así que se quedan colgando de <body> y se suben a la top layer con la API
+   * de *popover*: es la forma de ponerse por encima de un `<dialog>` sin
+   * meterse dentro de él. Donde no esté disponible se degrada al `z-index` de
+   * siempre, que basta salvo que haya un modal abierto.
+   */
+  const subirATopLayer = useCallback((el: HTMLDivElement | null) => {
+    if (!el || typeof el.showPopover !== 'function') return;
+    try {
+      // Por atributo y no por prop de JSX: `popover` todavía no está en los
+      // tipos de React 18.
+      el.setAttribute('popover', 'manual');
+      if (!el.matches(':popover-open')) el.showPopover();
+    } catch {
+      // Un `popover` ya abierto o no soportado: se queda con su z-index.
+    }
+  }, []);
+
   const limpiarTimer = useCallback((id: string) => {
     const t = timers.current.get(id);
     if (t) clearTimeout(t);
@@ -282,13 +305,16 @@ export const ToastProvider: FC<ToastProviderProps> = ({
     <ToastContext.Provider value={api}>
       {children}
       {toasts.length > 0 && (
-        <Portal>
+        <Portal container={typeof document === 'undefined' ? null : document.body}>
           <div
+            ref={subirATopLayer}
             // `pointer-events-none` en el contenedor y `auto` en cada aviso: la
             // región ocupa una franja entera de la pantalla y sin esto bloquea
             // los clics de todo lo que tenga debajo.
             className={cn(
               'pointer-events-none fixed z-[80] flex max-h-screen w-full max-w-sm flex-col gap-2 overflow-hidden p-4',
+              // El UA da a `[popover]` borde, relleno, fondo y `margin: auto`.
+              'm-0 border-0 bg-transparent',
               POSITION_CLASS[position],
               // Lo más nuevo entra por el borde: arriba se apila hacia abajo y
               // abajo al revés, para que nunca empuje a lo que ya estabas

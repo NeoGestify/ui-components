@@ -7,6 +7,11 @@ import { CloseIcon } from '../icons/icons';
 import { bg, border, text } from '../../theme/tokens';
 import { blurStyle, motion, motionDuration, motionStyle, type AnimatableProps } from '../../theme/motion';
 import { cn } from '../../internal/cn';
+import { inertOutside } from '../../internal/inertOutside';
+import { Portal } from '../../internal/Portal';
+import { NUI_LAYERS } from '../../internal/layers';
+import { pushTopLayer } from '../../internal/topLayer';
+import { useMergedRefs } from '../../internal/mergeRefs';
 import { useScrollLock } from '../../internal/useScrollLock';
 import { useMessage } from '../../context/config/NuiConfigProvider';
 
@@ -29,6 +34,23 @@ export interface DrawerProps extends AnimatableProps {
    * Por defecto, el valor global (`--nui-blur`, 8 px).
    */
   blur?: number | false;
+  /**
+   * `z-index` del cajón.
+   *
+   * Para que signifique algo hay que salirse de la *top layer* del navegador
+   * —ahí un `z-index` es inerte, porque esa capa va por encima de todo el
+   * documento—, así que pasar `zIndex` implica `topLayer={false}`.
+   *
+   * Con `topLayer={false}` y sin dar valor, se apila en `NUI_LAYERS.modal`
+   * (50), por debajo de los menús y los avisos de la propia librería.
+   */
+  zIndex?: number;
+  /**
+   * Abre el diálogo en la *top layer*. Por defecto sí, salvo que pases
+   * `zIndex`. Fuera de ella el navegador deja de atrapar el foco, así que la
+   * librería marca `inert` el resto de la página a mano.
+   */
+  topLayer?: boolean;
   className?: string;
 }
 
@@ -85,6 +107,9 @@ const FUERA: Record<DrawerSide, string> = {
  * Como `Modal`, se controla montándolo y desmontándolo; `onClose` se avisa
  * cuando termina la animación de salida.
  */
+/** `<body>` cuando lo hay. En SSR el portal no pinta nada. */
+const bodyOrNull = () => (typeof document === 'undefined' ? null : document.body);
+
 export const Drawer = forwardRef<DrawerRef, DrawerProps>(({
   onClose,
   title,
@@ -97,12 +122,20 @@ export const Drawer = forwardRef<DrawerRef, DrawerProps>(({
   closeOnEsc = true,
   animate,
   blur,
+  zIndex,
+  topLayer = zIndex === undefined,
   className = '',
 }, ref) => {
   const closeLabel = useMessage('close');
   const [show, setShow] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // El nodo también en estado: con `topLayer={false}` el diálogo vive en un
+  // portal, que no monta hasta su propio efecto. Atado solo a la ref, el
+  // efecto de apertura corría con `dialogRef.current` todavía en `null` y el
+  // diálogo no llegaba a abrirse nunca.
+  const [dialogEl, setDialogEl] = useState<HTMLDialogElement | null>(null);
+  const setDialog = useMergedRefs<HTMLDialogElement>(dialogRef, setDialogEl);
   const titleId = `drawer-title-${useId()}`;
 
   const handleClose = () => {
@@ -118,15 +151,26 @@ export const Drawer = forwardRef<DrawerRef, DrawerProps>(({
   handleCloseRef.current = handleClose;
 
   useEffect(() => {
-    const dialog = dialogRef.current;
+    const dialog = dialogEl;
     if (!dialog) return;
     // `showModal()` lanza `InvalidStateError` sobre un diálogo ya abierto, y en
     // `StrictMode` el efecto se ejecuta dos veces.
-    if (typeof dialog.showModal === 'function') {
+    // Fuera de la top layer se abre con el atributo `open`: diálogo normal del
+    // documento, obediente al `z-index`, con la inercia puesta a mano.
+    let quitarInert: (() => void) | undefined;
+    if (topLayer && typeof dialog.showModal === 'function') {
       if (!dialog.open) dialog.showModal();
     } else {
       dialog.setAttribute('open', '');
+      if (!topLayer) quitarInert = inertOutside(dialog);
     }
+    // Se apunta en la pila de la top layer para que las capas flotantes
+    // (Dropdown, Combobox, Tooltip, Toast) sepan dentro de qué portalizarse.
+    // Sin esto acaban en <body>, por debajo de este diálogo, e invisibles.
+    // Solo si de verdad está en la top layer: si no, las capas flotantes deben
+    // seguir colgando de <body>, donde el `z-index` manda.
+    const bajaTopLayer = topLayer ? pushTopLayer(dialog) : () => {};
+
     // Este reflujo forzado NO es supersticioso. El diálogo acaba de pasar de
     // `display: none` a visible, y una transición solo arranca si el navegador
     // ha llegado a CALCULAR el estilo de partida. Sin esto, el estado inicial
@@ -139,13 +183,23 @@ export const Drawer = forwardRef<DrawerRef, DrawerProps>(({
     // de clase que viene después ya es una transición de verdad.
     void dialog.offsetHeight;
     setShow(true);
-  }, []);
+
+    return () => {
+      bajaTopLayer();
+      quitarInert?.();
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+    };
+  // `topLayer` no va en las dependencias: el modo de apertura se decide una
+  // sola vez, al montar. Cambiarlo en caliente exigiría cerrar y reabrir el
+  // diálogo, que no es algo que este componente soporte.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dialogEl]);
 
   useScrollLock();
 
   // El Escape nativo cierra de golpe y sin animación, así que se intercepta.
   useEffect(() => {
-    const dialog = dialogRef.current;
+    const dialog = dialogEl;
     if (!dialog) return;
     const onCancel = (e: Event) => {
       e.preventDefault();
@@ -153,20 +207,20 @@ export const Drawer = forwardRef<DrawerRef, DrawerProps>(({
     };
     dialog.addEventListener('cancel', onCancel);
     return () => dialog.removeEventListener('cancel', onCancel);
-  }, [closeOnEsc]);
+  }, [closeOnEsc, dialogEl]);
 
   useImperativeHandle(ref, () => ({ handleClose }));
 
   const horizontal = side === 'left' || side === 'right';
 
-  return (
+  const dialogo = (
     // El equivalente por teclado del clic en el velo es el Escape, que ya se
     // atiende por el evento nativo `cancel`, y siempre hay un botón de cerrar.
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
     <dialog
-      ref={dialogRef}
+      ref={setDialog}
       aria-labelledby={titleId}
-      style={{ ...motionStyle(animate), ...blurStyle(blur) }}
+      style={{ ...motionStyle(animate), ...blurStyle(blur), zIndex: topLayer ? undefined : (zIndex ?? NUI_LAYERS.modal) }}
       onClick={e => { if (closeOnBackdrop && e.target === e.currentTarget) handleClose(); }}
       className={cn(
         'fixed inset-0 m-0 h-full max-h-none w-full max-w-none border-none bg-transparent p-0',
@@ -238,6 +292,11 @@ export const Drawer = forwardRef<DrawerRef, DrawerProps>(({
       </section>
     </dialog>
   );
+
+  // Fuera de la top layer tiene que colgar de <body> para que `inertOutside`
+  // pueda marcar a sus hermanos; enterrado en el árbol de la aplicación, su
+  // propio contenedor lo contendría y no se podría marcar nada.
+  return topLayer ? dialogo : <Portal container={bodyOrNull()}>{dialogo}</Portal>;
 });
 
 Drawer.displayName = 'Drawer';

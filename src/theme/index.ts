@@ -2,6 +2,7 @@
 // librería: envolver un componente y que sus clases ganen de verdad.
 // Vive en `theme` y no en `html` para que siga siendo utilizable en servidor.
 export { cn, type ClassValue } from '../internal/cn';
+export { NUI_LAYERS } from '../internal/layers';
 export {
   NUI_DEFAULTS,
   bg, bgHover, bgHoverOf, text, textHover, border, borderHover, borderSoft, divide, placeholder, focusBorder,

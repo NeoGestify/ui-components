@@ -1,5 +1,65 @@
 # Changelog
 
+## 3.8.0
+
+Vuelve `zIndex`, y con él sale a la luz un fallo que llevaba desde la 3.6.0.
+
+### El fallo: las capas flotantes desaparecían dentro de un modal
+
+`Dropdown`, `Combobox`, `Popover` y `Tooltip` se portalizaban a `document.body`
+con `z-index` 60–80. Un `<dialog>` abierto con `showModal()` vive en la *top
+layer*, que se pinta por encima de **todo** el documento al margen de cualquier
+`z-index`. Resultado: abrir un desplegable dentro de un `Modal` o un `Drawer` lo
+dejaba **detrás del propio diálogo**. La lista existía, respondía al teclado y
+no se veía.
+
+Se comprobó con el `Combobox` que el showcase tiene dentro del cajón:
+`aria-expanded="true"`, diez opciones en el DOM, cero píxeles en pantalla.
+
+Ahora hay un registro de los diálogos abiertos y `Portal` cuelga la capa
+flotante **dentro** del diálogo activo, que ya está en la top layer.
+
+`Toast` es la excepción a propósito: se queda en `<body>` y se sube con la API
+de *popover*. Portalizado dentro del modal, un «guardado con éxito» lanzado
+desde un formulario moriría al cerrar ese modal — justo cuando hay que leerlo.
+
+### `zIndex`, otra vez, y esta vez sirviendo para algo
+
+Estaba marcada como obsoleta desde la 3.0.4 porque en la top layer un `z-index`
+es literalmente inerte. Ahora funciona, saliéndose de esa capa:
+
+```tsx
+<Modal zIndex={40} … />   // y tu elemento a z-50 queda por encima
+```
+
+Pasar `zIndex` implica `topLayer={false}`, que es el comportamiento anterior a
+la 3.0.4. **La modalidad no se pierde**: la librería marca `inert` el resto de
+`<body>` a mano, lo que cubre foco, puntero y árbol de accesibilidad — más de lo
+que conseguía la trampa de foco casera que se borró entonces.
+
+Para que el `inert` pueda marcar a sus hermanos, en este modo el diálogo se
+portaliza a `<body>`; enterrado en el árbol de la aplicación, su propio
+contenedor lo contendría y no se podría marcar nada.
+
+Con `topLayer={false}` y sin dar valor, se apila en `NUI_LAYERS.modal` (50), por
+debajo de los menús y los avisos de la propia librería. Se exporta la escala
+entera: modal 50, popover 60, tooltip 70, toast 80.
+
+`Drawer` gana las mismas dos props.
+
+### Y un tercer fallo de camino
+
+El efecto de apertura leía el `<dialog>` de una ref. Con `topLayer={false}` el
+diálogo vive en un portal, que no monta hasta su propio efecto, así que la ref
+valía `null` y **el diálogo no llegaba a abrirse**. Igual que el Escape, que
+enganchaba su listener a la nada. Ambos efectos esperan ahora al nodo.
+
+### En el showcase
+
+La sección de movimiento gana un banco de pruebas: dos campos para el `z-index`
+del modal y el de una banda ajena a la librería, y un interruptor para la top
+layer. Se ve al momento quién queda encima.
+
 ## 3.7.0
 
 La duración y el desenfoque pasan a ser configurables, por la misma vía que los

@@ -3,6 +3,11 @@ import { CloseIcon } from '../icons/icons';
 import { bg, border, text } from '../../theme/tokens';
 import { blurStyle, motion, motionDuration, motionStyle, type AnimatableProps } from '../../theme/motion';
 import { cn } from '../../internal/cn';
+import { inertOutside } from '../../internal/inertOutside';
+import { Portal } from '../../internal/Portal';
+import { NUI_LAYERS } from '../../internal/layers';
+import { pushTopLayer } from '../../internal/topLayer';
+import { useMergedRefs } from '../../internal/mergeRefs';
 import { useScrollLock } from '../../internal/useScrollLock';
 import { useMessage } from '../../context/config/NuiConfigProvider';
 import React, { useEffect, useId, useState, useRef, forwardRef, useImperativeHandle } from 'react';
@@ -22,11 +27,38 @@ export interface ModalProps extends AnimatableProps {
     size?: ModalSize;
     showCloseButton?: boolean;
     /**
-     * @deprecated Sin efecto desde 3.0.4. El diálogo se abre con `showModal()`,
-     * que lo coloca en la *top layer* del navegador: siempre queda por encima de
-     * todo, al margen de cualquier `z-index`. Se acepta por compatibilidad.
+     * `z-index` del diálogo.
+     *
+     * Para que signifique algo, el modal tiene que salirse de la *top layer*
+     * del navegador — ahí un `z-index` es literalmente inerte, porque esa capa
+     * va por encima de todo el documento pase lo que pase. Así que pasar
+     * `zIndex` implica `topLayer={false}`, que es el comportamiento que tenía
+     * el componente antes de la 3.0.4.
+     *
+     * Con `topLayer={false}` y sin dar valor, se apila en `NUI_LAYERS.modal`
+     * (50) — por debajo de los menús y los avisos de la propia librería, que es
+     * donde le toca a un diálogo.
+     *
+     * ```tsx
+     * <Modal zIndex={40} … />   // y tu cosa a z-50 queda por encima
+     * ```
+     *
+     * Ojo: casi nunca hace falta. Las capas flotantes de la propia librería
+     * (`Dropdown`, `Combobox`, `Popover`, `Tooltip`, `Toast`) ya se pintan
+     * dentro del modal, y otro `Modal` o `Drawer` abierto después también se
+     * apila encima. `zIndex` es para meter por encima algo tuyo.
      */
     zIndex?: number;
+    /**
+     * Abre el diálogo en la *top layer* del navegador. Por defecto sí, salvo
+     * que pases `zIndex`.
+     *
+     * Fuera de la top layer el diálogo se convierte en un elemento normal del
+     * documento: obedece al `z-index`, pero el navegador deja de atrapar el
+     * foco y de marcar el resto de la página como inerte. La librería lo
+     * suple marcando `inert` a mano, así que la modalidad se conserva.
+     */
+    topLayer?: boolean;
     closeOnBackdrop?: boolean;
     closeOnEsc?: boolean;
     variant?: ModalVariant;
@@ -63,6 +95,9 @@ const VARIANT_TITLE: Record<ModalVariant, string> = {
     warning: text.warning,
 };
 
+/** `<body>` cuando lo hay. En SSR el portal no pinta nada. */
+const bodyOrNull = () => (typeof document === 'undefined' ? null : document.body);
+
 export const Modal = forwardRef<ModalRef, ModalProps>(({
     onClose,
     title,
@@ -76,12 +111,20 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     variant = 'default',
     animate,
     blur,
+    zIndex,
+    topLayer = zIndex === undefined,
     className = '',
 }, ref) => {
     const closeLabel = useMessage('close');
     const [show, setShow] = useState(false);
     const dialogRef = useRef<HTMLDialogElement>(null);
     const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // El nodo también en estado: con `topLayer={false}` el diálogo vive en un
+    // portal, que no monta hasta su propio efecto. Atado solo a la ref, el
+    // efecto de apertura corría con `dialogRef.current` todavía en `null` y el
+    // diálogo no llegaba a abrirse nunca.
+    const [dialogEl, setDialogEl] = useState<HTMLDialogElement | null>(null);
+    const setDialog = useMergedRefs<HTMLDialogElement>(dialogRef, setDialogEl);
     const titleId = `modal-title-${useId()}`;
 
     // `onClose` se avisa cuando termina la animación de salida, no a los 300 ms
@@ -108,25 +151,45 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     // de verdad faltaba: la trampa de foco manual solo capturaba el tabulador,
     // así que un lector de pantalla seguía paseándose por el fondo.
     useEffect(() => {
-        const dialog = dialogRef.current;
+        const dialog = dialogEl;
         if (!dialog) return;
         // El guardia de `open` no es cosmético: `showModal()` lanza
         // `InvalidStateError` sobre un diálogo ya abierto, y en `StrictMode` el
         // efecto se ejecuta dos veces. Sin él, la excepción cortaba el efecto
         // antes del `setShow(true)` y el panel se quedaba invisible.
-        if (typeof dialog.showModal === 'function') {
+        // Fuera de la top layer se abre con el atributo `open`: es un diálogo
+        // normal del documento, obedece al `z-index` y hay que suplir a mano la
+        // inercia del resto de la página, que el navegador ya no aplica.
+        let quitarInert: (() => void) | undefined;
+        if (topLayer && typeof dialog.showModal === 'function') {
             if (!dialog.open) dialog.showModal();
         } else {
-            dialog.setAttribute('open', ''); // navegador sin <dialog> modal
+            dialog.setAttribute('open', '');
+            if (!topLayer) quitarInert = inertOutside(dialog);
         }
+        // Se apunta en la pila de la top layer para que las capas flotantes
+        // (Dropdown, Combobox, Tooltip, Toast) sepan dentro de qué portalizarse.
+        // Sin esto acaban en <body>, por debajo de este diálogo, e invisibles.
+        // Solo se apunta si de verdad está en la top layer: si no, las capas
+        // flotantes deben seguir colgando de <body>, donde el `z-index` manda.
+        const bajaTopLayer = topLayer ? pushTopLayer(dialog) : () => {};
+
         // El reflujo forzado hace que el navegador CALCULE el estilo de partida
         // ahora que el diálogo ya está visible. Sin él, el estado inicial
         // (`opacity-0 scale-95`) y el final se resolvían en el mismo cálculo y
         // no había nada entre lo que interpolar: el modal aparecía de golpe.
         void dialog.offsetHeight;
         setShow(true);
-        return () => { if (closeTimer.current) clearTimeout(closeTimer.current); };
-    }, []);
+        return () => {
+          bajaTopLayer();
+          quitarInert?.();
+          if (closeTimer.current) clearTimeout(closeTimer.current);
+        };
+    // `topLayer` no va en las dependencias: el modo de apertura se decide una
+    // sola vez, al montar. Cambiarlo en caliente exigiría cerrar y reabrir el
+    // diálogo, que no es algo que este componente soporte.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [dialogEl]);
 
     // El navegador no bloquea el desplazamiento de la página de detrás. Va por
     // `useScrollLock`, con contador: la versión anterior guardaba el `overflow`
@@ -139,7 +202,7 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     // intercepta: si `closeOnEsc` está activo lo reconducimos por `handleClose`,
     // y si no, se queda en nada.
     useEffect(() => {
-        const dialog = dialogRef.current;
+        const dialog = dialogEl;
         if (!dialog) return;
         const onCancel = (e: Event) => {
             e.preventDefault();
@@ -147,7 +210,7 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
         };
         dialog.addEventListener('cancel', onCancel);
         return () => dialog.removeEventListener('cancel', onCancel);
-    }, [closeOnEsc]);
+    }, [closeOnEsc, dialogEl]);
 
     useImperativeHandle(ref, () => ({ handleClose }));
 
@@ -159,15 +222,15 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
         if (closeOnBackdrop && e.target === e.currentTarget) handleClose();
     };
 
-    return (
+    const dialogo = (
         // El equivalente por teclado del clic en el velo no es un listener aquí:
         // es el Escape, que ya se atiende por el evento nativo `cancel`, y
         // además siempre hay un botón de cerrar enfocable.
         // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
         <dialog
-            ref={dialogRef}
+            ref={setDialog}
             aria-labelledby={titleId}
-            style={{ ...motionStyle(animate), ...blurStyle(blur) }}
+            style={{ ...motionStyle(animate), ...blurStyle(blur), zIndex: topLayer ? undefined : (zIndex ?? NUI_LAYERS.modal) }}
             className={cn(
                 'fixed inset-0 m-0 max-w-none max-h-none w-full h-full border-none p-4 flex items-center justify-center',
                 motion.scrim,
@@ -209,6 +272,12 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
             </article>
         </dialog>
     );
+
+    // Fuera de la top layer el diálogo tiene que colgar de <body>: `inertOutside`
+    // marca a sus hermanos, y si estuviera enterrado en el árbol de la
+    // aplicación su propio contenedor lo contendría y no se podría marcar nada.
+    // Con `showModal()` da igual dónde esté, así que se deja en su sitio.
+    return topLayer ? dialogo : <Portal container={bodyOrNull()}>{dialogo}</Portal>;
 });
 
 Modal.displayName = 'Modal';

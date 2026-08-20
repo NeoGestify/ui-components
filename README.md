@@ -1447,6 +1447,44 @@ full`), `title`, `footer`, `showCloseButton`, `closeOnBackdrop`, `closeOnEsc`.
 Controlled by mounting/unmounting, like `Modal`; `onClose` fires when the exit
 animation finishes.
 
+### Stacking: `zIndex` and the top layer
+
+`Modal` and `Drawer` open with `showModal()`, which puts them in the browser's
+**top layer** — above the entire document, ignoring every `z-index` on the page.
+That is what buys you a real focus trap, `inert` on everything behind, and
+immunity to any `overflow` or `transform` in the tree.
+
+It also means a plain `z-index` cannot put anything on top of them. If you need
+that, pass `zIndex`:
+
+```tsx
+<Modal zIndex={40} … />   /* your own element at z-50 now sits above it */
+```
+
+Passing `zIndex` implies `topLayer={false}`: the dialog becomes a normal element
+of the document and obeys stacking again. Modality is preserved — the library
+marks everything else in `<body>` as `inert` by hand, which covers focus,
+pointer and the accessibility tree.
+
+With `topLayer={false}` and no value, it stacks at `NUI_LAYERS.modal` (50),
+below the library's own menus and toasts, which is where a dialog belongs.
+
+| | `topLayer` (default) | `topLayer={false}` |
+| --- | --- | --- |
+| Above everything | always | up to your `z-index` |
+| Focus trap | browser | `inert`, by the library |
+| Obeys `z-index` | no | yes |
+
+**You usually don't need this.** The library's own floating layers already work
+on top of an open modal: `Dropdown`, `Combobox`, `Popover` and `Tooltip` are
+portalled *into* the active dialog, `Toast` raises itself with the popover API,
+and another `Modal` or `Drawer` opened afterwards stacks above by open order.
+`zIndex` is for putting something of **your own** above.
+
+The scale the library uses for everything outside the top layer is exported as
+`NUI_LAYERS`: modal 50, popover 60, tooltip 70, toast 80.
+
+
 ## Composition pieces
 
 ### Divider
