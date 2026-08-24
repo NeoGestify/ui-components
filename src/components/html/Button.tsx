@@ -5,6 +5,7 @@ import {
 } from '../../theme/tokens';
 import { motion, withMotionStyle, type AnimatableProps } from '../../theme/motion';
 import { cn } from '../../internal/cn';
+import { debeCentrarse } from '../../internal/stretch';
 import { useMessage } from '../../context/config/NuiConfigProvider';
 
 type ButtonVariant = 'primary' | 'secondary' | 'icon' | 'danger' | 'success' | 'outline' | 'nav' | 'custom' | 'link' | 'warning' | 'toggle' | 'ghost';
@@ -108,7 +109,10 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(({
     sizeCls,
     shapeCls,
     stateCls,
-    fullWidth ? 'w-full justify-center' : '',
+    fullWidth ? 'w-full' : '',
+    // Va ANTES de `className` a propósito: `cn` resuelve por `twMerge`, así
+    // que un `justify-start` o `justify-between` del consumidor sigue ganando.
+    debeCentrarse(variant, fullWidth, className) ? 'justify-center' : '',
     className,
   );
 
