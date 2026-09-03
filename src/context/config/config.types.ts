@@ -36,6 +36,20 @@ export interface NuiMessages {
   select: string;
   /** Campo obligatorio, para lectores de pantalla. */
   required: string;
+  /** Botón de subir un paso en `NumberInput`. */
+  increment: string;
+  /** Botón de bajar un paso en `NumberInput`. */
+  decrement: string;
+  /** Quitar un elemento de una lista: una etiqueta, un archivo. */
+  remove: string;
+  /** Campo de búsqueda. */
+  search: string;
+  /** Invitación a soltar archivos en `FileDropzone`. */
+  dropFiles: string;
+  /** Desplegar una rama de `Tree`. */
+  expand: string;
+  /** Plegar una rama de `Tree`. */
+  collapse: string;
 }
 
 export const DEFAULT_MESSAGES: NuiMessages = {
@@ -51,6 +65,13 @@ export const DEFAULT_MESSAGES: NuiMessages = {
   noResults: 'Sin resultados',
   select: 'Selecciona…',
   required: 'obligatorio',
+  increment: 'Aumentar',
+  decrement: 'Disminuir',
+  remove: 'Quitar',
+  search: 'Buscar',
+  dropFiles: 'Arrastra archivos aquí o pulsa para elegirlos',
+  expand: 'Desplegar',
+  collapse: 'Plegar',
 };
 
 /** Diccionario en inglés, por comodidad. */
@@ -67,6 +88,13 @@ export const EN_MESSAGES: NuiMessages = {
   noResults: 'No results',
   select: 'Select…',
   required: 'required',
+  increment: 'Increase',
+  decrement: 'Decrease',
+  remove: 'Remove',
+  search: 'Search',
+  dropFiles: 'Drag files here or click to choose',
+  expand: 'Expand',
+  collapse: 'Collapse',
 };
 
 export interface NuiConfig {

@@ -19,9 +19,27 @@ export interface ModalProps extends AnimatableProps {
     onClose: () => void;
     /** Clases extra para el panel. Ganan sobre las de la librería (ver `cn`). */
     className?: string;
-    title: React.ReactNode;
+    /** Obligatorio salvo que se sustituya la cabecera entera con `header`. */
+    title?: React.ReactNode;
     children: React.ReactNode;
     footer?: React.ReactNode;
+    /**
+     * Sustituye la cabecera completa: la banda, el título y el botón de cerrar.
+     * Al usarlo hace falta `aria-label`, porque ya no hay título al que apuntar.
+     *
+     * Es lo que permite montar sobre `Modal` diálogos que no llevan cabecera de
+     * texto —un buscador, un asistente con sus propios pasos— sin reescribir la
+     * capa, el velo, el bloqueo del desplazamiento ni el foco.
+     */
+    header?: React.ReactNode;
+    /**
+     * `top` pega el panel a la parte de arriba en vez de centrarlo. Un panel
+     * que crece y mengua —una lista que se filtra— centrado da saltos: cada
+     * resultado que aparece lo mueve medio renglón.
+     */
+    align?: 'center' | 'top';
+    /** Clases del cuerpo. Por defecto lleva `p-6`; aquí se puede quitar. */
+    bodyClassName?: string;
     /** @deprecated Use size instead */
     maxWidth?: string;
     size?: ModalSize;
@@ -67,6 +85,8 @@ export interface ModalProps extends AnimatableProps {
      * Por defecto, el valor global (`--nui-blur`, 8 px).
      */
     blur?: number | false;
+    /** Etiqueta del diálogo cuando no hay `title` al que apuntar. */
+    'aria-label'?: string;
 }
 
 export interface ModalRef {
@@ -103,6 +123,9 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     title,
     children,
     footer,
+    header,
+    align = 'center',
+    bodyClassName,
     maxWidth,
     size,
     showCloseButton = true,
@@ -114,6 +137,7 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
     zIndex,
     topLayer = zIndex === undefined,
     className = '',
+    'aria-label': ariaLabel,
 }, ref) => {
     const closeLabel = useMessage('close');
     const [show, setShow] = useState(false);
@@ -229,10 +253,12 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
         // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
         <dialog
             ref={setDialog}
-            aria-labelledby={titleId}
+            aria-labelledby={header ? undefined : titleId}
+            aria-label={header ? ariaLabel : undefined}
             style={{ ...motionStyle(animate), ...blurStyle(blur), zIndex: topLayer ? undefined : (zIndex ?? NUI_LAYERS.modal) }}
             className={cn(
-                'fixed inset-0 m-0 max-w-none max-h-none w-full h-full border-none p-4 flex items-center justify-center',
+                'fixed inset-0 m-0 max-w-none max-h-none w-full h-full border-none p-4 flex justify-center',
+                align === 'top' ? 'items-start pt-[10vh]' : 'items-center',
                 motion.scrim,
                 'bg-[color-mix(in_oklab,var(--nui-scrim,oklch(21%_.034_264.665))_60%,transparent)] backdrop:bg-transparent',
                 show ? 'opacity-100 backdrop-blur-[var(--nui-blur,8px)]' : 'opacity-0 backdrop-blur-[0px]',
@@ -247,21 +273,23 @@ export const Modal = forwardRef<ModalRef, ModalProps>(({
                     className,
                 )}
             >
-                <header className={`shrink-0 px-6 py-4 flex items-center justify-between ${VARIANT_HEADER[variant]}`}>
-                    <h2 id={titleId} className={`text-2xl font-bold ${VARIANT_TITLE[variant]}`}>{title}</h2>
-                    {showCloseButton && (
-                        <Button
-                            variant="icon"
-                            onClick={handleClose}
-                            aria-label={closeLabel}
-                            title={closeLabel}
-                            className={`${text.faint} hover:text-[color:var(--nui-text-muted,oklch(37.3%_.034_259.733))] dark:hover:text-[color:var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))]`}
-                        >
-                            <CloseIcon className="w-5 h-5" />
-                        </Button>
-                    )}
-                </header>
-                <div className="flex-1 overflow-y-auto p-6">
+                {header ?? (
+                    <header className={`shrink-0 px-6 py-4 flex items-center justify-between ${VARIANT_HEADER[variant]}`}>
+                        <h2 id={titleId} className={`text-2xl font-bold ${VARIANT_TITLE[variant]}`}>{title}</h2>
+                        {showCloseButton && (
+                            <Button
+                                variant="icon"
+                                onClick={handleClose}
+                                aria-label={closeLabel}
+                                title={closeLabel}
+                                className={`${text.faint} hover:text-[color:var(--nui-text-muted,oklch(37.3%_.034_259.733))] dark:hover:text-[color:var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))]`}
+                            >
+                                <CloseIcon className="w-5 h-5" />
+                            </Button>
+                        )}
+                    </header>
+                )}
+                <div className={cn('flex-1 overflow-y-auto p-6', bodyClassName)}>
                     {children}
                 </div>
                 {footer && (

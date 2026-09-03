@@ -1,5 +1,5 @@
-import { type ReactNode, type CSSProperties } from 'react';
-import { bg, bgHover, border, divide, text } from '../../theme/tokens';
+import { type ReactNode, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from 'react';
+import { bg, bgHover, border, divide, focusVisibleOutline, focusVisibleRing, text } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
 import { SortAscIcon, SortDescIcon, SortBothIcon } from '../icons/icons';
 import { cn } from '../../internal/cn';
@@ -88,8 +88,21 @@ export interface TableProps {
     /** Estilos inline para el <table> */
     style?: CSSProperties;
 
-    /** Fija el thead al hacer scroll vertical */
+    /**
+     * Fija el thead al hacer scroll vertical.
+     *
+     * Necesita que la tabla tenga **altura máxima**: el envoltorio es un
+     * contenedor de scroll (lo hace `overflow-x-auto`, que arrastra el eje Y
+     * con él), así que sin altura nunca hay scroll vertical del que pegarse y
+     * la cabecera se queda quieta. Con `maxHeight` se resuelve solo.
+     */
     stickyHeader?: boolean;
+
+    /**
+     * Altura máxima del envoltorio; a partir de ahí la tabla se desplaza.
+     * Acepta cualquier medida CSS (`'24rem'`, `400`, `'60vh'`).
+     */
+    maxHeight?: string | number;
 
     /** Caption accesible de la tabla */
     caption?: ReactNode;
@@ -254,6 +267,13 @@ const VARIANT_TBODY_DIVIDER: Record<TableVariant, string> = {
     custom:   '',
 };
 
+/** `aria-sort` no acepta `'asc'`/`'desc'`: los nombres son otros. */
+const SORT_ARIA: Record<'asc' | 'desc' | 'none', 'ascending' | 'descending' | 'none'> = {
+    asc:  'ascending',
+    desc: 'descending',
+    none: 'none',
+};
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function SortIcon({ direction }: { direction?: 'asc' | 'desc' | null }) {
@@ -309,6 +329,7 @@ export function Table({
     hideHeader = false,
     style,
     stickyHeader = false,
+    maxHeight,
     caption,
     footerRows,
     loading = false,
@@ -327,17 +348,33 @@ export function Table({
         const stripeCls = VARIANT_TR_STRIPE[variant](i);
         const baseCls = stripeCls || VARIANT_TR_BASE[variant];
         const hoverCls = hoverable ? `${VARIANT_TR_HOVER[variant]} ${motion.colors}` : '';
-        const clickCls = onRowClick ? 'cursor-pointer' : '';
+        const clickCls = onRowClick ? `cursor-pointer ${focusVisibleOutline}` : '';
         const customCls = typeof trClassName === 'function' ? trClassName(i) : (trClassName ?? '');
         return cn(baseCls, hoverCls, clickCls, customCls);
     };
 
+    // `rounded-lg` a secas, SIN `overflow-hidden`. Los dos van al mismo grupo
+    // de `twMerge` que `overflow-x-auto`, así que ponerlos juntos borraba el
+    // scroll horizontal y una tabla ancha se quedaba recortada sin manera de
+    // desplazarla. No hace falta: un contenedor con `overflow` distinto de
+    // `visible` ya recorta por las esquinas redondeadas.
+    // Intro y Espacio son las dos teclas que activan cualquier control; Espacio
+    // además desplaza la página, así que hay que cortarlo.
+    const onRowKeyDown = (rowIndex: number) => (e: ReactKeyboardEvent<HTMLTableRowElement>) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        onRowClick?.(rowIndex);
+    };
+
     const wrapperCls = cn(
         'overflow-x-auto w-full',
-        rounded ? 'rounded-lg overflow-hidden' : '',
+        rounded ? 'rounded-lg' : '',
         shadow ? 'shadow-md' : '',
         className,
     );
+
+    const wrapperStyle: CSSProperties | undefined =
+        maxHeight === undefined ? undefined : { maxHeight };
 
     const theadCls = cn(
         VARIANT_THEAD[variant],
@@ -347,10 +384,11 @@ export function Table({
     const stickyColCls = 'sticky left-0 z-10 bg-inherit';
 
     return (
-        <div className={wrapperCls}>
+        <div className={wrapperCls} style={wrapperStyle}>
             <table
-                className={`${VARIANT_TABLE[variant]} ${tableClassName}`.trim()}
+                className={cn(VARIANT_TABLE[variant], tableClassName)}
                 style={style}
+                aria-busy={loading || undefined}
             >
                 {caption && (
                     <caption className={`mb-2 text-left text-sm ${text.subtle}`}>
@@ -362,12 +400,17 @@ export function Table({
                     <thead className={theadCls}>
                         <tr>
                             {cols.map((col, i) => {
-                                const isSortable = col.sortable && col.key;
+                                const isSortable = Boolean(col.sortable && col.key);
                                 const activeSort = (sortState && col.key && sortState.key === col.key) ? sortState.direction : null;
                                 return (
                                     <th
                                         key={i}
                                         scope="col"
+                                        // Lo que anuncia un lector de pantalla al entrar en la
+                                        // columna: por cuál está ordenada la tabla y en qué
+                                        // sentido. Sin esto, el icono de la flecha no existe
+                                        // para quien no la ve.
+                                        aria-sort={isSortable ? SORT_ARIA[activeSort ?? 'none'] : undefined}
                                         className={cn(
                                             SIZE_TH[size],
                                             VARIANT_TH[variant],
@@ -375,13 +418,32 @@ export function Table({
                                             col.className ?? '',
                                             thClassName,
                                             col.sticky ? stickyColCls : '',
-                                            isSortable ? 'cursor-pointer select-none' : '',
                                         )}
                                         style={{ ...colSizeStyle(col), ...(col.thStyle ?? {}) }}
-                                        onClick={isSortable ? () => onSort?.(col.key!) : undefined}
                                     >
-                                        {col.header}
-                                        {isSortable && <SortIcon direction={activeSort} />}
+                                        {isSortable ? (
+                                            // Un `<th>` con `onClick` no se puede pulsar con el
+                                            // teclado: no recibe foco ni responde a Intro. El
+                                            // botón interior sí, y de paso hereda el tamaño de
+                                            // la celda con el margen negativo.
+                                            <button
+                                                type="button"
+                                                onClick={() => onSort?.(col.key!)}
+                                                className={cn(
+                                                    'inline-flex max-w-full items-center gap-1 rounded -mx-1 px-1 py-0.5',
+                                                    'cursor-pointer select-none text-inherit',
+                                                    // La hoja del navegador pone `text-transform: none` a
+                                                    // TODO `<button>`, y ninguna variante de Tailwind la
+                                                    // hereda de vuelta. Sin esto, la única cabecera con
+                                                    // botón se queda sin las mayúsculas de las demás.
+                                                    '[text-transform:inherit]',
+                                                    focusVisibleRing,
+                                                )}
+                                            >
+                                                <span className="truncate">{col.header}</span>
+                                                <SortIcon direction={activeSort} />
+                                            </button>
+                                        ) : col.header}
                                     </th>
                                 );
                             })}
@@ -410,6 +472,14 @@ export function Table({
                                 className={resolvedTrClass(rowIndex)}
                                 style={getRowStyle?.(rowIndex)}
                                 onClick={onRowClick ? () => onRowClick(rowIndex) : undefined}
+                                // Una fila pulsable tiene que serlo también con el teclado.
+                                // `<tr>` no es un elemento interactivo, así que hay que darle
+                                // el foco y las teclas a mano; el `role="button"` es lo que
+                                // hace que un lector de pantalla la anuncie como pulsable
+                                // sin dejar de ser una fila de la tabla para la navegación.
+                                tabIndex={onRowClick ? 0 : undefined}
+                                role={onRowClick ? 'button' : undefined}
+                                onKeyDown={onRowClick ? onRowKeyDown(rowIndex) : undefined}
                             >
                                 {row.map((cell, cellIndex) => {
                                     const col = cols[cellIndex];

@@ -1,22 +1,20 @@
 import {
-  useCallback, useId, useRef,
+  useCallback, useMemo, useRef,
   type FC, type KeyboardEvent as ReactKeyboardEvent, type ReactNode,
 } from 'react';
-import { bg, border, focusVisibleRing, ringOffset, text } from '../../theme/tokens';
-import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
+import { motionStyle, type AnimatableProps } from '../../theme/motion';
 import { cn } from '../../internal/cn';
 import { useControllableState } from '../../internal/useControllableState';
+import { toOptions, type NuiOption, type OptionsInput } from '../../internal/options';
+import { Radio, type RadioSize } from './Radio';
+import { Field, describedBy, useFieldIds } from './Field';
 
-export interface RadioOption {
-  value: string;
-  label: ReactNode;
-  /** Texto de apoyo bajo la etiqueta. */
-  description?: ReactNode;
-  disabled?: boolean;
-}
+/** @see NuiOption — es el mismo tipo que usan el resto de selectores. */
+export type RadioOption = NuiOption;
 
 export interface RadioGroupProps extends AnimatableProps {
-  options: RadioOption[];
+  /** Opciones completas o solo sus valores. */
+  options: OptionsInput;
   value?: string;
   defaultValue?: string;
   onChange?: (value: string) => void;
@@ -31,6 +29,7 @@ export interface RadioGroupProps extends AnimatableProps {
   orientation?: 'vertical' | 'horizontal';
   /** Cada opción dentro de una tarjeta pulsable, no solo un círculo. */
   variant?: 'plain' | 'card';
+  size?: RadioSize;
   className?: string;
   id?: string;
   'aria-label'?: string;
@@ -39,10 +38,10 @@ export interface RadioGroupProps extends AnimatableProps {
 /**
  * Grupo de opciones excluyentes.
  *
- * Un `Input type="radio"` suelto no forma un grupo: no comparte etiqueta, no
- * expone `role="radiogroup"` y el tabulador para en **cada** círculo. Aquí el
- * grupo es una sola parada de tabulación y dentro se mueve con las flechas,
- * que es como se comporta un grupo de radios nativo.
+ * Un `Radio` suelto no forma un grupo: no comparte etiqueta, no expone
+ * `role="radiogroup"` y el tabulador para en **cada** círculo. Aquí el grupo es
+ * una sola parada de tabulación y dentro se mueve con las flechas, que es como
+ * se comporta un grupo de radios nativo.
  *
  * ```tsx
  * <RadioGroup
@@ -69,16 +68,14 @@ export const RadioGroup: FC<RadioGroupProps> = ({
   disabled = false,
   orientation = 'vertical',
   variant = 'plain',
+  size = 'md',
   animate,
   className = '',
   id,
   'aria-label': ariaLabel,
 }) => {
-  const autoId = useId();
-  const baseId = id || `radiogroup-${autoId}`;
-  const errorId = `${baseId}-error`;
-  const descId = `${baseId}-desc`;
-  const labelId = `${baseId}-label`;
+  const ids = useFieldIds(id, 'radiogroup');
+  const opciones = useMemo(() => toOptions(options), [options]);
 
   const [selected, setSelected] = useControllableState<string>({
     value,
@@ -108,30 +105,28 @@ export const RadioGroup: FC<RadioGroupProps> = ({
     setSelected(siguiente.dataset.value!);
   }, [setSelected]);
 
-  const describedBy = error ? errorId : description ? descId : undefined;
-
   return (
-    <div className={cn('space-y-2', className)} style={motionStyle(animate)}>
-      {label && (
-        <p id={labelId} className={cn('text-sm font-medium', text.muted)}>
-          {label}
-          {required && <span className={cn('ml-1', text.danger)} aria-hidden="true">*</span>}
-        </p>
-      )}
-      {description && !error && (
-        <p id={descId} className={cn('text-sm', text.subtle)}>{description}</p>
-      )}
-
+    <Field
+      label={label}
+      labelId={ids.labelId}
+      description={description}
+      descriptionId={ids.helperId}
+      error={error}
+      errorId={ids.errorId}
+      required={required}
+      className={cn('space-y-2', className)}
+      style={motionStyle(animate)}
+    >
       <div
         ref={listRef}
         role="radiogroup"
-        // El foco vive en las opciones, no aquí, pero un `role`
-        // interactivo tiene que ser enfocable: `-1` lo hace alcanzable
-        // por código sin añadir una parada de tabulación.
+        // El foco vive en las opciones, no aquí, pero un `role` interactivo
+        // tiene que ser enfocable: `-1` lo hace alcanzable por código sin
+        // añadir una parada de tabulación.
         tabIndex={-1}
-        aria-labelledby={label ? labelId : undefined}
+        aria-labelledby={label ? ids.labelId : undefined}
         aria-label={label ? undefined : ariaLabel}
-        aria-describedby={describedBy}
+        aria-describedby={describedBy(ids, error, description)}
         aria-required={required || undefined}
         aria-invalid={error ? true : undefined}
         onKeyDown={onKeyDown}
@@ -140,58 +135,29 @@ export const RadioGroup: FC<RadioGroupProps> = ({
           orientation === 'vertical' ? 'flex-col' : 'flex-row flex-wrap',
         )}
       >
-        {options.map(option => {
+        {opciones.map((option, i) => {
           const activo = option.value === selected;
-          const apagado = disabled || option.disabled;
           return (
-            <button
+            <Radio
               key={option.value}
-              type="button"
-              role="radio"
-              data-value={option.value}
-              aria-checked={activo}
-              disabled={apagado}
+              value={option.value}
+              label={option.label}
+              description={option.description}
+              size={size}
+              variant={variant}
+              checked={activo}
+              disabled={disabled || option.disabled}
+              onChange={setSelected}
               // Solo el seleccionado entra en el orden de tabulación; si no hay
               // ninguno, el primero, para que el grupo sea alcanzable.
-              tabIndex={activo || (!selected && option === options[0]) ? 0 : -1}
-              onClick={() => setSelected(option.value)}
-              className={cn(
-                'flex items-start gap-2.5 text-left',
-                motion.colors, focusVisibleRing, ringOffset,
-                'disabled:opacity-50 disabled:pointer-events-none touch-manipulation',
-                variant === 'card'
-                  ? cn(
-                      'rounded-lg border p-3',
-                      activo ? `${border.accent} ${bg.accentSoft}` : `${border.subtle} ${bg.surface}`,
-                    )
-                  : 'rounded-md',
-              )}
-            >
-              <span
-                aria-hidden="true"
-                className={cn(
-                  'mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border',
-                  motion.colors,
-                  activo ? `${border.accent} ${bg.accent}` : `${border.base} ${bg.surface}`,
-                )}
-              >
-                {activo && <span className="h-1.5 w-1.5 rounded-full bg-white" />}
-              </span>
-              <span className="min-w-0">
-                <span className={cn('block text-sm font-medium', text.base)}>{option.label}</span>
-                {option.description !== undefined && (
-                  <span className={cn('block text-sm', text.subtle)}>{option.description}</span>
-                )}
-              </span>
-            </button>
+              tabIndex={activo || (!selected && i === 0) ? 0 : -1}
+            />
           );
         })}
       </div>
 
-      {error && <p id={errorId} className={cn('text-sm', text.danger)} role="alert">{error}</p>}
-
       {/* Para que el grupo viaje en un envío de formulario normal. */}
       {name && <input type="hidden" name={name} value={selected} />}
-    </div>
+    </Field>
   );
 };

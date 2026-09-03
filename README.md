@@ -5,9 +5,12 @@ Reusable UI component library built with React, Tailwind CSS and SweetAlert2.
 ## Features
 
 - Pre-styled HTML components (Button, Input, TextArea, Form, Select, Table, Modal, Loading)
-- Presentation components (Card, Avatar, Badge, Alert, Skeleton, Progress)
-- Navigation components (Tabs, Accordion, Breadcrumb, Pagination) with full keyboard support
-- Controls (Switch, Tooltip)
+- **`DataTable`**: sorting, search, pagination and selection over your records
+- Presentation components (Card, Avatar, Badge, Alert, Skeleton, Progress, Timeline)
+- Navigation and structure (Tabs, Accordion, Collapsible, Breadcrumb, Pagination, Stepper, Tree, ScrollArea) with full keyboard support
+- Form controls (Switch, Checkbox, Radio, NumberInput, Slider, TagInput, Rating, FileDropzone, ToggleGroup, and their group versions) sharing one option type and one `Field` wrapper
+- Floating layers (Dropdown, Popover, Tooltip, Toast, Drawer, CommandPalette) that survive inside a modal
+- The primitives the library is built on, exported at `/hooks`
 - **Animations** on everything that moves, switchable globally and per component
 - SVG icon collection (80+ icons)
 - Preconfigured SweetAlert2 alerts + InfoAlert component
@@ -538,6 +541,8 @@ want. If you prefer to import only one area, each one also has its own subpath:
 | `neogestify-ui-components/alerts` | `Alerta*` (SweetAlert2) and `InfoAlert` |
 | `neogestify-ui-components/theme` | `ThemeProvider`, `useTheme`, `ThemeToggle` |
 | `neogestify-ui-components/tokens` | Colour tokens and motion helpers (`bg`, `text`, `applyNuiColors`, `motion`…) |
+| `neogestify-ui-components/config` | `NuiConfigProvider`, `useMessage` and the message dictionaries |
+| `neogestify-ui-components/hooks` | The primitives the library is built on (see [Building your own](#building-your-own)) |
 | `neogestify-ui-components/calendar` | `Calendar`, `DatePicker`, date utilities |
 | `neogestify-ui-components/venue-map` | `VenueMapEditor`, `VenueMapViewer`, its hooks and utilities |
 | `neogestify-ui-components/element-library-builder` | `ElementLibraryBuilder` |
@@ -873,7 +878,9 @@ interface ColumnDef {
 - `onRowClick`: Callback when a row is clicked (`(rowIndex) => void`)
 - `hideHeader`: Hides the `<thead>` (boolean)
 - `style`: Inline styles for the `<table>`
-- `stickyHeader`: Pins the `<thead>` on vertical scroll (boolean)
+- `stickyHeader`: Pins the `<thead>` on vertical scroll (boolean). **Needs a
+  height** — see the note below
+- `maxHeight`: Maximum wrapper height before the table scrolls (`'24rem'`, `400`, `'60vh'`)
 - `caption`: Accessible caption rendered in `<caption>`
 - `footerRows`: `<tfoot>` rows (`ReactNode[][]`)
 - `loading`: Shows an animated skeleton instead of rows (boolean)
@@ -883,7 +890,30 @@ interface ColumnDef {
 - `shadow`: Adds a shadow to the wrapper (boolean)
 - `hoverable`: Disables the hover effect when `false`. Default: `true`
 - `sortState`: Active sort state (`{ key: string, direction: 'asc' | 'desc' }`)
-- `onSort`: Callback when a sortable `<th>` is clicked (`(key: string) => void`)
+- `onSort`: Callback when a sortable header is activated (`(key: string) => void`)
+- `getRowKey`: Stable identity per row (`(rowIndex: number) => string | number`).
+  Without it the key is the index, and the index does **not** identify a row: on
+  sort, filter or delete React reuses row N's `<tr>` for a different record, and
+  any state living inside a cell — a half-typed input, an open menu, the focus —
+  stays on the wrong row
+
+#### `stickyHeader` needs a height
+
+`overflow-x-auto` turns the wrapper into a scroll container on **both** axes, so
+without a height there is no vertical scrolling for the header to stick to and
+it never moves. Give it one:
+
+```tsx
+<Table stickyHeader maxHeight="24rem" columns={cols} rows={rows} />
+```
+
+#### Sorting is keyboard-accessible
+
+A sortable header renders a real `<button>`, so it takes focus and responds to
+<kbd>Enter</kbd>, and the `<th>` carries `aria-sort` — which is what tells a
+screen-reader user which column the table is sorted by. A clickable row
+(`onRowClick`) is focusable and responds to <kbd>Enter</kbd> and
+<kbd>Space</kbd> too.
 
 #### Additional examples
 
@@ -923,6 +953,113 @@ interface ColumnDef {
   variant="minimal"
 />
 ```
+
+---
+
+### DataTable
+
+`Table` receives `ReactNode[][]` and has no idea what is inside, so it cannot
+sort, filter or tell which row is selected. `DataTable` works on the **records**
+— `data` plus `columns` with their `accessor` — and sorting, search, pagination
+and selection come out of that. It still draws with `Table`, searches with
+`Input`, pages with `Pagination` and ticks with `Checkbox`.
+
+```tsx
+<DataTable
+  data={orders}
+  getRowId={(o) => o.id}
+  searchable
+  selectable
+  pageSize={20}
+  onSelectedChange={(ids, rows) => setSelection(rows)}
+  columns={[
+    { key: 'id', header: 'Order', sortable: true },
+    { key: 'customer', header: 'Customer', sortable: true },
+    {
+      key: 'total', header: 'Total', sortable: true, align: 'right',
+      cell: (o) => `${o.total.toFixed(2)} €`,
+    },
+    {
+      key: 'date', header: 'Date', sortable: true,
+      accessor: (o) => o.date,                       // sorts by the Date
+      cell: (o) => o.date.toLocaleDateString(),      // renders the text
+    },
+  ]}
+/>
+```
+
+#### `DataColumn<T>`
+
+```tsx
+interface DataColumn<T> {
+  key: string;                        // Unique; also what travels in SortState
+  header: ReactNode;
+  accessor?: (row: T) => unknown;     // Where the value comes from. Defaults to row[key]
+  cell?: (row: T, i: number) => ReactNode;  // How it is drawn. Defaults to the value
+  sortable?: boolean;
+  sortFn?: (a: T, b: T) => number;    // When the default comparator does not fit
+  searchable?: boolean;               // Excludes the column from search
+  align?: 'left' | 'center' | 'right';
+  width?: string | number;
+  minWidth?: string | number;
+  sticky?: boolean;
+  className?: string;
+}
+```
+
+#### Sorting
+
+Clicking a header cycles through three states: ascending, descending and **back
+to the original order**. Without that third step there is no way back short of
+reloading.
+
+The default comparator sorts numbers, `Date`s and booleans by value, and text
+with `localeCompare` + `numeric` — so `Artículo 2` comes before `Artículo 10`,
+and case and accents do not change the order. Empty values always go last,
+whichever way the sort runs: a cell with no data is not "the smallest", it is
+*no data*.
+
+#### `getRowId` is required
+
+On purpose. With the position as identity, sorting or paging reuses row N's
+`<tr>` for a different record, and the selection stops meaning anything as soon
+as the order changes.
+
+#### Server-side data
+
+Pass `manual` and the in-memory work is switched off: `data` is drawn as it
+comes and the controls only report. Use `totalRows` so pagination knows how many
+there really are.
+
+```tsx
+<DataTable
+  manual
+  data={page.rows}
+  totalRows={page.total}
+  getRowId={(r) => r.id}
+  page={page.number}
+  onPageChange={fetchPage}
+  sortState={sort}
+  onSortChange={setSort}
+  query={q}
+  onQueryChange={setQ}
+  searchable
+  pageSize={20}
+  columns={columns}
+/>
+```
+
+#### Props
+
+- `data`, `columns`, `getRowId` — the three required ones
+- Sorting: `sortState`, `defaultSort`, `onSortChange`
+- Search: `searchable`, `searchPlaceholder`, `query`, `onQueryChange`
+- Pagination: `pageSize` (`0` shows everything), `page`, `onPageChange`, `totalRows`
+- Selection: `selectable`, `selected`, `defaultSelected`, `onSelectedChange`
+- `manual`, `onRowClick`, `toolbar`, `emptyState`, `loading`, `loadingRows`
+- Passed straight through to `Table`: `variant`, `size`, `stickyHeader`,
+  `maxHeight`, `rounded`, `shadow`, `hoverable`, `caption`, `getRowStyle`,
+  `trClassName`, `tableClassName`
 
 ---
 
@@ -1192,6 +1329,102 @@ Omit `content` and only the bar renders — you own the panel.
 `plain`. Arrow keys, Home and End move between headers. Collapsed panels are
 hidden, not unmounted, so their internal state survives.
 
+### Collapsible
+
+The accordion of one. The animation runs on `grid-template-rows: 0fr → 1fr`,
+which is the only way to animate to the content's **real** height without
+measuring it in JavaScript or inventing a `max-height` that falls short. The
+content is not unmounted when closed — so it keeps its state and can be animated
+— which means it has to be taken out of reach of the keyboard and screen
+readers: that is exactly what `inert` does.
+
+```tsx
+<Collapsible variant="bordered" title="Advanced options" meta="3 fields">
+  <TextArea label="Notes" />
+</Collapsible>
+```
+
+`CollapsibleRegion` is exported on its own for collapsibles that do not fit the
+component: a table's detail row, a side panel, a card body. `Accordion` uses it.
+
+### Stepper
+
+Progress through steps. A real `<ol>`, not a row of circles: a screen reader
+announces "3 of 4" without anyone writing it, and the current step carries
+`aria-current="step"`.
+
+```tsx
+<Stepper
+  current={step}
+  onStepClick={setStep}
+  steps={[
+    { label: 'Details' },
+    { label: 'Payment', description: 'Card or transfer' },
+    { label: 'Done', optional: true },
+  ]}
+/>
+```
+
+`clickable` defaults to `'completed'`: you can go back but not jump forward,
+which is what stops steps being marked done before they are filled in. Pass
+`errorSteps={[1]}` to mark failures, `orientation="vertical"` for the vertical
+layout.
+
+### Timeline
+
+An ordered list of events. The line and the dots are marked decorative so a
+screen reader reads the list, not the geometry.
+
+```tsx
+<Timeline items={[
+  { title: 'Order created', meta: '10:04', variant: 'accent' },
+  { title: 'Payment confirmed', meta: '10:06', variant: 'success' },
+]} />
+```
+
+### Tree
+
+Follows the ARIA `tree` pattern: **one** tab stop for the whole tree, and inside
+you move with the arrows — up and down through what is visible, right to open or
+step into the first child, left to close or go up to the parent. It is what a
+screen-reader user expects, and it is far quicker than tabbing through hundreds
+of nodes.
+
+```tsx
+<Tree
+  nodes={folders}
+  selectable="multiple"
+  defaultExpanded={['root']}
+  onNodeClick={open}
+/>
+```
+
+- `nodes`: `{ id, label, icon?, children?, disabled?, meta? }[]`
+- `expanded` / `defaultExpanded` / `onExpandedChange`
+- `selected` / `defaultSelected` / `onSelectedChange`, `selectable`
+  (`'none' | 'single' | 'multiple'`)
+- `onNodeClick`, `showGuides`, `size`
+
+### ScrollArea
+
+A scrollable area with a themed scrollbar. It does **not** replace the native
+bar with one drawn in JavaScript: the native one keeps the wheel, the touch
+gesture, the drag and — the thing that usually breaks when you reimplement it —
+scrolling automatically when the tab key lands on something out of view. Only
+the looks change.
+
+```tsx
+<ScrollArea maxHeight="16rem" stableGutter>{rows}</ScrollArea>
+```
+
+`stableGutter` reserves the scrollbar's space so content does not jump by two
+pixels the moment a filtered list stops fitting. `hideScrollbar` hides the bar
+without removing the scrolling.
+
+Watch out for focus: a scrollable container with **nothing focusable inside**
+cannot be reached with the keyboard. If the content is just text, give it
+`tabIndex={0}` and an `aria-label`.
+
 ### Breadcrumb
 
 ```tsx
@@ -1235,6 +1468,230 @@ or a modal, not just at page level.
 ---
 
 ## Controls
+
+### One option type for all of them
+
+`SelectOption`, `ComboboxOption`, `RadioOption`, `CheckboxOption`,
+`SegmentedOption` and `ToggleOption` used to be near-identical and **mutually
+incompatible in TypeScript**: an array prepared for a `RadioGroup` could not be
+passed to a `SegmentedControl` without mapping it. They are all aliases of
+`NuiOption` now:
+
+```tsx
+interface NuiOption<V extends string | number = string> {
+  value: V;
+  label: ReactNode;
+  description?: ReactNode;   // Supporting text under the label
+  disabled?: boolean;
+  icon?: ReactNode;
+  group?: string;            // Groups options under a heading
+}
+```
+
+Extra fields are used by whichever component knows what to do with them and
+ignored by the rest — there is spare information, never missing information.
+
+`Select` and `Combobox` narrow `label` to `string`: one of them renders into a
+native `<option>`, which only paints text, and the other searches on it.
+
+Option components also take the short form, where the label *is* the value:
+
+```tsx
+<RadioGroup options={['S', 'M', 'L']} />
+<SegmentedControl options={['Day', 'Week', 'Month']} />
+```
+
+### Checkbox
+
+A single checkbox. Until 3.9.0 only the group version existed, so an "I accept
+the terms" meant declaring a `CheckboxGroup` of one.
+
+```tsx
+<Checkbox label="I accept the terms" required checked={ok} onChange={setOk} />
+
+<Checkbox
+  variant="card"
+  label="Email notifications"
+  description="One summary per day, never more"
+  checked={notify}
+  onChange={setNotify}
+/>
+```
+
+- `checked`, `defaultChecked`, `onChange(checked: boolean)`
+- `indeterminate` — the third state. Announced as `mixed`, not as unchecked
+- `label`, `description`, `error`, `size` (`sm`/`md`/`lg`), `variant` (`plain`/`card`)
+- `disabled`, `required`, `name`, `value` — `name` emits a hidden input so it
+  travels in a normal form submit
+
+`CheckboxBox` is exported separately when you only need the square: inside a
+table cell, a list row, anywhere the state lives elsewhere.
+
+### Radio
+
+A single exclusive option. You almost always want `RadioGroup`, which also gives
+you the `radiogroup` role, the shared label and arrow-key movement. This one is
+for building a group by hand when the options do not fit in a list — spread
+across a table, inside pricing cards.
+
+```tsx
+{plans.map(p => (
+  <Radio
+    key={p.value}
+    value={p.value}
+    variant="card"
+    label={p.label}
+    description={p.description}
+    checked={plan === p.value}
+    onChange={setPlan}
+  />
+))}
+```
+
+`RadioDot` is exported for the same reason as `CheckboxBox`.
+
+### NumberInput
+
+Not an `<input type="number">`. That one drags two problems that show up fast in
+a business form: the mouse wheel changes the value as you scroll past it — so
+quantities get corrected by accident just by moving down the page — and it
+accepts `e`, `+` and `-` anywhere, so `1e5` is "valid" until someone reads it.
+Here the field is text, the number is validated by the component, and the
+`spinbutton` role announces the value, the minimum and the maximum.
+
+```tsx
+<NumberInput label="Quantity" min={1} max={99} value={n} onChange={setN} />
+<NumberInput label="Price" step={0.01} prefix="€" value={p} onChange={setP} />
+<NumberInput label="Discount" suffix="%" controls={false} max={100} step={5} />
+```
+
+- `value`, `defaultValue`, `onChange(value: number | null)` — `null` is "empty"
+- `min`, `max`, `step`, `largeStep` (defaults to `step * 10`)
+- `prefix`, `suffix`, `controls`, `size`, `format`
+- `label`, `error`, `helperText`, `placeholder`, `disabled`, `readOnly`,
+  `required`, `name`
+
+Keyboard: <kbd>↑</kbd> <kbd>↓</kbd> by `step`, <kbd>PageUp</kbd>
+<kbd>PageDown</kbd> by `largeStep`, <kbd>Home</kbd> and <kbd>End</kbd> to the
+limits. The comma works as a decimal separator — on a Spanish keyboard it is the
+key under your finger, and `Number(',5')` is `NaN`. Values are clamped to the
+step grid on blur, rounded to the step's decimals so a price does not end up
+with twelve digits after the point.
+
+### Slider
+
+Underneath it is a real `<input type="range">`, so dragging, touch, arrow keys,
+<kbd>PageUp</kbd>/<kbd>PageDown</kbd>, <kbd>Home</kbd> and <kbd>End</kbd> come
+for free, along with the `slider` role and its announced value. Only the paint
+is ours.
+
+```tsx
+<Slider
+  label="Capacity"
+  min={0} max={500} step={10}
+  showValue
+  formatValue={(v) => `${v} people`}
+  marks={[0, 250, 500]}
+  value={n}
+  onChange={setN}
+  onChangeEnd={save}
+/>
+```
+
+`onChangeEnd` fires when you let go, not on every pixel — it is the one you want
+for saving or hitting the server, since `onChange` arrives dozens of times per
+gesture. `marks` takes the same `NuiOption` shape (or plain numbers).
+
+### TagInput
+
+Values that do **not** come from a list: whoever types invents them. That is
+what you want for free tags, invite emails or keywords. For values that do come
+from a list, use `Combobox` with `multiple`.
+
+```tsx
+<TagInput
+  label="Tags"
+  value={tags}
+  onChange={setTags}
+  max={10}
+  transform={(t) => t.toLowerCase()}
+/>
+```
+
+<kbd>Enter</kbd> or a comma closes a tag, <kbd>Backspace</kbd> on the empty field
+removes the last one, and pasting a spreadsheet column creates one tag per line.
+`transform` normalises each tag and returning `null` drops it, which is how you
+validate without painting an error on every attempt.
+
+### Rating
+
+A group of exclusive options, not an ornament: arrow keys move through it, each
+star says "3 of 5", and the whole thing is **one** tab stop. With `readOnly` it
+stops being a control and becomes an image with a label, which is the right
+thing for an already-published average.
+
+```tsx
+<Rating label="Rating" value={n} onChange={setN} showValue />
+<Rating value={4} readOnly size="sm" />
+```
+
+`icon={(filled) => …}` swaps the symbol; `getLabel` changes the announced text.
+
+### FileDropzone
+
+The `<input type="file">` is still there, hidden but focusable: that is what
+makes the control work with the keyboard, opens the browser's native picker and
+lets the field travel in a form. The big area is its `<label>`, so clicking it
+*is* clicking the field.
+
+```tsx
+<FileDropzone
+  label="Attachments"
+  accept="image/*,.pdf"
+  multiple
+  maxFiles={4}
+  maxSize={5 * 1024 * 1024}
+  value={files}
+  onChange={setFiles}
+  onReject={(rejected) => toast.error(`${rejected.length} file(s) rejected`)}
+/>
+```
+
+`accept` follows the browser's own rules — extension (`.pdf`), exact type
+(`image/png`) or wildcard (`image/*`). Rejections arrive in `onReject` with a
+reason (`'type' | 'size' | 'count'`) instead of failing silently.
+
+The visible list is kept in sync with the real input through a `DataTransfer`,
+so `name` submits what you actually see, not the last thing picked in the
+dialog.
+
+`acceptsFile(file, accept)` and `formatBytes(bytes)` are exported for reuse.
+
+### ToggleGroup
+
+Buttons that stay pressed. It looks like `SegmentedControl`, and the difference
+matters when choosing: the segmented control is **a field** — a row of exclusive
+options with its sliding indicator, meant for a form — and this is **a toolbar**:
+several active at once, icon-only buttons, and it attaches to other controls.
+Bold/italic/underline is this; "Monthly / Yearly" is a segmented control.
+
+```tsx
+<ToggleGroup options={views} value={view} onChange={setView} />
+
+<ToggleGroup
+  type="multiple"
+  attached
+  iconOnly
+  options={formatOptions}
+  value={format}
+  onChange={setFormat}
+  aria-label="Format"
+/>
+```
+
+`type` decides the value's type: `single` gives `onChange(value: string)`,
+`multiple` gives `onChange(value: string[])`, and TypeScript knows which without
+any casting on your side.
 
 ### Switch
 
@@ -1428,6 +1885,35 @@ Options: `title`, `description`, `variant` (`info | success | warning | danger`)
 `duration` (`0` = stays until dismissed), `action`, `dismissible`, `onDismiss`.
 Provider: `position` (6 corners), `duration`, `limit`, `aria-label`.
 
+### CommandPalette
+
+The ⌘K action finder. Built on `Modal`, so it inherits the scrim, the scroll
+lock, the trapped focus and the top layer. What is its own is the `combobox`
+pattern: focus **never leaves** the text field, and what moves up and down with
+the arrows is `aria-activedescendant`. That is what lets you keep typing while
+you walk the list.
+
+```tsx
+<CommandPalette
+  open={open}
+  onClose={() => setOpen(false)}
+  items={[
+    { id: 'new', label: 'Create order', group: 'Actions', shortcut: ['⌘', 'N'] },
+    { id: 'bill', label: 'Bill order', group: 'Actions', keywords: ['charge'] },
+    { id: 'go-customers', label: 'Customers', group: 'Go to' },
+  ]}
+  onSelect={(item) => run(item.id)}
+/>
+```
+
+The shortcut that opens it is yours to wire up: the component does not listen to
+the global keyboard so it cannot stomp on anyone else's shortcuts.
+
+Search ignores accents and matches per word, so `cl cr` finds "Create client"
+and `charge` finds "Bill order" through its `keywords`. `filter` replaces it
+outright, and `query` + `onQueryChange` hand the text to you for searching on
+the server.
+
 ### Drawer
 
 ```tsx
@@ -1529,6 +2015,61 @@ the same width so the figure doesn't jitter as it updates.
 <Kbd>⌘</Kbd> <Kbd>K</Kbd>
 ```
 
+
+## Building your own
+
+### Field
+
+Label, control, error and helper text: the wrapper every field in the library
+uses. It used to be copied in six places — `Input`, `TextArea`, `Select`,
+`Combobox`, `DatePicker` and the element builder — each with its own take on the
+ids and the `aria-describedby`. A spacing change or an accessibility bug had to
+be fixed six times.
+
+It also wraps a control that is not ours and gives it the same shape:
+
+```tsx
+const ids = useFieldIds(undefined, 'colour');
+
+<Field label="Colour" htmlFor={ids.id} error={error} errorId={ids.errorId}>
+  <input id={ids.id} type="color" />
+</Field>
+```
+
+- `useFieldIds(id, prefix)` returns `{ id, labelId, errorId, helperId }`, built
+  from the caller's `id` or from a stable React one
+- `describedBy(ids, error, helperText)` picks which message
+  `aria-describedby` points at — the error wins, because when there is one the
+  helper is not rendered and pointing at it would leave a dangling reference
+- `description` renders **above** the control (what a group of options wants),
+  `helperText` **below** (what a text field wants)
+
+### The primitives
+
+`neogestify-ui-components/hooks` exposes what the library is built on. Until
+3.9.0 these lived in `internal/` and never came out, so anyone building their
+own component on top — a colour picker, an anchored panel, a bespoke dialog —
+had to rewrite controlled state, dismiss-on-outside-click or the scroll lock.
+And rewrite them worse, because each of these holds the fix to a specific bug
+that was already paid for once.
+
+| Export | What it does |
+|---|---|
+| `useControllableState` | State that works the same controlled or not. Controlled-ness is decided **once**, at mount |
+| `useDismiss` | Closes a floating layer on outside `pointerdown` or Escape |
+| `useScrollLock` / `lockScroll` | Locks the page scroll, compensating the scrollbar width. Counted, so nested dialogs do not unlock early |
+| `useAnchoredPosition` / `computePosition` | Places a floating element against an anchor, flipping and shifting so it stays on screen |
+| `Portal` | Renders into the active top-layer dialog, or into a container you pass |
+| `mergeRefs` / `useMergedRefs` | Combines refs. Use the hook — the plain function returns a new identity every render, which makes React re-attach and can loop |
+| `inertOutside` | Marks every `<body>` child that is not the element as `inert` |
+| `pushTopLayer` / `currentTopLayer` | The open-dialog stack |
+| `NUI_LAYERS` | The `z-index` scale: modal 50, popover 60, tooltip 70, toast 80 |
+| `toOptions` / `optionText` / `NuiOption` | The shared option type and its normaliser |
+
+They are stable and documented, but they are low level: if what you need already
+exists as a component, use the component.
+
+---
 
 ## Animations
 

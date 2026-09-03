@@ -226,9 +226,21 @@ export const focusVisibleRing =
   'focus:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--nui-ring,oklch(58.5%_.233_277.117))] ' +
   'dark:focus-visible:ring-[color:var(--nui-ring-dark,oklch(67.3%_.182_276.935))]';
 
+/**
+ * Igual que `focusVisibleRing` pero dibujado con `outline` en lugar de con
+ * sombra. Lo piden los elementos que el navegador no pinta con `box-shadow`:
+ * `<tr>` y `<td>` dentro de una tabla, y en general cualquier caja de tipo
+ * `table-*`. En ellos `focusVisibleRing` no se ve, y una fila pulsable sin
+ * marca de foco es una fila que el teclado atraviesa a ciegas.
+ */
+export const focusVisibleOutline =
+  'focus:outline-none focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 ' +
+  'focus-visible:outline-[color:var(--nui-ring,oklch(58.5%_.233_277.117))] ' +
+  'dark:focus-visible:outline-[color:var(--nui-ring-dark,oklch(67.3%_.182_276.935))]';
+
 /** Anillo del acento en `focus:ring-*` sin el resto del bloque. */
 export const ringAccent =
   'ring-[color:var(--nui-ring,oklch(58.5%_.233_277.117))] dark:ring-[color:var(--nui-ring-dark,oklch(67.3%_.182_276.935))]';
 
 /** Todo junto, por comodidad al importar. */
-export const t = { bg, bgHover, bgHoverOf, text, textHover, border, borderHover, borderSoft, divide, placeholder, focusBorder, ringOffset, focusRing, focusRingOf, focusVisibleRing, ringAccent } as const;
+export const t = { bg, bgHover, bgHoverOf, text, textHover, border, borderHover, borderSoft, divide, placeholder, focusBorder, ringOffset, focusRing, focusRingOf, focusVisibleRing, focusVisibleOutline, ringAccent } as const;

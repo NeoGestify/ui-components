@@ -65,3 +65,20 @@ describe('cn', () => {
     });
   });
 });
+
+describe('conflictos que se han pagado caros', () => {
+  // `overflow-x-auto` y `overflow-hidden` son el mismo grupo para `twMerge`, y
+  // gana el último. La `Table` los ponía juntos al pedir `rounded`, así que una
+  // tabla ancha y redondeada se quedaba recortada sin forma de desplazarla.
+  it('overflow-hidden se come a overflow-x-auto', () => {
+    expect(cn('overflow-x-auto', 'rounded-lg overflow-hidden')).not.toContain('overflow-x-auto');
+  });
+
+  // El arreglo: redondear no necesita recortar. Un contenedor con `overflow`
+  // distinto de `visible` ya recorta por sus esquinas redondeadas.
+  it('rounded-lg a secas conserva el desplazamiento', () => {
+    const cls = cn('overflow-x-auto w-full', 'rounded-lg');
+    expect(cls).toContain('overflow-x-auto');
+    expect(cls).toContain('rounded-lg');
+  });
+});

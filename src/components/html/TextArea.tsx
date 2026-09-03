@@ -1,11 +1,12 @@
 import {
-  forwardRef, useEffect, useId, useRef,
+  forwardRef, useEffect, useRef,
   type FormEvent, type ReactNode, type TextareaHTMLAttributes,
 } from 'react';
 import { bg, border, focusBorder, focusRing, focusRingOf, placeholder, text } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
 import { useMergedRefs } from '../../internal/mergeRefs';
 import { cn } from '../../internal/cn';
+import { Field, describedBy, useFieldIds } from './Field';
 
 type TextAreaVariant = 'default' | 'outline' | 'filled' | 'minimal';
 type TextAreaSize = 'small' | 'medium' | 'large';
@@ -56,10 +57,8 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(({
   onInput: propsOnInput,
   ...props
 }, ref) => {
-  const autoId = useId();
-  const textAreaId = id || `textarea-${autoId}`;
-  const errorId = `${textAreaId}-error`;
-  const helperId = `${textAreaId}-helper`;
+  const ids = useFieldIds(id, 'textarea');
+  const textAreaId = ids.id;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const setTextArea = useMergedRefs<HTMLTextAreaElement>(ref, textareaRef);
 
@@ -93,42 +92,34 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(({
   const overLimit = maxLength !== undefined && currentLength > maxLength;
 
   return (
-    <div className="space-y-1 w-full">
-      {(label || showCount) && (
-        <div className="flex items-baseline gap-2">
-          <div className="flex-1">
-            {label && (
-              typeof label === 'string' ? (
-                <label htmlFor={textAreaId} className={`block text-sm font-medium ${text.muted}`}>
-                  {label}
-                  {props.required && <span className={`ml-1 ${text.danger}`} aria-hidden="true">*</span>}
-                </label>
-              ) : label
-            )}
-          </div>
-          {showCount && (
-            <span className={`text-xs shrink-0 tabular-nums ${overLimit ? text.danger : text.faint}`}>
-              {maxLength ? `${currentLength} / ${maxLength}` : currentLength}
-            </span>
-          )}
-        </div>
-      )}
+    <Field
+      label={label}
+      htmlFor={textAreaId}
+      error={error}
+      errorId={ids.errorId}
+      helperText={helperText}
+      helperId={ids.helperId}
+      required={props.required}
+      // El contador va arriba a la derecha, en la línea de la etiqueta: abajo
+      // se lo comería el mensaje de error justo cuando más falta hace verlo.
+      labelAside={showCount
+        ? (
+          <span className={`text-xs shrink-0 tabular-nums ${overLimit ? text.danger : text.faint}`}>
+            {maxLength ? `${currentLength} / ${maxLength}` : currentLength}
+          </span>
+        )
+        : undefined}
+    >
       <textarea
         ref={setTextArea}
         id={textAreaId}
         className={classes}
         onInput={handleInput}
         aria-invalid={error ? true : undefined}
-        aria-describedby={error ? errorId : helperText ? helperId : undefined}
+        aria-describedby={describedBy(ids, error, helperText)}
         {...props}
       />
-      {error && (
-        <p id={errorId} className={`text-sm ${text.danger}`} role="alert">{error}</p>
-      )}
-      {helperText && !error && (
-        <p id={helperId} className={`text-sm ${text.subtle}`}>{helperText}</p>
-      )}
-    </div>
+    </Field>
   );
 });
 

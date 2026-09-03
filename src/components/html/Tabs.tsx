@@ -186,7 +186,10 @@ export const Tabs: FC<TabsProps> = ({
               id={`${baseId}-tab-${item.id}`}
               data-tab-id={item.id}
               aria-selected={isActive}
-              aria-controls={item.content !== undefined ? `${baseId}-panel-${item.id}` : undefined}
+              // Solo se pinta el panel de la pestaña activa, así que apuntar
+              // desde las demás dejaba dos `aria-controls` colgando de un `id`
+              // que no existe en el documento.
+              aria-controls={isActive && item.content !== undefined ? `${baseId}-panel-${item.id}` : undefined}
               // Solo la pestaña activa entra en el orden de tabulación.
               tabIndex={isActive ? 0 : -1}
               disabled={item.disabled}

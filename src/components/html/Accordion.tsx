@@ -1,5 +1,5 @@
 import {
-  useCallback, useEffect, useId, useRef,
+  useCallback, useId, useRef,
   type FC, type KeyboardEvent as ReactKeyboardEvent, type ReactNode,
 } from 'react';
 import { ChevronDownIcon } from '../icons/icons';
@@ -7,6 +7,7 @@ import { bg, bgHover, border, focusVisibleRing, text } from '../../theme/tokens'
 import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
 import { useControllableState } from '../../internal/useControllableState';
 import { cn } from '../../internal/cn';
+import { CollapsibleRegion } from './Collapsible';
 
 export interface AccordionItem {
   /**
@@ -45,30 +46,6 @@ export interface AccordionProps extends AnimatableProps {
   className?: string;
   id?: string;
 }
-
-/**
- * Panel plegado. Al estar siempre en el DOM (para poder animarlo) hay que
- * sacarlo del alcance del teclado y de los lectores de pantalla cuando está
- * cerrado: eso es exactamente lo que hace `inert`, que no tiene equivalente
- * declarativo en React 18.
- */
-const Panel: FC<{
-  id: string;
-  labelledBy: string;
-  open: boolean;
-  className: string;
-  children: ReactNode;
-}> = ({ id, labelledBy, open, className, children }) => {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    ref.current?.toggleAttribute('inert', !open);
-  }, [open]);
-  return (
-    <div ref={ref} id={id} role="region" aria-labelledby={labelledBy} className={className}>
-      {children}
-    </div>
-  );
-};
 
 /**
  * Lista de paneles plegables, accesible con teclado (flechas, Inicio y Fin).
@@ -178,22 +155,16 @@ export const Accordion: FC<AccordionProps> = ({
                 </span>
               </button>
             </h3>
-            {/* El despliegue va con `grid-template-rows: 0fr → 1fr`: es la
-                única forma de animar hasta la altura real del contenido sin
-                medirla en JavaScript ni inventar un `max-height`.
-                No se desmonta, así se conserva el estado interno del panel. */}
-            <div className={`grid ${motion.collapse} ${isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-              <div className="overflow-hidden">
-                <Panel
-                  id={panelId}
-                  labelledBy={headerId}
-                  open={isOpen}
-                  className={`px-4 pb-4 pt-0 text-sm ${text.muted}`}
-                >
-                  {item.content}
-                </Panel>
-              </div>
-            </div>
+            {/* El plegado, la animación y el `inert` viven en `Collapsible`;
+                aquí solo se decide qué panel está abierto. */}
+            <CollapsibleRegion
+              id={panelId}
+              labelledBy={headerId}
+              open={isOpen}
+              className={`px-4 pb-4 pt-0 text-sm ${text.muted}`}
+            >
+              {item.content}
+            </CollapsibleRegion>
           </div>
         );
       })}

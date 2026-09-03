@@ -1,5 +1,150 @@
 # Changelog
 
+## 3.9.0
+
+Dieciséis componentes nuevos, los cinco fallos de `Table` y una capa de
+primitivas para que dejen de estar copiadas seis veces.
+
+### Los fallos de `Table`
+
+**`rounded` mataba el scroll horizontal.** El envoltorio se construía con
+`cn('overflow-x-auto w-full', rounded && 'rounded-lg overflow-hidden')`, y
+`twMerge` mete `overflow-x-auto` y `overflow-hidden` en el mismo grupo: ganaba
+el último. Una tabla ancha y redondeada se quedaba **recortada sin manera de
+desplazarla**. El arreglo es que redondear no necesita recortar — un contenedor
+con `overflow` distinto de `visible` ya recorta por sus esquinas—, así que ahora
+solo se añade `rounded-lg`. Hay una prueba de regresión que fija las dos mitades
+del comportamiento.
+
+**La cabecera ordenable no se podía pulsar con el teclado.** Era un `<th>` con
+`onClick`: sin foco, sin `Intro`, sin `aria-sort`. Ahora el contenido va dentro
+de un `<button>` de verdad y el `<th>` expone `aria-sort` (`ascending` /
+`descending` / `none`), que es lo que anuncia por qué columna va ordenada la
+tabla a quien no ve la flecha.
+
+De paso: la hoja de estilos del navegador pone `text-transform: none` a **todo**
+`<button>` y ninguna variante de Tailwind lo hereda de vuelta, así que la única
+cabecera con botón se quedaba sin las mayúsculas de las demás. Lleva
+`[text-transform:inherit]`.
+
+**`onRowClick` tampoco.** La fila pulsable ahora recibe foco, responde a `Intro`
+y `Espacio`, y se marca con `role="button"`. Su aro de foco va con `outline` y
+no con `box-shadow`: el navegador no pinta sombras en cajas `table-row`, así que
+`focusVisibleRing` era invisible ahí. Se exporta el token nuevo,
+`focusVisibleOutline`.
+
+**`tableClassName` no podía ganar.** Era el único sitio de la librería que
+concatenaba a mano en vez de pasar por `cn()`.
+
+**`stickyHeader` no pegaba nada.** `overflow-x-auto` convierte el envoltorio en
+contenedor de scroll en **los dos ejes**, así que sin altura no hay scroll
+vertical del que pegarse. Ahora hay `maxHeight`, y está dicho en la
+documentación de la prop.
+
+### `DataTable`
+
+`Table` recibe `ReactNode[][]` y no sabe qué hay dentro: no puede ordenar, ni
+filtrar, ni saber qué fila está marcada. `DataTable` trabaja sobre los
+registros y de ahí salen la ordenación (tres estados: sube, baja y vuelve al
+orden original), la búsqueda, la paginación y la selección. Dibuja con `Table`,
+busca con `Input`, pagina con `Pagination` y marca con `Checkbox`.
+
+La comparación por defecto ordena «Artículo 2» antes que «Artículo 10», iguala
+mayúsculas y acentos, entiende fechas y booleanos, y manda los vacíos al final
+suba o baje el orden: una celda sin dato no es «lo más pequeño», es que no hay
+dato.
+
+`getRowId` es obligatorio a propósito. Con la posición como identidad, ordenar o
+cambiar de página reutiliza el `<tr>` de la fila N para otro registro y la
+selección deja de significar nada.
+
+Con `manual` se apaga todo el trabajo en memoria, para cuando ordena y pagina el
+servidor.
+
+### Componentes nuevos
+
+| | |
+|---|---|
+| `Checkbox`, `Radio` | Sueltos. Antes un «acepto los términos» obligaba a un grupo de una sola opción. Ahora los grupos se construyen con ellos, no al revés |
+| `NumberInput` | No es un `input type="number"`: la rueda del ratón no cambia el valor al pasar por encima, y la coma vale como separador decimal |
+| `Slider` | Un `input type="range"` de verdad por dentro; solo cambia la pintura |
+| `TagInput` | Valores que no salen de una lista. `⌫` sobre el campo vacío borra la última; al pegar una columna sale una etiqueta por línea |
+| `FileDropzone` | El `<input type="file">` sigue ahí, oculto pero enfocable, y su `FileList` se mantiene sincronizada con un `DataTransfer` para que `name` envíe lo que de verdad se ve |
+| `Rating` | Grupo de opciones excluyentes, no un adorno. En `readOnly` deja de ser un control y pasa a ser imagen con texto |
+| `ToggleGroup` | Barra de herramientas: varios activos a la vez y botones de solo icono |
+| `Stepper` | Un `<ol>` de verdad, así que se anuncia «3 de 4» sin escribirlo |
+| `Collapsible` | El acordeón de uno solo. `Accordion` ahora usa su misma región plegable |
+| `Timeline` | Historial de sucesos |
+| `Tree` | Patrón `tree` de ARIA: una parada de tabulación y flechas por dentro |
+| `ScrollArea` | Barra nativa, solo repintada. Reimplementarla rompe el desplazamiento al llegar con el tabulador a algo fuera de la vista |
+| `CommandPalette` | El buscador de ⌘K, montado sobre `Modal` |
+| `Field` | El envoltorio de etiqueta, error y ayuda |
+| `DataTable` | Arriba |
+
+### `Field`: se acabó copiarlo seis veces
+
+Etiqueta, error, texto de ayuda y los `aria-describedby` estaban reimplementados
+en `Input`, `TextArea`, `Select`, `Combobox`, `DatePicker` y el constructor de
+elementos, cada uno con su propia versión de los identificadores. Un fallo de
+accesibilidad había que arreglarlo seis veces. Ahora hay un componente y dos
+ayudantes —`useFieldIds` y `describedBy`—, y los seis campos pasan por ellos.
+
+`Field` también sirve para envolver un control ajeno y que herede el mismo
+aspecto.
+
+### Un solo tipo de opción
+
+`SelectOption`, `ComboboxOption`, `RadioOption`, `CheckboxOption` y
+`SegmentedOption` eran casi idénticos e **incompatibles en TypeScript**: quien
+tuviera un arreglo preparado para un `RadioGroup` no podía pasárselo a un
+`SegmentedControl` sin mapearlo. Todos son ahora alias de `NuiOption`.
+
+`Select` y `Combobox` estrechan la etiqueta a `string`, porque una va dentro de
+una `<option>` nativa y la otra es el texto sobre el que se busca.
+
+Y los componentes de opciones aceptan la lista abreviada:
+
+```tsx
+<RadioGroup options={['S', 'M', 'L']} />
+```
+
+### Las primitivas salen de `internal/`
+
+Nuevo subcamino `neogestify-ui-components/hooks` con `useControllableState`,
+`useDismiss`, `useScrollLock`, `useAnchoredPosition`, `computePosition`,
+`Portal`, `mergeRefs`, `useMergedRefs`, `inertOutside` y `pushTopLayer`.
+
+Quien montaba un componente propio sobre la librería tenía que reescribirlos, y
+reescribirlos peor: cada uno guarda la solución a un fallo concreto que ya se
+pagó una vez.
+
+### `Modal` gana tres props
+
+`header` sustituye la cabecera entera (con `aria-label` en su lugar), `align`
+la pega arriba y `bodyClassName` quita el relleno del cuerpo. Son lo que
+permite montar `CommandPalette` encima sin reescribir la capa, el velo, el
+bloqueo del desplazamiento ni el foco.
+
+### Un fallo en `Tree`, encontrado probándolo
+
+Los nodos van anidados, así que el `<li>` de un hijo está **dentro** del `<li>`
+de su padre y un `keydown` sube por todos ellos. La flecha izquierda sobre una
+rama la cerraba y acto seguido cerraba a su padre, a su abuelo y hasta la raíz,
+dejando el foco en la nada. Se corta la propagación entre nodos.
+
+Y al pulsar con el ratón el foco se queda en el botón interior, que está fuera
+del recorrido, así que las flechas seguían moviéndose desde el nodo anterior.
+Ahora vuelve al nodo pulsado.
+
+### Otros
+
+- Siete textos nuevos en `NuiConfigProvider`: `increment`, `decrement`,
+  `remove`, `search`, `dropFiles`, `expand`, `collapse`.
+- 40 pruebas nuevas (80 en total), todas sobre las funciones puras nuevas y la
+  regresión de `overflow` de `Table`.
+- Cuatro demos nuevas en el showcase: campos de formulario, tablas, estructura
+  y navegación.
+
 ## 3.8.0
 
 Vuelve `zIndex`, y con él sale a la luz un fallo que llevaba desde la 3.6.0.

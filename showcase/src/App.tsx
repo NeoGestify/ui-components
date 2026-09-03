@@ -12,6 +12,9 @@ import { Flotantes } from './demos/Flotantes';
 import { Controles } from './demos/Controles';
 import { Datos } from './demos/Datos';
 import { Movimiento } from './demos/Movimiento';
+import { Formularios } from './demos/Formularios';
+import { Tablas } from './demos/Tablas';
+import { Estructura } from './demos/Estructura';
 
 // ─── Demo «elemento clickeable» ────────────────────────────────────────────────
 // El tipo INFO trae `clickable: true` por defecto: en el visor responde al clic;
@@ -729,6 +732,43 @@ function App() {
             Movimiento configurable
           </h2>
           <Movimiento />
+        </section>
+
+        {/* Campos de formulario nuevos */}
+        <section className="mb-8 sm:mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Campos de formulario
+          </h2>
+          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+            Los huecos que quedaban: una casilla suelta, cantidades, un
+            deslizador, etiquetas libres, puntuación y archivos. Todos comparten
+            el mismo envoltorio <code>Field</code> y el mismo tipo de opción.
+          </p>
+          <Formularios />
+        </section>
+
+        {/* Tablas */}
+        <section className="mb-8 sm:mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Tablas
+          </h2>
+          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+            <code>DataTable</code> sobre <code>Table</code>, y los arreglos de la
+            tabla de siempre: el scroll que se perdía al redondear, la ordenación
+            con teclado y <code>aria-sort</code>.
+          </p>
+          <Tablas />
+        </section>
+
+        {/* Estructura y navegación */}
+        <section className="mb-8 sm:mb-12 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            Estructura y navegación
+          </h2>
+          <p className="mb-6 text-sm text-gray-500 dark:text-gray-400">
+            Pasos, plegables, historiales, árboles y el buscador de acciones.
+          </p>
+          <Estructura />
         </section>
 
         {/* Selección, paneles y piezas de composición */}

@@ -1,19 +1,28 @@
-import { forwardRef, useId, type SelectHTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, type SelectHTMLAttributes, type ReactNode } from 'react';
 import { ChevronDownIcon } from '../icons/icons';
 // `placeholder` se renombra: el componente ya tiene una prop con ese nombre.
 import { bg, border, focusBorder, focusRing, focusRingOf, placeholder as placeholderCls, text } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
 import { cn } from '../../internal/cn';
+import type { NuiOption } from '../../internal/options';
+import { Field, describedBy, useFieldIds } from './Field';
 
 type SelectVariant = 'default' | 'outline' | 'filled' | 'minimal' | 'custom' | 'small';
 type SelectSize = 'sm' | 'md' | 'lg';
 
-export interface SelectOption {
-  value: string | number;
-  label: string;
-  disabled?: boolean;
-  selected?: boolean;
-}
+/**
+ * @see NuiOption — es el mismo tipo que usan el resto de selectores, con dos
+ * diferencias que impone el `<select>` nativo: la etiqueta va dentro de una
+ * `<option>`, que solo pinta texto, y el valor admite números porque el
+ * atributo `value` los convierte a cadena por su cuenta.
+ */
+export type SelectOption =
+  Omit<NuiOption<string | number>, 'label'>
+  & {
+    label: string;
+    /** Marca la opción elegida al montar cuando no hay `value` ni `defaultValue`. */
+    selected?: boolean;
+  };
 
 /** @deprecated Usa `SelectOption`. Se mantiene por compatibilidad. */
 export type Option = SelectOption;
@@ -56,9 +65,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
   id,
   ...props
 }, ref) => {
-  const autoId = useId();
-  const selectId = id || `select-${autoId}`;
-  const describedById = `${selectId}-desc`;
+  const ids = useFieldIds(id, 'select');
+  const selectId = ids.id;
 
   // backward compat: variant='small' → size='sm'
   const effectiveSize: SelectSize = variant === 'small' ? 'sm' : size;
@@ -97,22 +105,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
     className,
   );
 
-  const helpNode = errorMsg
-    ? <p id={describedById} className={`text-sm ${text.danger}`} role="alert">{errorMsg}</p>
-    : helperText
-      ? <p id={describedById} className={`text-sm ${hasError ? text.danger : text.subtle}`}>{helperText}</p>
-      : null;
-
   return (
-    <div className="space-y-1 w-full">
-      {label && (
-        typeof label === 'string' ? (
-          <label htmlFor={selectId} className={`block text-sm font-medium ${text.muted}`}>
-            {label}
-            {props.required && <span className={`ml-1 ${text.danger}`} aria-hidden="true">*</span>}
-          </label>
-        ) : label
-      )}
+    <Field
+      label={label}
+      htmlFor={selectId}
+      error={errorMsg || undefined}
+      errorId={ids.errorId}
+      helperText={helperText}
+      helperId={ids.helperId}
+      required={props.required}
+    >
       <div className="relative">
         {icon && (
           <div className={`pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-3 ${text.faint}`}>
@@ -125,7 +127,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
           className={selectCls}
           defaultValue={computedDefaultValue}
           aria-invalid={hasError || undefined}
-          aria-describedby={helpNode ? describedById : undefined}
+          aria-describedby={describedBy(ids, errorMsg, helperText)}
           {...props}
         >
           {placeholder && (
@@ -149,8 +151,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(({
           <ChevronDownIcon className="w-4 h-4" />
         </div>
       </div>
-      {helpNode}
-    </div>
+    </Field>
   );
 });
 

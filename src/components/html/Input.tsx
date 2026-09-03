@@ -1,5 +1,5 @@
 import {
-  forwardRef, useCallback, useId, useRef, useState,
+  forwardRef, useCallback, useRef, useState,
   type ChangeEvent, type InputHTMLAttributes, type ReactNode,
 } from 'react';
 import { useMergedRefs } from '../../internal/mergeRefs';
@@ -9,6 +9,7 @@ import {
 } from '../../theme/tokens';
 import { motion } from '../../theme/motion';
 import { cn } from '../../internal/cn';
+import { Field, describedBy as describedByOf, useFieldIds } from './Field';
 import { useMessage } from '../../context/config/NuiConfigProvider';
 
 type InputVariant = 'default' | 'outline' | 'filled' | 'minimal';
@@ -71,10 +72,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
   ...props
 }, ref) => {
   const clearText = useMessage('clear', clearLabel);
-  const autoId = useId();
-  const inputId = id || `input-${autoId}`;
-  const errorId = `${inputId}-error`;
-  const helperId = `${inputId}-helper`;
+  const ids = useFieldIds(id, 'input');
+  const inputId = ids.id;
 
   // El campo puede venir controlado o no. Para lo controlado manda `value`; para
   // lo demás se recuerda si hay contenido, que es lo único que necesita la X.
@@ -115,7 +114,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
 
   // `aria-describedby` es lo que ata el mensaje al campo: sin él, el lector de
   // pantalla anuncia el error suelto y el usuario nunca sabe de cuál es.
-  const describedBy = error ? errorId : helperText ? helperId : undefined;
+  const describedBy = describedByOf(ids, error, helperText);
   const commonAria = {
     'aria-invalid': error ? true : undefined,
     'aria-describedby': describedBy,
@@ -163,73 +162,73 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
     className,
   );
 
+  // `hidden` puesto por el consumidor va sobre el campo, pero quien tiene que
+  // desaparecer es la fila entera con su etiqueta y su mensaje.
   const hasHidden = Boolean(className && /\bhidden\b/.test(className));
-  const wrapperCls = `space-y-1 w-full${hasHidden ? ' hidden' : ''}`;
 
-  const labelNode = label && (
-    typeof label === 'string' ? (
-      <label htmlFor={inputId} className={`block text-sm font-medium ${text.muted}`}>
-        {label}
-        {required && <span className={`ml-1 ${text.danger}`} aria-hidden="true">*</span>}
-      </label>
-    ) : label
-  );
-
-  const errorNode = error && (
-    <p id={errorId} className={`text-sm ${text.danger}`} role="alert">{error}</p>
-  );
-
-  const helperNode = helperText && !error && (
-    <p id={helperId} className={`text-sm ${text.subtle}`}>{helperText}</p>
+  /** Etiqueta, error y ayuda: los mismos de todos los campos de la librería. */
+  const campo = (children: ReactNode, conEtiqueta = true) => (
+    <Field
+      label={conEtiqueta ? label : undefined}
+      htmlFor={inputId}
+      error={error}
+      errorId={ids.errorId}
+      helperText={helperText}
+      helperId={ids.helperId}
+      required={required}
+      className={hasHidden ? 'hidden' : ''}
+    >
+      {children}
+    </Field>
   );
 
   if (type === 'checkbox' || type === 'radio') {
-    return (
-      <div className={wrapperCls}>
-        <div className="flex items-center space-x-2">
-          <input
-            ref={ref}
-            id={inputId}
-            type={type}
-            className={toggleCls}
-            value={value}
-            defaultValue={defaultValue}
-            onChange={onChange}
-            {...commonAria}
-            {...props}
-          />
-          {labelNode}
-        </div>
-        {errorNode}
-        {helperNode}
-      </div>
-    );
-  }
-
-  if (type === 'file') {
-    return (
-      <div className={wrapperCls}>
-        {labelNode}
+    // Aquí la etiqueta va AL LADO de la casilla, no encima, así que no la pone
+    // `Field`: solo se le deja el error y el texto de ayuda.
+    return campo(
+      <div className="flex items-center space-x-2">
         <input
           ref={ref}
           id={inputId}
-          type="file"
-          className={fileCls}
+          type={type}
+          className={toggleCls}
+          value={value}
+          defaultValue={defaultValue}
           onChange={onChange}
           {...commonAria}
           {...props}
         />
-        {errorNode}
-        {helperNode}
-      </div>
+        {label && (
+          typeof label === 'string' ? (
+            <label htmlFor={inputId} className={`block text-sm font-medium ${text.muted}`}>
+              {label}
+              {required && <span className={`ml-1 ${text.danger}`} aria-hidden="true">*</span>}
+            </label>
+          ) : label
+        )}
+      </div>,
+      false,
+    );
+  }
+
+  if (type === 'file') {
+    return campo(
+      <input
+        ref={ref}
+        id={inputId}
+        type="file"
+        className={fileCls}
+        onChange={onChange}
+        {...commonAria}
+        {...props}
+      />,
     );
   }
 
   const prefixBorderCls = error ? border.dangerSubtle : border.base;
 
-  return (
-    <div className={wrapperCls}>
-      {labelNode}
+  return campo(
+    <>
       <div className="flex">
         {prefix && (
           <span className={`inline-flex shrink-0 items-center px-3 border border-r-0 ${prefixBorderCls} ${bg.surfaceMuted} ${text.subtle} rounded-l-md text-sm`}>
@@ -276,9 +275,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
           </span>
         )}
       </div>
-      {errorNode}
-      {helperNode}
-    </div>
+    </>,
   );
 });
 

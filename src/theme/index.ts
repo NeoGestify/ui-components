@@ -7,7 +7,7 @@ export {
   NUI_DEFAULTS,
   bg, bgHover, bgHoverOf, text, textHover, border, borderHover, borderSoft, divide, placeholder, focusBorder,
   ringOffset, focusRingOf,
-  focusRing, focusVisibleRing, ringAccent, t,
+  focusRing, focusVisibleRing, focusVisibleOutline, ringAccent, t,
   type NuiToken,
 } from './tokens';
 export {

@@ -1,26 +1,24 @@
 import {
-  useCallback, useId, useLayoutEffect, useEffect, useRef, useState,
-  type FC, type KeyboardEvent as ReactKeyboardEvent, type ReactNode,
+  useCallback, useId, useLayoutEffect, useEffect, useMemo, useRef, useState,
+  type FC, type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 import { bg, focusVisibleRing, text, textHover } from '../../theme/tokens';
 import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
 import { cn } from '../../internal/cn';
 import { useControllableState } from '../../internal/useControllableState';
+import { toOptions, type NuiOption, type OptionsInput } from '../../internal/options';
 
 /** `useLayoutEffect` avisa en SSR; en el servidor no hay nada que medir. */
 const useIsomorphicLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
-export interface SegmentedOption {
-  value: string;
-  label: ReactNode;
-  icon?: ReactNode;
-  disabled?: boolean;
-}
+/** @see NuiOption — es el mismo tipo que usan el resto de selectores. */
+export type SegmentedOption = NuiOption;
 
 type SegmentedSize = 'sm' | 'md' | 'lg';
 
 export interface SegmentedControlProps extends AnimatableProps {
-  options: SegmentedOption[];
+  /** Opciones completas o solo sus valores. */
+  options: OptionsInput;
   value?: string;
   defaultValue?: string;
   onChange?: (value: string) => void;
@@ -65,7 +63,8 @@ export const SegmentedControl: FC<SegmentedControlProps> = ({
 }) => {
   const autoId = useId();
   const baseId = `segmented-${autoId}`;
-  const primero = options.find(o => !o.disabled)?.value ?? options[0]?.value ?? '';
+  const opciones = useMemo(() => toOptions(options), [options]);
+  const primero = opciones.find(o => !o.disabled)?.value ?? opciones[0]?.value ?? '';
 
   const [selected, setSelected] = useControllableState<string>({
     value,
@@ -140,7 +139,7 @@ export const SegmentedControl: FC<SegmentedControlProps> = ({
         />
       )}
 
-      {options.map(option => {
+      {opciones.map(option => {
         const activo = option.value === selected;
         return (
           <button

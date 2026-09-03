@@ -1,11 +1,13 @@
 import {
-  useCallback, useEffect, useId, useMemo, useRef, useState,
+  useCallback, useEffect, useMemo, useRef, useState,
   type FC, type KeyboardEvent as ReactKeyboardEvent, type ReactNode,
 } from 'react';
 import { CheckIcon, ChevronDownIcon, CloseIcon } from '../icons/icons';
 import { bg, bgHover, border, focusBorder, focusRingOf, text } from '../../theme/tokens';
 import { motion, motionStyle, type AnimatableProps } from '../../theme/motion';
 import { cn } from '../../internal/cn';
+import type { NuiOption } from '../../internal/options';
+import { Field, useFieldIds } from './Field';
 import { Portal } from '../../internal/Portal';
 import { useAnchoredPosition } from '../../internal/useAnchoredPosition';
 import { useControllableState } from '../../internal/useControllableState';
@@ -13,15 +15,17 @@ import { useDismiss } from '../../internal/useDismiss';
 import { useMergedRefs } from '../../internal/mergeRefs';
 import { useNuiConfig } from '../../context/config/NuiConfigProvider';
 
-export interface ComboboxOption {
-  value: string;
-  label: string;
-  /** Texto secundario bajo la etiqueta. */
-  description?: string;
-  disabled?: boolean;
-  /** Agrupa opciones bajo una cabecera. */
-  group?: string;
-}
+/**
+ * @see NuiOption — es el mismo tipo que usan el resto de selectores.
+ *
+ * Con una diferencia: aquí la etiqueta y la descripción se escriben como
+ * `string` y no como `ReactNode`. Son el texto sobre el que se busca —y la
+ * etiqueta, además, lo que se copia al campo al elegir—, así que tienen que
+ * poder leerse sin renderizarlas.
+ */
+export type ComboboxOption =
+  Omit<NuiOption, 'label' | 'description'>
+  & { label: string; description?: string };
 
 interface ComboboxBase extends AnimatableProps {
   options: ComboboxOption[];
@@ -106,11 +110,11 @@ export const Combobox: FC<ComboboxProps | ComboboxMultipleProps> = (props) => {
   const multiple = props.multiple === true;
   const { messages } = useNuiConfig();
 
-  const autoId = useId();
-  const baseId = id || `combobox-${autoId}`;
+  const ids = useFieldIds(id, 'combobox');
+  const baseId = ids.id;
   const listId = `${baseId}-list`;
-  const errorId = `${baseId}-error`;
-  const helperId = `${baseId}-helper`;
+  const errorId = ids.errorId;
+  const helperId = ids.helperId;
 
   const [seleccion, setSeleccion] = useControllableState<string[]>({
     value: props.value === undefined
@@ -238,14 +242,17 @@ export const Combobox: FC<ComboboxProps | ComboboxMultipleProps> = (props) => {
   let indice = -1;
 
   return (
-    <div className={cn('w-full space-y-1', className)} style={motionStyle(animate)}>
-      {label && (
-        <label htmlFor={baseId} className={cn('block text-sm font-medium', text.muted)}>
-          {label}
-          {required && <span className={cn('ml-1', text.danger)} aria-hidden="true">*</span>}
-        </label>
-      )}
-
+    <Field
+      label={label}
+      htmlFor={baseId}
+      error={error}
+      errorId={errorId}
+      helperText={helperText}
+      helperId={helperId}
+      required={required}
+      className={className}
+      style={motionStyle(animate)}
+    >
       <div
         ref={anchorRef}
         className={cn(
@@ -328,9 +335,6 @@ export const Combobox: FC<ComboboxProps | ComboboxMultipleProps> = (props) => {
           className={cn('h-4 w-4 shrink-0', text.faint, motion.transform, open && 'rotate-180')}
         />
       </div>
-
-      {error && <p id={errorId} className={cn('text-sm', text.danger)} role="alert">{error}</p>}
-      {helperText && !error && <p id={helperId} className={cn('text-sm', text.subtle)}>{helperText}</p>}
 
       {name && (multiple
         ? seleccion.map(v => <input key={v} type="hidden" name={name} value={v} />)
@@ -417,6 +421,6 @@ export const Combobox: FC<ComboboxProps | ComboboxMultipleProps> = (props) => {
           </div>
         </Portal>
       )}
-    </div>
+    </Field>
   );
 };
