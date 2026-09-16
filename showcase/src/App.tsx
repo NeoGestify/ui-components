@@ -655,10 +655,18 @@ function App() {
             Constructor de Librerías (Shapes JSON)
           </h2>
           <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
-            Crea colecciones personalizadas de formas utilizando tus inputs nativos y expórtalas en JSON.
+            Dibuja las piezas que luego se colocan en un plano. Con <code>onGuardar</code> las devuelve a quien lo
+            abrió; sin esa prop solo quedan «Descargar» y «Copiar».
           </p>
-          <div className="bg-white dark:bg-gray-50 rounded border dark:border-none shadow-inner h-[650px] overflow-hidden">
-            <ElementLibraryBuilder />
+          <div className="bg-white dark:bg-gray-800 rounded border dark:border-none shadow-inner h-[650px] overflow-hidden">
+            <ElementLibraryBuilder
+              titulo="Piezas del plano"
+              onGuardar={libs => AlertaToast(
+                'Librerías listas',
+                `${Object.keys(libs).length} librería(s) · ${Object.values(libs).reduce((n, g) => n + g.objects.length, 0)} piezas`,
+                'success',
+              )}
+            />
           </div>
         </section>
 

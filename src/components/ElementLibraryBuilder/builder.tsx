@@ -1,595 +1,489 @@
-import React, { useState, useMemo, useRef } from 'react';
-import { ElementShape, ElementTypeDef, ElementLibrary } from '../VenueMapEditor/types';
-import { Button, Input, Select, TextArea } from '../html';
-import { IMAGE_ACCEPT, fileToDataUri, sanitizeImageSrc } from '../VenueMapEditor/utils/imageSrc';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { ElementLibrary, ElementTypeDef } from '../VenueMapEditor/types';
+import { Button, Input, TextArea } from '../html';
 import { useContainerSize } from '../VenueMapEditor/hooks/useContainerSize';
-import { bg, bgHover, border, focusVisibleRing, text } from '../../theme/tokens';
+import { bg, border, focusVisibleRing, text } from '../../theme/tokens';
 import { cn } from '../../internal/cn';
+import { ListaPiezas } from './ListaPiezas';
+import { PanelPieza } from './PanelPieza';
+import { VistaPrevia } from './VistaPrevia';
+import {
+  PIEZA_NUEVA, gruposDesdeLibreria, identificadorDesde, identificadorUnico, leerLibreriaJson,
+  libreriaDesdeGrupos, nombreLibreriaLibre, nuevoId, type GrupoInterno,
+} from './piezas';
 
-/**
- * Anchos (px del contenedor) en los que cambia la disposición.
- * Tres columnas simultáneas necesitan bastante más sitio que el editor de
- * mapas, de ahí que el umbral principal sea mayor que su `COMPACT_WIDTH`.
- */
-const STACK_OUTPUT_WIDTH = 900;   // el JSON pasa debajo
-const STACK_ALL_WIDTH = 640;      // todo en una sola columna
-
-type InternalGroup = {
-  internalId: string;
-  name: string;
-  objects: ElementTypeDef[];
-};
-
-const DEFAULT_ELEMENT: ElementTypeDef = {
-  id: '',
-  label: '',
-  shape: 'rect',
-  defaultWidth: 100,
-  defaultHeight: 100,
-  color: '#cccccc',
-  strokeColor: '#000000',
-};
-
-const SHAPE_OPTIONS = [
-  { value: 'rect', label: 'Rectangle' },
-  { value: 'circle', label: 'Circle' },
-  { value: 'arrow', label: 'Arrow' },
-  { value: 'path', label: 'Path' },
-  { value: 'svg', label: 'SVG Markup' },
-  { value: 'image', label: 'Image (base64)' },
-];
-
-/**
- * Tamaño a partir del cual conviene avisar. Un data URI base64 ocupa ~33 % más
- * que el archivo original y se copia entero dentro del JSON de la librería y de
- * cada mapa que la use.
- */
-const IMAGE_WARN_BYTES = 200 * 1024;
-
-/**
- * Indicador de foco compartido. `focus-visible` para que el anillo aparezca al
- * navegar con teclado pero no al pulsar con el ratón.
- */
-const FOCUS_CLS =
-  focusVisibleRing;
-
-/** Bytes reales que ocupa la carga útil de un data URI base64. */
-function dataUriBytes(src: string): number {
-  const base64 = src.slice(src.indexOf(',') + 1);
-  return Math.floor((base64.length * 3) / 4);
+export interface ElementLibraryBuilderProps {
+  /**
+   * Con qué abre el taller. Sin ella arranca con una librería vacía.
+   *
+   * Se lee **al montar**, como `initialMap` del editor: el taller no es un
+   * campo controlado y volver a pasarle otra librería no lo reinicia. Para
+   * abrir otra, móntalo de nuevo con una `key` distinta.
+   */
+  librerias?: ElementLibrary;
+  /**
+   * Qué hacer con las librerías terminadas. Es el botón «Usar en el plano»;
+   * sin esta prop el botón no aparece y quedan «Descargar» y «Copiar», que es
+   * como funcionaba hasta la 3.9.
+   */
+  onGuardar?: (librerias: ElementLibrary) => void;
+  /** Cierra el taller desde su propia barra. Sin ella no sale el botón. */
+  onCerrar?: () => void;
+  /** El título de la barra: «Piezas del plano», «Piezas del salón»… */
+  titulo?: string;
+  /** Nombre del `.json` que se descarga, sin extensión. */
+  nombreArchivo?: string;
+  className?: string;
 }
 
-export const ElementLibraryBuilder: React.FC = () => {
-  const [groups, setGroups] = useState<InternalGroup[]>([
-    { internalId: crypto.randomUUID(), name: 'defaultGroup', objects: [] }
-  ]);
-  const [activeGroupId, setActiveGroupId] = useState<string>(groups[0].internalId);
-  const [editingGroupId, setEditingGroupId] = useState<string | null>(null);
+/**
+ * Ancho (del contenedor, no de la ventana) a partir del cual caben las tres
+ * columnas. El taller se embebe en modales de todos los tamaños, así que manda
+ * su propia caja.
+ */
+const TRES_COLUMNAS = 900;
 
-  const [activeElementIndex, setActiveElementIndex] = useState<number | null>(null);
-  const [currentElement, setCurrentElement] = useState<ElementTypeDef>({ ...DEFAULT_ELEMENT, id: 'rect_1', label: 'New Rect' });
-  const [downloadFileName, setDownloadFileName] = useState<string>("libraries");
-  const [imageError, setImageError] = useState<string | null>(null);
+/** Lo que dura el aviso de «Deshacer» antes de irse solo. */
+const DESHACER_MS = 8000;
 
-  // Igual que en el editor de mapas: la disposición depende del contenedor
-  // propio, no del viewport, porque el constructor también puede embeberse.
-  const rootRef = useRef<HTMLDivElement>(null);
-  const { width } = useContainerSize(rootRef);
-  const stackOutput = width > 0 && width < STACK_OUTPUT_WIDTH;
-  const stackAll = width > 0 && width < STACK_ALL_WIDTH;
+interface Deshacer {
+  mensaje: string;
+  restaurar: () => void;
+}
 
-  // ─── Group management ────────────────────────────────────────────────────────
+/**
+ * El taller donde se dibujan las piezas que luego se colocan en un plano.
+ *
+ * Tres zonas: qué hay (librerías y piezas), cómo queda (la pieza sobre la
+ * rejilla del editor) y cómo se cambia (forma, tamaño, colores). Lo que se
+ * toca se aplica: no hay botón de guardar la pieza, que era de donde salía el
+ * fallo de perder lo escrito al saltar de una a otra.
+ *
+ * La salida sigue siendo el mismo JSON de librerías de siempre; lo nuevo es que
+ * puede volver por {@link ElementLibraryBuilderProps.onGuardar} en vez de tener
+ * que descargarlo e importarlo a mano.
+ */
+export const ElementLibraryBuilder: React.FC<ElementLibraryBuilderProps> = ({
+  librerias,
+  onGuardar,
+  onCerrar,
+  titulo = 'Piezas del plano',
+  nombreArchivo = 'librerias',
+  className = '',
+}) => {
+  const [grupos, setGrupos] = useState<GrupoInterno[]>(() => {
+    const abiertos = gruposDesdeLibreria(librerias);
+    return abiertos.length > 0 ? abiertos : [{ idInterno: nuevoId(), nombre: 'librería 1', piezas: [] }];
+  });
+  const [grupoActivoId, setGrupoActivoId] = useState('');
+  const [indiceActivo, setIndiceActivo] = useState<number | null>(null);
+  const [editandoId, setEditandoId] = useState(false);
+  const [errorImagen, setErrorImagen] = useState<string | null>(null);
+  const [errorArchivo, setErrorArchivo] = useState<string | null>(null);
+  const [verJson, setVerJson] = useState(false);
+  const [copiado, setCopiado] = useState(false);
+  const [sinGuardar, setSinGuardar] = useState(false);
+  const [deshacer, setDeshacer] = useState<Deshacer | null>(null);
 
-  const handleAddGroup = () => {
-    const newGroupId = crypto.randomUUID();
-    const newName = `group_${groups.length + 1}`;
-    setGroups([...groups, { internalId: newGroupId, name: newName, objects: [] }]);
-    setActiveGroupId(newGroupId);
-    setActiveElementIndex(null);
+  const archivoRef = useRef<HTMLInputElement>(null);
+  const raizRef = useRef<HTMLDivElement>(null);
+  const lienzoRef = useRef<HTMLDivElement>(null);
+  const { width: anchoCaja } = useContainerSize(raizRef);
+  const { width: anchoLienzo, height: altoLienzo } = useContainerSize(lienzoRef);
+  const apilado = anchoCaja > 0 && anchoCaja < TRES_COLUMNAS;
+
+  // El grupo activo se resuelve contra la lista: así un borrado o una apertura
+  // de archivo no dejan seleccionado algo que ya no existe.
+  const grupoActivo = grupos.find(g => g.idInterno === grupoActivoId) ?? grupos[0];
+  const piezas = grupoActivo?.piezas ?? [];
+  const piezaActiva = indiceActivo !== null ? piezas[indiceActivo] : undefined;
+
+  const libreriaGenerada = useMemo(() => libreriaDesdeGrupos(grupos), [grupos]);
+  const json = useMemo(() => JSON.stringify(libreriaGenerada, null, 2), [libreriaGenerada]);
+
+  useEffect(() => {
+    if (!deshacer) return;
+    const t = setTimeout(() => setDeshacer(null), DESHACER_MS);
+    return () => clearTimeout(t);
+  }, [deshacer]);
+
+  useEffect(() => {
+    if (!copiado) return;
+    const t = setTimeout(() => setCopiado(false), 2000);
+    return () => clearTimeout(t);
+  }, [copiado]);
+
+  /** Toda modificación pasa por aquí: es lo que enciende «Sin guardar». */
+  const cambiarGrupos = useCallback((siguiente: (previos: GrupoInterno[]) => GrupoInterno[]) => {
+    setGrupos(previos => siguiente(previos));
+    setSinGuardar(true);
+  }, []);
+
+  // ─── Librerías ─────────────────────────────────────────────────────────────
+
+  const nuevoGrupo = () => {
+    const grupo: GrupoInterno = { idInterno: nuevoId(), nombre: nombreLibreriaLibre(grupos), piezas: [] };
+    cambiarGrupos(previos => [...previos, grupo]);
+    setGrupoActivoId(grupo.idInterno);
+    setIndiceActivo(null);
   };
 
-  const handleRemoveGroup = (id: string) => {
-    const newGroups = groups.filter((g) => g.internalId !== id);
-    setGroups(newGroups);
-    if (activeGroupId === id) {
-      if (newGroups.length > 0) {
-        setActiveGroupId(newGroups[0].internalId);
-      } else {
-        setActiveGroupId('');
-      }
-      setActiveElementIndex(null);
+  const renombrarGrupo = (idInterno: string, nombre: string) => {
+    cambiarGrupos(previos => previos.map(g => (g.idInterno === idInterno ? { ...g, nombre } : g)));
+  };
+
+  const borrarGrupo = (idInterno: string) => {
+    const indice = grupos.findIndex(g => g.idInterno === idInterno);
+    if (indice < 0) return;
+    const borrado = grupos[indice];
+    cambiarGrupos(previos => previos.filter(g => g.idInterno !== idInterno));
+    if (grupoActivoId === idInterno) {
+      setGrupoActivoId('');
+      setIndiceActivo(null);
     }
-  };
-
-  const activeGroup = groups.find((g) => g.internalId === activeGroupId);
-
-  // ─── Element management ──────────────────────────────────────────────────────
-
-  const handleSelectGroup = (gId: string) => {
-    setActiveGroupId(gId);
-    setActiveElementIndex(null);
-  }
-
-  const handleAddElement = () => {
-    if (!activeGroup) return;
-
-    const newEl = { ...DEFAULT_ELEMENT, id: `shape_${activeGroup.objects.length + 1}`, label: `Shape ${activeGroup.objects.length + 1}` };
-    const updatedGroups = groups.map((g) => {
-      if (g.internalId === activeGroupId) {
-        return { ...g, objects: [...g.objects, newEl] };
-      }
-      return g;
+    setDeshacer({
+      mensaje: `Se eliminó la librería «${borrado.nombre}»`,
+      restaurar: () => {
+        cambiarGrupos(previos => {
+          const copia = [...previos];
+          copia.splice(Math.min(indice, copia.length), 0, borrado);
+          return copia;
+        });
+        setGrupoActivoId(borrado.idInterno);
+      },
     });
-    setGroups(updatedGroups);
-    setActiveElementIndex(activeGroup.objects.length);
-    setCurrentElement(newEl);
   };
 
-  const handleSelectElement = (idx: number) => {
-    if (!activeGroup) return;
-    setActiveElementIndex(idx);
-    setCurrentElement(activeGroup.objects[idx]);
+  // ─── Piezas ────────────────────────────────────────────────────────────────
+
+  const nuevaPieza = () => {
+    if (!grupoActivo) return;
+    const usados = grupoActivo.piezas.map(p => p.id);
+    const label = `Pieza ${grupoActivo.piezas.length + 1}`;
+    const pieza: ElementTypeDef = {
+      ...PIEZA_NUEVA,
+      id: identificadorUnico(identificadorDesde(label), usados),
+      label,
+    };
+    cambiarGrupos(previos => previos.map(g => (
+      g.idInterno === grupoActivo.idInterno ? { ...g, piezas: [...g.piezas, pieza] } : g
+    )));
+    setIndiceActivo(grupoActivo.piezas.length);
+    setErrorImagen(null);
   };
 
-  const handleRemoveElement = (idx: number) => {
-    if (!activeGroup) return;
-    const updatedGroups = groups.map((g) => {
-      if (g.internalId === activeGroupId) {
-        const newObjs = [...g.objects];
-        newObjs.splice(idx, 1);
-        return { ...g, objects: newObjs };
-      }
-      return g;
+  const borrarPieza = (indice: number) => {
+    if (!grupoActivo) return;
+    const borrada = grupoActivo.piezas[indice];
+    if (!borrada) return;
+    const idGrupo = grupoActivo.idInterno;
+    cambiarGrupos(previos => previos.map(g => (
+      g.idInterno === idGrupo ? { ...g, piezas: g.piezas.filter((_, i) => i !== indice) } : g
+    )));
+    setIndiceActivo(null);
+    setDeshacer({
+      mensaje: `Se eliminó «${borrada.label || borrada.id}»`,
+      restaurar: () => {
+        cambiarGrupos(previos => previos.map(g => {
+          if (g.idInterno !== idGrupo) return g;
+          const copia = [...g.piezas];
+          copia.splice(Math.min(indice, copia.length), 0, borrada);
+          return { ...g, piezas: copia };
+        }));
+        setIndiceActivo(indice);
+      },
     });
-    setGroups(updatedGroups);
-    if (activeElementIndex === idx) {
-      setActiveElementIndex(null);
-    } else if (activeElementIndex !== null && activeElementIndex > idx) {
-      setActiveElementIndex(activeElementIndex - 1);
-    }
   };
 
-  const handleSaveElement = () => {
-    if (!activeGroup || activeElementIndex === null) return;
-    const updatedGroups = groups.map((g) => {
-      if (g.internalId === activeGroupId) {
-        const newObjs = [...g.objects];
-        newObjs[activeElementIndex] = { ...currentElement };
-        return { ...g, objects: newObjs };
+  /** Escribe los cambios directamente en la pieza: no hay copia que confirmar. */
+  const cambiarPieza = useCallback((cambios: Partial<ElementTypeDef>) => {
+    if (!grupoActivo || indiceActivo === null) return;
+    const idGrupo = grupoActivo.idInterno;
+    cambiarGrupos(previos => previos.map(g => {
+      if (g.idInterno !== idGrupo) return g;
+      const copia = [...g.piezas];
+      const actual = copia[indiceActivo];
+      if (!actual) return g;
+      const siguiente = { ...actual, ...cambios };
+      // El identificador sigue al nombre mientras nadie lo haya escrito a mano:
+      // así «Puesto de carro» da `puesto_de_carro` sin pedir nada, pero un
+      // identificador propio no se pisa al corregir una tilde del rótulo.
+      if (cambios.label !== undefined && actual.id === identificadorDesde(actual.label)) {
+        const usados = copia.filter((_, i) => i !== indiceActivo).map(p => p.id);
+        siguiente.id = identificadorUnico(identificadorDesde(cambios.label), usados);
       }
-      return g;
-    });
-    setGroups(updatedGroups);
+      copia[indiceActivo] = siguiente;
+      return { ...g, piezas: copia };
+    }));
+  }, [cambiarGrupos, grupoActivo, indiceActivo]);
+
+  const cambiarIdentificador = (valor: string) => {
+    if (!grupoActivo || indiceActivo === null) return;
+    const usados = grupoActivo.piezas.filter((_, i) => i !== indiceActivo).map(p => p.id);
+    cambiarPieza({ id: identificadorUnico(identificadorDesde(valor), usados) });
   };
 
-  // ─── Helpers ─────────────────────────────────────────────────────────────────
+  // ─── Entrada y salida ──────────────────────────────────────────────────────
 
-  const handleFieldChange = (field: keyof ElementTypeDef, value: ElementTypeDef[keyof ElementTypeDef]) => {
-    setCurrentElement((prev) => ({ ...prev, [field]: value }));
-  };
-
-  const handleImageFile = async (file: File | undefined) => {
+  const abrirArchivo = async (file: File | undefined) => {
     if (!file) return;
-    setImageError(null);
-    try {
-      const dataUri = await fileToDataUri(file);
-      if (!sanitizeImageSrc(dataUri)) {
-        // El SVG en data URI se rechaza a propósito: puede contener scripts.
-        // Para vectores existe el shape 'svg', que sí se sanea.
-        setImageError('Formato no admitido. Usa PNG, JPG, WEBP, GIF o AVIF (para vectores usa el shape "SVG Markup").');
-        return;
-      }
-      handleFieldChange('imageSrc', dataUri);
-    } catch {
-      setImageError('No se pudo leer el archivo.');
+    setErrorArchivo(null);
+    const { librerias: leidas, error } = leerLibreriaJson(await file.text());
+    if (error || !leidas) {
+      setErrorArchivo(error ?? 'No se pudo leer el archivo.');
+      return;
     }
+    const abiertos = gruposDesdeLibreria(leidas);
+    // Las que ya estaban con el mismo nombre se sustituyen; el resto se suma.
+    cambiarGrupos(previos => [
+      ...previos.filter(g => !abiertos.some(n => n.nombre === g.nombre)),
+      ...abiertos,
+    ]);
+    setGrupoActivoId(abiertos[0]?.idInterno ?? '');
+    setIndiceActivo(null);
   };
 
-  const handleSvgMarkupChange = (value: string) => {
-    // No manual sanitization needed — JSON.stringify() will automatically escape
-    // double quotes and special characters when serializing the output object.
-    // Modifying the string here (e.g. collapsing whitespace or replacing quotes)
-    // would corrupt the SVG structure (paths, attributes, colors, etc.).
-    handleFieldChange('svgMarkup', value);
-  };
-
-  const generatedLib = useMemo(() => {
-    const lib: ElementLibrary = {};
-    groups.forEach((g) => {
-      lib[g.name] = {
-        name: g.name,
-        objects: g.objects,
-      };
-    });
-    return JSON.stringify(lib, null, 2);
-  }, [groups]);
-
-  const handleDownload = () => {
-    const blob = new Blob([generatedLib], { type: 'application/json' });
+  const descargar = () => {
+    const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${downloadFileName}.json`;
+    a.download = `${nombreArchivo}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   };
 
-  // ─── Render ──────────────────────────────────────────────────────────────────
+  const copiar = () => {
+    void navigator.clipboard?.writeText(json);
+    setCopiado(true);
+  };
+
+  const guardar = () => {
+    onGuardar?.(libreriaGenerada);
+    setSinGuardar(false);
+  };
+
+  // ─── Pintado ───────────────────────────────────────────────────────────────
+
+  const totalPiezas = grupos.reduce((n, g) => n + g.piezas.length, 0);
+
+  const lista = (
+    <ListaPiezas
+      grupos={grupos}
+      grupoActivoId={grupoActivo?.idInterno ?? ''}
+      onElegirGrupo={id => { setGrupoActivoId(id); setIndiceActivo(null); }}
+      onNuevoGrupo={nuevoGrupo}
+      onRenombrarGrupo={renombrarGrupo}
+      onBorrarGrupo={borrarGrupo}
+      piezas={piezas}
+      indiceActivo={indiceActivo}
+      onElegirPieza={i => { setIndiceActivo(i); setErrorImagen(null); }}
+      onNuevaPieza={nuevaPieza}
+      enTira={apilado}
+    />
+  );
+
+  const centro = (
+    <div className={cn('flex flex-col gap-3 min-w-0', apilado ? '' : 'flex-1 min-h-0')}>
+      <div
+        ref={lienzoRef}
+        className={cn(
+          'rounded-xl border flex items-center justify-center overflow-hidden relative',
+          border.subtle, bg.surface,
+          apilado ? 'h-56' : 'flex-1 min-h-56',
+        )}
+      >
+        {piezaActiva ? (
+          <>
+            <VistaPrevia
+              pieza={piezaActiva}
+              ancho={Math.max(160, Math.round(anchoLienzo) || 320)}
+              alto={Math.max(140, Math.round(altoLienzo) || 240)}
+              conCuadricula
+              conEtiqueta
+            />
+            <span className={cn('absolute top-2 left-3 text-xs', text.subtle)}>Así se verá en el plano</span>
+            <span className={cn('absolute bottom-2 right-3 text-xs tabular-nums', text.subtle)}>
+              {piezaActiva.defaultWidth} × {piezaActiva.defaultHeight}
+            </span>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-2 text-center px-6 py-10">
+            <p className="text-base font-semibold">
+              {piezas.length === 0 ? 'Esta librería está vacía' : 'Elige una pieza'}
+            </p>
+            <p className={cn('text-sm max-w-xs', text.subtle)}>
+              {piezas.length === 0
+                ? 'Dibuja la primera pieza —un puesto, una columna, una flecha— o abre una librería que ya tengas.'
+                : 'Toca una de las piezas de la lista para cambiarle la forma, el tamaño o el color.'}
+            </p>
+            <div className="flex gap-2 mt-2">
+              <Button variant="primary" onClick={nuevaPieza}>Nueva pieza</Button>
+              <Button variant="secondary" onClick={() => archivoRef.current?.click()}>Abrir librería…</Button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {piezaActiva && (
+        <div className="flex flex-col gap-1">
+          <div className="flex items-end gap-2">
+            <div className="flex-1 min-w-0">
+              <Input
+                label="Nombre de la pieza"
+                value={piezaActiva.label}
+                onChange={e => cambiarPieza({ label: e.target.value })}
+              />
+            </div>
+            <Button
+              variant="secondary"
+              onClick={() => indiceActivo !== null && borrarPieza(indiceActivo)}
+              className={text.danger}
+            >
+              Eliminar
+            </Button>
+          </div>
+          {editandoId ? (
+            <Input
+              autoFocus
+              label="Identificador"
+              helperText="Es lo que guarda cada elemento colocado en un plano. Cambiarlo en una librería ya usada deja sueltos los elementos viejos."
+              value={piezaActiva.id}
+              onChange={e => cambiarIdentificador(e.target.value)}
+              onBlur={() => setEditandoId(false)}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') setEditandoId(false); }}
+              className="font-mono text-sm"
+            />
+          ) : (
+            <p className={cn('text-xs', text.subtle)}>
+              Identificador: <span className="font-mono">{piezaActiva.id}</span>{' '}
+              <button
+                type="button"
+                onClick={() => setEditandoId(true)}
+                className={cn('font-semibold cursor-pointer rounded', text.accent, focusVisibleRing)}
+              >
+                cambiar
+              </button>
+            </p>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button variant="secondary" size="sm" onClick={() => setVerJson(v => !v)} aria-expanded={verJson}>
+            {verJson ? 'Ocultar el JSON' : 'Ver el JSON'}
+          </Button>
+          <span className={cn('text-xs', text.subtle)}>Para copiarlo a otro proyecto o revisarlo. Es de solo lectura.</span>
+          {verJson && (
+            <Button variant="secondary" size="sm" onClick={copiar} className="ml-auto">
+              {copiado ? 'Copiado' : 'Copiar'}
+            </Button>
+          )}
+        </div>
+        {verJson && (
+          <TextArea
+            readOnly
+            rows={apilado ? 8 : 10}
+            value={json}
+            aria-label="JSON de las librerías"
+            className={cn('resize-none font-mono text-xs', bg.surfaceMuted, border.subtle, text.success)}
+          />
+        )}
+      </div>
+    </div>
+  );
+
+  const panel = piezaActiva ? (
+    <PanelPieza
+      pieza={piezaActiva}
+      onCambio={cambiarPieza}
+      errorImagen={errorImagen}
+      onErrorImagen={setErrorImagen}
+      apilado={apilado}
+    />
+  ) : (
+    <p className={cn('text-sm', text.subtle)}>
+      Elige una pieza para cambiarle la forma, el tamaño y los colores.
+    </p>
+  );
 
   return (
     <div
-      ref={rootRef}
-      className={cn(
-        `flex gap-4 p-4 h-full text-sm ${text.base} ${bg.surface}`,
-        stackOutput
-          // Apilado: el contenido crece más que el contenedor, así que éste es
-          // quien scrollea. `min-h-0` evita que los hijos flex impongan su
-          // altura mínima y desborden sin barra.
-          ? 'flex-col overflow-y-auto min-h-0'
-          : 'flex-row min-h-[600px] overflow-hidden',
-      )}
+      ref={raizRef}
+      className={cn('flex flex-col h-full min-h-0 text-sm', text.base, bg.surface, className)}
     >
-      {/* Listas + editor. Con sitio de sobra este envoltorio es `contents`, así
-          que sus hijos participan directamente en el flex de 3 columnas. */}
-      <div
-        className={cn(
-          stackOutput
-            ? (stackAll ? 'flex flex-col gap-4 shrink-0' : 'flex flex-row gap-4 shrink-0')
-            : 'contents',
+      {/* Barra */}
+      <div className={cn('shrink-0 flex flex-wrap items-center gap-2 px-4 py-3 border-b', border.subtle)}>
+        <div className="flex-1 min-w-40">
+          <h2 className="text-base font-bold leading-tight">{titulo}</h2>
+          <p className={cn('text-xs', text.subtle)}>
+            {grupos.length === 1 ? '1 librería' : `${grupos.length} librerías`} · {totalPiezas === 1 ? '1 pieza' : `${totalPiezas} piezas`}
+          </p>
+        </div>
+
+        {onGuardar && (
+          <span className={cn('text-xs font-semibold', sinGuardar ? text.warning : text.success)}>
+            {sinGuardar ? '● Sin guardar' : '● Guardado'}
+          </span>
         )}
-      >
-      {/* Sidebar columns for Groups and Elements */}
-      <div className={cn(
-        'flex flex-col gap-4',
-        stackAll
-          ? `w-full shrink-0 border-b ${border.subtle} pb-4`
-          : `w-1/4 shrink-0 min-h-0 border-r ${border.subtle} pr-4`,
-      )}>
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold">Libraries (Groups)</h3>
-            <Button variant='primary' onClick={handleAddGroup}>+ Group</Button>
-          </div>
-          <div className="flex flex-col gap-1 max-h-48 overflow-y-auto pr-1">
-            {groups.map((group) => (
-              <div
-                key={group.internalId}
-                className={`flex items-center justify-between p-2 rounded ${activeGroupId === group.internalId ? `${bg.accentSoft} ${text.accent} font-semibold` : `${bgHover.surface}`}`}
-              >
-                {editingGroupId === group.internalId ? (
-                  <Input
-                    autoFocus
-                    value={group.name}
-                    onChange={(e) => {
-                      setGroups(groups.map(g => g.internalId === group.internalId ? { ...g, name: e.target.value } : g));
-                    }}
-                    onBlur={() => setEditingGroupId(null)}
-                    onKeyDown={(e) => e.key === 'Enter' && setEditingGroupId(null)}
-                  />
-                ) : (
-                  <button
-                    type="button"
-                    className={`min-w-0 flex-1 truncate text-left cursor-pointer ${FOCUS_CLS}`}
-                    aria-pressed={activeGroupId === group.internalId}
-                    onClick={() => handleSelectGroup(group.internalId)}
-                    onDoubleClick={() => setEditingGroupId(group.internalId)}
-                  >
-                    {group.name}
-                  </button>
-                )}
 
-                {groups.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); handleRemoveGroup(group.internalId); }}
-                    aria-label={`Eliminar grupo ${group.name}`}
-                    className={`rounded px-1 text-xs ${text.danger} hover:${text.danger} ${FOCUS_CLS}`}
-                  >x</button>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <hr className={`${border.subtle}`} />
-
-        <div className={`flex flex-col gap-2 overflow-hidden ${stackAll ? '' : 'flex-grow'}`}>
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold">Elements in {activeGroup?.name || '?'}</h3>
-            <Button variant='secondary' onClick={handleAddElement} disabled={!activeGroup}>+ Element</Button>
-          </div>
-          <div className={`flex flex-col gap-1 overflow-y-auto pr-1 ${stackAll ? 'max-h-40' : 'flex-grow'}`}>
-            {activeGroup?.objects.map((el, i) => (
-              <div
-                key={i}
-                className={`flex items-center justify-between p-2 rounded ${activeElementIndex === i ? `${bg.accentSoft} ${text.accent} font-semibold` : `${bgHover.surface}`}`}
-              >
-                <button
-                  type="button"
-                  className={`min-w-0 flex-1 truncate text-left cursor-pointer ${FOCUS_CLS}`}
-                  aria-pressed={activeElementIndex === i}
-                  onClick={() => handleSelectElement(i)}
-                >
-                  {el.id} ({el.shape})
-                </button>
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); handleRemoveElement(i); }}
-                  aria-label={`Eliminar elemento ${el.id}`}
-                  className={`rounded px-1 text-xs ${text.danger} hover:${text.danger} ${FOCUS_CLS}`}
-                >x</button>
-              </div>
-            ))}
-            {(!activeGroup || activeGroup.objects.length === 0) && (
-              <span className={`${text.faint} italic text-xs`}>No elements yet</span>
-            )}
-          </div>
-        </div>
+        <input
+          ref={archivoRef}
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          onChange={e => { void abrirArchivo(e.target.files?.[0]); e.target.value = ''; }}
+        />
+        <Button variant="secondary" onClick={() => archivoRef.current?.click()}>Abrir…</Button>
+        <Button variant="secondary" onClick={descargar}>Descargar</Button>
+        {!onGuardar && (
+          <Button variant="secondary" onClick={copiar}>{copiado ? 'Copiado' : 'Copiar'}</Button>
+        )}
+        {onGuardar && <Button variant="primary" onClick={guardar}>Usar en el plano</Button>}
+        {onCerrar && <Button variant="secondary" onClick={onCerrar}>Cerrar</Button>}
       </div>
 
-      {/* Editor Section */}
-      <div className={cn(
-        'flex-1 min-w-0 flex flex-col gap-4 px-2',
-        stackOutput ? 'shrink-0' : 'min-h-0 overflow-y-auto',
-      )}>
-        <h3 className="font-bold text-lg">Element Editor</h3>
-        {activeElementIndex !== null ? (
-          <div className="flex flex-col gap-4 w-full max-w-2xl">
-            <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
-              <Input
-                label="Element ID (unique)"
-                value={currentElement.id}
-                onChange={(e) => handleFieldChange('id', e.target.value)}
-              />
-              <Input
-                label="Label (display name)"
-                value={currentElement.label}
-                onChange={(e) => handleFieldChange('label', e.target.value)}
-              />
-            </div>
+      {errorArchivo && (
+        <p role="alert" className={cn('shrink-0 px-4 py-2 text-sm border-b', border.subtle, text.danger)}>
+          {errorArchivo}
+        </p>
+      )}
 
-            <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
-              <Select
-                label="Shape"
-                options={SHAPE_OPTIONS}
-                value={currentElement.shape}
-                onChange={(e) => handleFieldChange('shape', e.target.value as ElementShape)}
-              />
-              <Input
-                label="Icon (emoji or class)"
-                value={currentElement.icon || ''}
-                onChange={(e) => handleFieldChange('icon', e.target.value)}
-              />
-            </div>
-
-            <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
-              <Input
-                type="number"
-                label="Default Width"
-                value={currentElement.defaultWidth}
-                onChange={(e) => handleFieldChange('defaultWidth', parseFloat(e.target.value) || 0)}
-              />
-              <Input
-                type="number"
-                label="Default Height"
-                value={currentElement.defaultHeight}
-                onChange={(e) => handleFieldChange('defaultHeight', parseFloat(e.target.value) || 0)}
-              />
-            </div>
-
-            <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
-              <div className="flex flex-col gap-1">
-                <span className={`text-xs font-semibold ${text.muted}`}>Fill Color</span>
-                <div className="flex gap-2">
-                  <input
-                    type="color"
-                    aria-label="Fill Color"
-                    className={`w-8 h-8 cursor-pointer rounded ${FOCUS_CLS}`}
-                    value={currentElement.color}
-                    onChange={(e) => handleFieldChange('color', e.target.value)}
-                  />
-                  <Input
-                    value={currentElement.color}
-                    onChange={(e) => handleFieldChange('color', e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className={`text-xs font-semibold ${text.muted}`}>Stroke Color</span>
-                <div className="flex gap-2">
-                  <input
-                    type="color"
-                    aria-label="Stroke Color"
-                    className={`w-8 h-8 cursor-pointer rounded ${FOCUS_CLS}`}
-                    value={currentElement.strokeColor}
-                    onChange={(e) => handleFieldChange('strokeColor', e.target.value)}
-                  />
-                  <Input
-                    value={currentElement.strokeColor}
-                    onChange={(e) => handleFieldChange('strokeColor', e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <label className="flex items-start gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={!!currentElement.clickable}
-                onChange={(e) => handleFieldChange('clickable', e.target.checked)}
-                className="mt-0.5 accent-[var(--nui-accent,oklch(51.1%_.262_276.966))] dark:accent-[var(--nui-accent-dark,oklch(58.5%_.233_277.117))] [color-scheme:light] dark:[color-scheme:dark]"
-              />
-              <span className="flex flex-col">
-                <span className={`text-xs font-semibold ${text.muted}`}>
-                  Clickable by default
-                </span>
-                <span className={`text-[11px] ${text.faint} leading-snug`}>
-                  Elements of this type respond to clicks in the viewer only (not
-                  in the editor). Each placed element can override this.
-                </span>
-              </span>
-            </label>
-
-            {currentElement.shape === 'path' && (
-              <div className={`flex flex-col gap-4 border ${border.subtle} p-4 rounded ${bg.surfaceMuted}/50`}>
-                <h4 className="font-semibold text-sm">Path Config</h4>
-                <div className={`grid gap-4 ${stackAll ? 'grid-cols-1' : 'grid-cols-2'}`}>
-                  <Input
-                    label="ViewBox"
-                    placeholder="0 0 100 100"
-                    value={currentElement.viewBox || ''}
-                    onChange={(e) => handleFieldChange('viewBox', e.target.value)}
-                  />
-                  <Select
-                    label="Fill Rule"
-                    options={[
-                      { value: 'nonzero', label: 'nonzero' },
-                      { value: 'evenodd', label: 'evenodd' }
-                    ]}
-                    value={currentElement.fillRule || 'nonzero'}
-                    onChange={(e) => handleFieldChange('fillRule', e.target.value)}
-                  />
-                </div>
-                <TextArea
-                  label="SVG Path (d attribute)"
-                  placeholder="M10 10 H 90 V 90 H 10 Z"
-                  value={currentElement.svgPath || ''}
-                  onChange={(e) => handleFieldChange('svgPath', e.target.value)}
-                  rows={4}
-                />
-              </div>
-            )}
-
-            {currentElement.shape === 'svg' && (
-              <div className="flex flex-col gap-4 p-4 rounded border border-[color:color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_35%,transparent)] bg-[color-mix(in_oklab,var(--nui-warning,oklch(68.1%_.162_75.834))_10%,white)] dark:bg-[color-mix(in_oklab,var(--nui-warning-dark,oklch(79.5%_.184_86.047))_12%,transparent)]">
-                <h4 className="font-semibold text-sm">SVG Markup (Autosanitized)</h4>
-                <p className={`text-xs ${text.warning}`}>
-                  Paste your raw SVG here. Double quotes will be converted to single quotes automatically to safely embed the string in JSON.
-                </p>
-                <TextArea
-                  label="raw <svg>...</svg>"
-                  value={currentElement.svgMarkup || ''}
-                  onChange={(e) => handleSvgMarkupChange(e.target.value)}
-                  rows={6}
-                  placeholder={"<svg viewBox='0 0 100 100'><circle cx='50' cy='50' r='50'/></svg>"}
-                />
-              </div>
-            )}
-
-            {currentElement.shape === 'image' && (
-              <div className="flex flex-col gap-4 p-4 rounded border border-[color:color-mix(in_oklab,var(--nui-info,oklch(54.6%_.245_262.881))_35%,transparent)] bg-[color-mix(in_oklab,var(--nui-info,oklch(54.6%_.245_262.881))_8%,white)] dark:bg-[color-mix(in_oklab,var(--nui-info-dark,oklch(62.3%_.214_259.815))_12%,transparent)]">
-                <h4 className="font-semibold text-sm">Imagen (base64)</h4>
-                <p className={`text-xs ${text.info}`}>
-                  El archivo se incrusta como data URI dentro del JSON, así que la
-                  librería y los mapas que la usen no dependen de ningún servidor.
-                </p>
-
-                <Input
-                  type="file"
-                  label="Archivo de imagen"
-                  accept={IMAGE_ACCEPT}
-                  onChange={(e) => handleImageFile(e.target.files?.[0])}
-                  error={imageError ?? undefined}
-                  helperText="PNG · JPG · WEBP · GIF · AVIF"
-                />
-
-                <Select
-                  label="Ajuste dentro de la caja"
-                  options={[
-                    { value: 'xMidYMid meet', label: 'Contener (mantiene proporción)' },
-                    { value: 'xMidYMid slice', label: 'Cubrir (recorta sobrante)' },
-                    { value: 'none', label: 'Estirar (deforma)' },
-                  ]}
-                  value={currentElement.preserveAspectRatio || 'xMidYMid meet'}
-                  onChange={(e) => handleFieldChange('preserveAspectRatio', e.target.value)}
-                />
-
-                {currentElement.imageSrc && (
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={currentElement.imageSrc}
-                      alt="Vista previa"
-                      className={`w-16 h-16 object-contain border ${border.subtle} rounded bg-white`}
-                    />
-                    <div className="flex flex-col gap-1 text-xs">
-                      <span className={`${text.subtle}`}>
-                        {(dataUriBytes(currentElement.imageSrc) / 1024).toFixed(0)} KB incrustados
-                      </span>
-                      {dataUriBytes(currentElement.imageSrc) > IMAGE_WARN_BYTES && (
-                        <span className={`${text.warning}`}>
-                          Imagen pesada: agranda el JSON de todos los mapas que la usen.
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        className={`${text.danger} hover:${text.danger} text-left rounded ${FOCUS_CLS}`}
-                        onClick={() => { handleFieldChange('imageSrc', undefined); setImageError(null); }}
-                      >
-                        Quitar imagen
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div className={`flex justify-end gap-2 mt-4 pt-4 border-t ${border.subtle}`}>
-              <Button onClick={handleSaveElement}>Save Changes to Element</Button>
-            </div>
+      {/* Cuerpo */}
+      <div className={cn('flex-1 min-h-0', apilado ? 'overflow-y-auto' : 'flex')}>
+        {apilado ? (
+          <div className="flex flex-col gap-4 p-4">
+            {lista}
+            {centro}
+            <div className={cn('border-t pt-4', border.subtle)}>{panel}</div>
           </div>
         ) : (
-          <div className={`flex items-center justify-center h-full ${text.subtle}`}>
-            Select an element to edit or add a new one.
-          </div>
+          <>
+            <div className={cn('w-72 shrink-0 border-r p-4 overflow-y-auto', border.subtle)}>{lista}</div>
+            <div className="flex-1 min-w-0 flex flex-col p-4 overflow-y-auto">{centro}</div>
+            <div className={cn('w-80 shrink-0 border-l p-4 overflow-y-auto', border.subtle)}>{panel}</div>
+          </>
         )}
       </div>
-      </div>
 
-      {/* output section */}
-      <div className={cn(
-        'flex flex-col gap-2',
-        stackOutput
-          ? `w-full shrink-0 border-t ${border.subtle} pt-4`
-          : `w-1/3 shrink-0 min-h-0 border-l ${border.subtle} pl-4 h-full max-h-full`,
-      )}>
-        <div className={`flex gap-2 shrink-0 ${stackAll ? 'flex-col items-stretch' : 'items-center justify-between'}`}>
-          <h3 className="font-bold">Output JSON</h3>
-          <div className="flex items-center gap-2 flex-wrap">
-            <Input
-              value={downloadFileName}
-              onChange={(e) => setDownloadFileName(e.target.value)}
-              placeholder="filename"
-              title="Filename without extension"
-            />
-            <span className={`text-xs ${text.subtle}`}>.json</span>
+      {/* Deshacer */}
+      <div aria-live="polite" className="shrink-0">
+        {deshacer && (
+          <div className={cn('flex items-center gap-3 px-4 py-3 border-t', border.subtle, bg.surfaceMuted)}>
+            <span className="text-sm">{deshacer.mensaje}</span>
             <Button
               variant="secondary"
-              onClick={handleDownload}
-              title="Download JSON file"
+              size="sm"
+              className="ml-auto"
+              onClick={() => { deshacer.restaurar(); setDeshacer(null); }}
             >
-              Descargar
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => navigator.clipboard.writeText(generatedLib)}
-            >
-              Copy
+              Deshacer
             </Button>
           </div>
-        </div>
-        {/* La altura se fija con `rows`, no con `h-full`: el <textarea> vive
-            dentro del wrapper de `TextArea`, que no tiene altura definida, así
-            que `h-full` se resolvía como `auto` y dejaba el JSON en dos líneas. */}
-        <div className={`pb-4 ${stackOutput ? '' : 'flex-1 min-h-0 overflow-hidden'}`}>
-          <TextArea
-            readOnly
-            rows={stackOutput ? 12 : 22}
-            className={`resize-none font-mono text-xs ${text.success} ${bg.surfaceMuted} ${border.subtle}`}
-            value={generatedLib}
-          />
-        </div>
+        )}
       </div>
     </div>
   );

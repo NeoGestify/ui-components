@@ -7,26 +7,7 @@ import { useDrag } from '../hooks/useDrag';
 import { snapToGrid } from '../utils/snapUtils';
 import { parseSvgMarkup } from '../utils/svgParser';
 import { sanitizeImageSrc } from '../utils/imageSrc';
-import { cn } from '../../../internal/cn';
-
-// ─── Arrow shape ──────────────────────────────────────────────────────────────
-
-function arrowPath(x: number, y: number, w: number, h: number): string {
-  const headW = Math.min(w * 0.4, h * 0.9);
-  const tailH = h * 0.45;
-  const yt = y + (h - tailH) / 2;
-  const yb = y + (h + tailH) / 2;
-  return cn(
-    `M ${x} ${yt}`,
-    `L ${x + w - headW} ${yt}`,
-    `L ${x + w - headW} ${y}`,
-    `L ${x + w} ${y + h / 2}`,
-    `L ${x + w - headW} ${y + h}`,
-    `L ${x + w - headW} ${yb}`,
-    `L ${x} ${yb}`,
-    'Z',
-  );
-}
+import { arrowPath } from '../utils/shapePath';
 
 // ─── Resize-handle geometry ───────────────────────────────────────────────────
 

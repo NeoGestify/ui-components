@@ -1,5 +1,69 @@
 # Changelog
 
+## 3.10.0
+
+El constructor de librerías, rehecho: ahora se ve lo que se dibuja y lo que sale
+puede volver al mapa sin pasar por la carpeta de descargas.
+
+### `ElementLibraryBuilder`
+
+**Se ve la pieza.** Antes se escribían ancho, alto y dos colores a ciegas: la
+única vista previa era la de la imagen incrustada. Ahora la pieza se dibuja en
+grande sobre la rejilla de 20 px del editor, con las mismas formas y los mismos
+ayudantes que `ElementNode` (`arrowPath`, `parseSvgMarkup`, `sanitizeImageSrc`),
+así que lo que se ve es lo que se coloca. Cada pieza de la lista también se
+enseña dibujada, en vez de como `shape_1 (rect)`.
+
+**Se acabó «Save Changes to Element».** Era el fallo de fondo: el formulario
+editaba una copia y, si se saltaba a otra pieza sin pulsar el botón, lo escrito
+se perdía sin avisar. Ya no hay copia ni botón — cada cambio entra en la
+librería— y el estado se cuenta en la barra: «Sin guardar» mientras haya algo
+que mandar, «Guardado» después.
+
+**Props nuevas, todas opcionales.** Sin ninguna se comporta como hasta ahora:
+
+| Prop | Qué hace |
+| --- | --- |
+| `librerias` | Con qué abre. Se lee al montar, como `initialMap`. |
+| `onGuardar` | Saca el botón «Usar en el plano» y devuelve el `ElementLibrary`. |
+| `onCerrar` | Saca el botón «Cerrar» en la propia barra. |
+| `titulo` | «Piezas del plano», «Piezas del salón»… |
+| `nombreArchivo` | Nombre del `.json` que se descarga. |
+
+Con `onGuardar`, quien abre el taller recibe las librerías y las guarda donde
+quiera —dentro del mapa, por ejemplo—. Sin él, el recorrido sigue siendo
+descargar el archivo e importarlo con «Importar librería».
+
+**Se puede abrir una librería.** «Abrir…» lee un `.json` de los que exporta el
+propio taller y lo suma a lo que haya, sustituyendo las del mismo nombre. Si el
+archivo no sirve, se dice qué le falta —«no trae ninguna librería», «la librería
+"x" no trae piezas»— en lugar del `Unexpected token` del `JSON.parse`.
+
+**Borrar perdona.** Las «x» de 16 px que borraban sin preguntar son ahora un
+botón de tamaño normal y un aviso con «Deshacer» que dura ocho segundos. La
+papelera solo sale en la librería abierta: la de al lado era la que se pulsaba
+sin querer.
+
+**En español y con las palabras de la tarea.** *Libraries (Groups)*, *Element
+Editor*, *Element ID (unique)*, *Shape*, *Fill Rule*, *Output JSON* pasan a
+librerías, piezas, nombre, forma, relleno, borde y tamaño. El identificador ya
+no se escribe: sale del nombre («Puesto de carro» → `puesto_de_carro`), se
+mantiene único dentro de su librería y solo se toca si alguien lo pide con
+«cambiar» —y entonces deja de seguir al nombre—.
+
+**Tamaño de dedo.** Botones de 44 px, piezas de 96, el número del tamaño con su
+menos y su más a los lados, y la forma como seis fichas dibujadas en vez de un
+`<select>`. El JSON, que ocupaba un tercio del ancho, se despliega solo cuando
+se pide.
+
+**Por dentro.** El archivo de 596 líneas queda repartido en `builder.tsx`,
+`ListaPiezas`, `PanelPieza`, `VistaPrevia` y `piezas.ts` (los ayudantes puros,
+con sus pruebas). `arrowPath` se muda a `VenueMapEditor/utils/shapePath.ts`,
+que ahora comparten el mapa y la vista previa.
+
+El JSON que produce es idéntico al de la 3.9: una librería hecha con la versión
+anterior se abre, se edita y se guarda sin conversiones.
+
 ## 3.9.0
 
 Dieciséis componentes nuevos, los cinco fallos de `Table` y una capa de
