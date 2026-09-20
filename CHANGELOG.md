@@ -1,5 +1,126 @@
 # Changelog
 
+## 3.10.1
+
+`Progress` sabía decir «llevo el 62 %». Ahora sabe decir «hay 62 camisetas, el
+mínimo son 20 y el máximo 80».
+
+### Marcas fijas en `Progress`
+
+**Antes la barra solo tenía dos números: el valor y el tope.** Servía para una
+subida de archivo, donde el 100 % es la meta y no hay nada que señalar en medio.
+No servía para una pantalla de stock, donde lo que importa no es cuánto llevas
+sino **dónde caes**: un stock de 62 no significa nada sin el mínimo de 20 y el
+máximo de 80 al lado. La única salida era poner tres barras, o escribir los
+números debajo y dejar que cada quien los cruzara a ojo.
+
+**Ahora la barra es una escala.** `marks` dibuja referencias fijas sobre la
+pista —un mínimo, un objetivo, el máximo—, cada una con su raya y su etiqueta:
+
+```tsx
+<Progress
+  label="Stock de camisetas"
+  value={62}
+  max={80}
+  marks={[
+    { value: 20, label: 'Mín. 20' },
+    { value: 80, label: 'Máx. 80' },
+  ]}
+/>
+```
+
+**La cuenta del tope es de quien llama.** `Progress` recibe `max` ya calculado y
+no lo toca: mientras el stock quepa, el tope es el máximo de inventario y su
+marca cae en el 100 %; cuando el stock lo pasa, quien llama sube el tope al
+propio stock, la barra se llena y el máximo se queda **dentro**, como una marca
+interior que enseña por cuánto se ha pasado. Una marca fuera de `[0, max]` no se
+dibuja, y eso es a propósito: recortarla al borde la pondría encima del 100 %
+como si el tope fuera ella, justo en el momento en que ya no lo es. Que
+desaparezca es la señal de que hay que subir `max`.
+
+**Tres cosas que no salen a la primera**, y que están escritas en el código para
+que nadie las vuelva a descubrir:
+
+- La pista lleva `overflow-hidden`. Una raya metida dentro se recorta a la mitad
+  justo en el 100 % —donde cae el máximo mientras no se supere— y desaparece del
+  todo en los extremos redondeados. Las marcas van **hermanas** de la pista,
+  dentro de un envoltorio que no recorta.
+- La raya tiene que verse sobre el relleno **y** sobre la pista vacía, que son
+  dos colores distintos. Son 2 px de tinta con un halo de 2 px del color de la
+  superficie; sin el halo se pierde contra el relleno, que en casi todas las
+  variantes es igual de oscuro que el texto.
+- Una etiqueta centrada en el 2 % se sale por la izquierda del componente. Van
+  centradas bajo su marca, salvo por debajo del 6 % y por encima del 94 %, donde
+  se anclan al borde.
+
+Las rayas son `aria-hidden` y quien habla es la fila de etiquetas. Una marca sin
+etiqueta visible puede decir lo suyo con `description`, que entra en un
+`sr-only`; con las dos se anunciaría la misma marca dos veces, así que
+`description` solo se lee cuando no hay `label`.
+
+### Tramos de color
+
+**El relleno era de un solo color de punta a punta.** Para que la barra cambiara
+de color al cruzar el mínimo había que cambiarle la `variant` completa, y
+entonces cambiaba *toda*: se perdía la información de por dónde se había pasado.
+
+Ahora cada marca dice con `fill` **con qué color llega el relleno hasta ella**,
+y tiñe el tramo que termina ahí —desde la marca anterior, o desde 0 si es la
+primera—. Lo que importa es que los tramos **se encadenan**: un color a solas se
+engancha al color con el que se quedó la marca anterior, así que una escala se
+escribe con un color por banderín y las transiciones salen solas.
+
+```tsx
+marks={[
+  { value: 20, label: 'Mín.', fill: 'var(--nui-danger)' },
+  { value: 80, label: 'Máx.', fill: 'var(--nui-success)' },
+]}
+```
+
+Eso son tres tramos: rojo plano hasta el mínimo —que no tiene de dónde venir—,
+un degradado del rojo al verde del mínimo al máximo, y del máximo al tope el
+color de la variante, porque ahí ya no manda ningún banderín.
+
+Las dos escapatorias:
+
+- **`[desde, hasta]`** fija el arranque pase lo que pase. Es la forma de cortar
+  con el color anterior —queda una línea limpia en la marca que los separa— o de
+  pintar un tramo de un color plano, poniendo el mismo color dos veces.
+- **Sin `fill`**, el tramo se queda con el color de la variante, y además rompe
+  la cadena: la marca siguiente ya no tiene color del que venir. Es a propósito.
+  Venir de un tramo transparente desteñiría el color de la variante, que es
+  justo lo que un tramo sin `fill` quiere dejar quieto.
+
+Los tramos están clavados a la **pista**, no al relleno, así que un corte en el
+20 % sigue en el 20 % mientras el valor crece; no se arrastra con la barra.
+
+### `over`, el naranja
+
+**`variant="over"` para el valor que se ha salido de su escala.** No reusa
+`warning`: `warning` es amarillo y en una pantalla de stock ya significa «por
+debajo del mínimo». Pasarse del máximo es el estado siguiente, y dos estados
+distintos no pueden salir del mismo color. Es un token como los demás
+(`--nui-over` / `--nui-over-dark`, orange-600 / orange-500 por defecto), así que
+se retematiza declarando la variable.
+
+### Props nuevas, todas opcionales
+
+Sin `marks`, `Progress` se comporta y se ve exactamente como en la 3.10.
+
+| Prop | Qué hace |
+| --- | --- |
+| `marks` | Referencias fijas sobre la barra, en las unidades de `value`. |
+| `marks[].value` | Dónde cae, en unidades de `value`. Fuera de `[0, max]` no se dibuja. |
+| `marks[].label` | Lo que va debajo de la raya. Sin ella, la marca es solo la raya. |
+| `marks[].description` | Lo que lee el lector de pantalla cuando la marca no lleva etiqueta. |
+| `marks[].fill` | Con qué color llega el relleno a esta marca. Uno se engancha al de la marca anterior; `[desde, hasta]` fija el arranque; nada deja el de la variante. |
+| `variant="over"` | Relleno naranja para el valor que se ha pasado del tope. |
+
+Se exportan el tipo `ProgressMark` y el token `over`. El cálculo de las marcas
+visibles, del degradado de los tramos y de la posición de las etiquetas sale a
+funciones puras con sus pruebas (`visibleMarks`, `segmentGradient`, `fillStyle`,
+`markLabelPosition`).
+
 ## 3.10.0
 
 El constructor de librerías, rehecho: ahora se ve lo que se dibuja y lo que sale

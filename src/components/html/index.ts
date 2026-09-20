@@ -19,7 +19,7 @@ export { Avatar, AvatarGroup, initialsOf, type AvatarProps, type AvatarGroupProp
 export { Badge, type BadgeProps } from './Badge';
 export { Skeleton, SkeletonText, type SkeletonProps, type SkeletonTextProps } from './Skeleton';
 export { Alert, type AlertProps } from './Alert';
-export { Progress, type ProgressProps } from './Progress';
+export { Progress, type ProgressProps, type ProgressMark } from './Progress';
 export {
   Divider, EmptyState, Stat, Kbd,
   type DividerProps, type EmptyStateProps, type StatProps, type KbdProps,
