@@ -747,6 +747,15 @@ function App() {
               )}
             />
           </div>
+
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-6 mb-2">
+            Y el mismo taller <strong>sin altura fija</strong>, como cuando vive dentro de un modal que crece con su
+            contenido. La vista previa se mide contra su propio hueco: si el dibujo contara para la altura de ese
+            hueco, cada medición lo haría más alto y el lienzo crecería sin parar. Aquí tiene que quedarse quieto.
+          </p>
+          <div className="bg-white dark:bg-gray-800 rounded border dark:border-none shadow-inner overflow-hidden">
+            <ElementLibraryBuilder titulo="Piezas del plano (sin altura fija)" />
+          </div>
         </section>
 
         {/* VenueMapEditor Section */}

@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.10.2
+
+### `ElementLibraryBuilder`: el lienzo crecía sin parar
+
+La vista previa se dibujaba con un tamaño en píxeles sacado de medir su propio
+contenedor. En flujo normal eso es un bucle: el `<svg>` estira la caja, el
+`ResizeObserver` la mide más alta, el `<svg>` vuelve a crecer. Cada vuelta
+sumaba unos píxeles y el taller se estiraba hasta miles de píxeles de alto.
+
+Solo se libraba quien le diera al taller una altura definida desde fuera —el
+showcase, con su `h-[650px]`—, así que no se veía aquí. Dentro de un modal que
+crece con su contenido, que es como lo monta el plano del salón, se disparaba.
+
+La vista previa pasa a estar fuera del flujo (`absolute inset-0`): ya no cuenta
+para la altura de la caja que se mide, y esa altura la fijan `flex-1 min-h-56`
+como estaba previsto. Además llena el hueco por CSS (`w-full h-full`), de modo
+que en el primer pintado —cuando todavía no hay medida y valen las de reserva—
+no aparece un lienzo de 320×240 rodeado de blanco.
+
+El showcase monta ahora el taller **dos veces**: con altura fija y sin ella. El
+segundo es el que reproduce el fallo.
+
 ## 3.10.1
 
 `Progress` sabía decir «llevo el 62 %». Ahora sabe decir «hay 62 camisetas, el
