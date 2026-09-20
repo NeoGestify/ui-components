@@ -505,6 +505,85 @@ function App() {
               <h3 className="font-semibold text-gray-900 dark:text-white mt-6 mb-3">Progress</h3>
               <Progress value={45} label="Subiendo archivo" showValue />
               <Progress className="mt-3" indeterminate label="Procesando..." variant="info" />
+
+              <h4 className="font-semibold text-gray-900 dark:text-white mt-6 mb-1 text-sm">Con marcas: la barra como escala</h4>
+              <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">
+                Un stock no se lee con un porcentaje sino con sus topes al lado. La cuenta de <code>max</code> es de
+                quien llama: mientras el stock quepa, el tope es el maximo de inventario.
+              </p>
+              <Progress
+                label="Camisetas"
+                value={62}
+                max={80}
+                valueText="62 de un maximo de 80"
+                marks={[
+                  { value: 20, label: 'Min. 20' },
+                  { value: 80, label: 'Max. 80' },
+                ]}
+              />
+
+              <p className="text-gray-500 dark:text-gray-400 text-xs mt-4 mb-3">
+                El mismo stock, ahora con <code>fill</code> en la marca del minimo: el tramo que termina ahi se tine de
+                amarillo y el resto sigue con el color de la variante. <strong>Son dos colores en una misma barra</strong>,
+                y el corte cae justo en la marca, sin tocar <code>variant</code>.
+              </p>
+              <Progress
+                label="Gorras"
+                value={62}
+                max={80}
+                valueText="62 de un maximo de 80"
+                marks={[
+                  { value: 20, label: 'Min. 20', fill: 'var(--nui-warning, oklch(68.1% .162 75.834))' },
+                  { value: 80, label: 'Max. 80' },
+                ]}
+              />
+
+              <p className="text-gray-500 dark:text-gray-400 text-xs mt-4 mb-3">
+                Y con ese mismo <code>fill</code>, un stock que no llega al minimo: el relleno entero cae dentro del
+                tramo amarillo, asi que la barra se ve amarilla de punta a punta. El color dice el estado sin leer
+                ningun numero.
+              </p>
+              <Progress
+                label="Gorras (bajo minimo)"
+                value={12}
+                max={80}
+                valueText="12 de un maximo de 80, por debajo del minimo"
+                marks={[
+                  { value: 20, label: 'Min. 20', fill: 'var(--nui-warning, oklch(68.1% .162 75.834))' },
+                  { value: 80, label: 'Max. 80' },
+                ]}
+              />
+
+              <p className="text-gray-500 dark:text-gray-400 text-xs mt-4 mb-3">
+                Los tramos se encadenan: un color por banderin y la barra entera se vuelve una escala, de rojo a verde.
+              </p>
+              <Progress
+                label="Temporada"
+                value={72}
+                max={100}
+                valueText="72 de 100"
+                marks={[
+                  { value: 25, label: 'Flojo', fill: 'var(--nui-danger, oklch(57.7% .245 27.325))' },
+                  { value: 50, label: 'Normal', fill: 'var(--nui-warning, oklch(68.1% .162 75.834))' },
+                  { value: 75, label: 'Bueno', fill: 'var(--nui-success, oklch(62.7% .194 149.214))' },
+                ]}
+              />
+
+              <p className="text-gray-500 dark:text-gray-400 text-xs mt-4 mb-3">
+                Pasado de la raya: el stock supera el maximo, asi que quien llama sube <code>max</code> al propio
+                stock y la marca del maximo se queda <strong>dentro</strong>, ensenando por cuanto se ha pasado.
+              </p>
+              <Progress
+                label="Sudaderas"
+                value={95}
+                max={95}
+                variant="over"
+                valueText="95, por encima del maximo de 80"
+                marks={[
+                  { value: 20, label: 'Min. 20' },
+                  { value: 80, label: 'Max. 80' },
+                ]}
+              />
             </div>
 
             <div>
@@ -667,6 +746,15 @@ function App() {
                 'success',
               )}
             />
+          </div>
+
+          <p className="text-gray-500 dark:text-gray-400 text-sm mt-6 mb-2">
+            Y el mismo taller <strong>sin altura fija</strong>, como cuando vive dentro de un modal que crece con su
+            contenido. La vista previa se mide contra su propio hueco: si el dibujo contara para la altura de ese
+            hueco, cada medición lo haría más alto y el lienzo crecería sin parar. Aquí tiene que quedarse quieto.
+          </p>
+          <div className="bg-white dark:bg-gray-800 rounded border dark:border-none shadow-inner overflow-hidden">
+            <ElementLibraryBuilder titulo="Piezas del plano (sin altura fija)" />
           </div>
         </section>
 

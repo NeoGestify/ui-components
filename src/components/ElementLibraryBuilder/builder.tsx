@@ -297,13 +297,31 @@ export const ElementLibraryBuilder: React.FC<ElementLibraryBuilderProps> = ({
       >
         {piezaActiva ? (
           <>
-            <VistaPrevia
-              pieza={piezaActiva}
-              ancho={Math.max(160, Math.round(anchoLienzo) || 320)}
-              alto={Math.max(140, Math.round(altoLienzo) || 240)}
-              conCuadricula
-              conEtiqueta
-            />
+            {/* Fuera del flujo a propósito. `VistaPrevia` dibuja un `<svg>` con
+                un tamaño en píxeles, y ese tamaño sale de medir ESTE mismo
+                contenedor: en flujo normal el `<svg>` empuja la caja, el
+                `ResizeObserver` mide más alto, el `<svg>` crece otra vez y el
+                lienzo se dispara hasta el infinito. Solo se libraba de ello
+                quien le diera al taller una altura definida desde fuera —el
+                showcase con su `h-[650px]`—; dentro de un modal que crece con
+                su contenido, no. Posicionado en absoluto el dibujo ya no
+                cuenta para la altura, que la fijan `flex-1 min-h-56`. */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              {/* `w-full h-full` además de las medidas: los píxeles fijan el
+                  sistema de coordenadas —la cuadrícula tiene que salir de 20 px
+                  de verdad— y el CSS se encarga de que el dibujo llene el hueco
+                  igualmente en el primer pintado, cuando todavía no se ha
+                  medido nada y las medidas son las de reserva. Sin esto se veía
+                  un lienzo de 320×240 rodeado de blanco. */}
+              <VistaPrevia
+                pieza={piezaActiva}
+                ancho={Math.max(160, Math.round(anchoLienzo) || 320)}
+                alto={Math.max(140, Math.round(altoLienzo) || 240)}
+                conCuadricula
+                conEtiqueta
+                className="w-full h-full"
+              />
+            </div>
             <span className={cn('absolute top-2 left-3 text-xs', text.subtle)}>Así se verá en el plano</span>
             <span className={cn('absolute bottom-2 right-3 text-xs tabular-nums', text.subtle)}>
               {piezaActiva.defaultWidth} × {piezaActiva.defaultHeight}

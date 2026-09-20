@@ -80,6 +80,11 @@ export const NUI_DEFAULTS = {
   'warning-text':   ['oklch(55.4% .135 66.442)',      'oklch(90.5% .182 98.111)'],  // yellow-700 / yellow-300
   'info':           ['oklch(54.6% .245 262.881)',     'oklch(62.3% .214 259.815)'], // blue-600 / blue-500
   'info-text':      ['oklch(48.8% .243 264.376)',     'oklch(70.7% .165 254.624)'], // blue-700 / blue-400
+  // Pasado de la raya: un valor que se ha salido de su escala. No es `warning`
+  // —que es amarillo y ya significa «por debajo del mínimo» en una pantalla de
+  // stock— sino el estado siguiente. Dos estados distintos no pueden salir del
+  // mismo color.
+  'over':           ['oklch(64.6% .222 41.116)',      'oklch(70.5% .213 47.604)'],  // orange-600 / orange-500
   // Velo de los overlays (se usa con transparencia)
   'scrim':          ['oklch(21% .034 264.665)',       'oklch(21% .034 264.665)'],   // gray-900
   // Cabecera invertida (variante `dark` de la tabla)
@@ -107,6 +112,7 @@ export const bg = {
   success:       'bg-[var(--nui-success,oklch(62.7%_.194_149.214))] dark:bg-[var(--nui-success-dark,oklch(72.3%_.219_149.579))]',
   warning:       'bg-[var(--nui-warning,oklch(68.1%_.162_75.834))] dark:bg-[var(--nui-warning-dark,oklch(79.5%_.184_86.047))]',
   info:          'bg-[var(--nui-info,oklch(54.6%_.245_262.881))] dark:bg-[var(--nui-info-dark,oklch(62.3%_.214_259.815))]',
+  over:          'bg-[var(--nui-over,oklch(64.6%_.222_41.116))] dark:bg-[var(--nui-over-dark,oklch(70.5%_.213_47.604))]',
   inverted:      'bg-[var(--nui-surface-inverted,oklch(27.8%_.033_256.848))] dark:bg-[var(--nui-surface-inverted-dark,oklch(21%_.034_264.665))]',
   skeleton:      'bg-[var(--nui-skeleton,oklch(92.8%_.006_264.531))] dark:bg-[var(--nui-skeleton-dark,oklch(37.3%_.034_259.733))]',
   // Mismo color que `bgHover.surface` pero SIN la variante `hover:`. Lo piden
