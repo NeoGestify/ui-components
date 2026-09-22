@@ -366,8 +366,13 @@ export function Table({
         onRowClick?.(rowIndex);
     };
 
+    // `relative` para que el scroll contenga también lo posicionado en
+    // absoluto. Sin él, un `sr-only` en una cabecera —el «Acciones» de la
+    // columna de botones— toma como referencia el primer ancestro posicionado
+    // de la página, se escapa de este contenedor y de cualquier `overflow` que
+    // haya por encima, y le pone a la página entera un scroll horizontal.
     const wrapperCls = cn(
-        'overflow-x-auto w-full',
+        'relative overflow-x-auto w-full',
         rounded ? 'rounded-lg' : '',
         shadow ? 'shadow-md' : '',
         className,
