@@ -1,6 +1,6 @@
 # Changelog
 
-## 3.11.0
+## 3.10.3
 
 `TextArea` y `Loading` eran los dos únicos componentes que medían en otro
 idioma. Ya no.
