@@ -9,7 +9,15 @@ import { cn } from '../../internal/cn';
 import { Field, describedBy, useFieldIds } from './Field';
 
 type TextAreaVariant = 'default' | 'outline' | 'filled' | 'minimal';
-type TextAreaSize = 'small' | 'medium' | 'large';
+/**
+ * `sm | md | lg`, como el resto de la librería.
+ *
+ * Los nombres largos son los que tenía este componente antes y siguen
+ * funcionando: cambiarlos de golpe habría roto todos los formularios que ya
+ * los usan. Son equivalentes, no otro tamaño.
+ */
+type TextAreaSize = 'sm' | 'md' | 'lg';
+type TextAreaSizeAntiguo = 'small' | 'medium' | 'large';
 type ResizeOption = 'vertical' | 'horizontal' | 'both' | 'none';
 
 export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
@@ -17,17 +25,25 @@ export interface TextAreaProps extends TextareaHTMLAttributes<HTMLTextAreaElemen
   error?: string;
   helperText?: string;
   variant?: TextAreaVariant;
-  size?: TextAreaSize;
+  size?: TextAreaSize | TextAreaSizeAntiguo;
   autoResize?: boolean;
   showCount?: boolean;
   resize?: ResizeOption;
 }
 
 const SIZE_CLASSES: Record<TextAreaSize, string> = {
-  small:  'px-2 py-1 text-xs',
-  medium: 'px-3 py-2 text-sm',
-  large:  'px-4 py-3 text-base',
+  sm: 'px-2 py-1 text-xs',
+  md: 'px-3 py-2 text-sm',
+  lg: 'px-4 py-3 text-base',
 };
+
+const EQUIVALENCIAS: Record<TextAreaSizeAntiguo, TextAreaSize> = {
+  small: 'sm', medium: 'md', large: 'lg',
+};
+
+/** `medium` y `md` son el mismo tamaño: esto traduce el nombre viejo al nuevo. */
+export const normalizarTamano = (size: TextAreaSize | TextAreaSizeAntiguo): TextAreaSize =>
+  size in EQUIVALENCIAS ? EQUIVALENCIAS[size as TextAreaSizeAntiguo] : size as TextAreaSize;
 
 const VARIANT_CLASSES: Record<TextAreaVariant, string> = {
   default: `border ${border.base} ${bg.surface}`,
@@ -48,7 +64,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(({
   error,
   helperText,
   variant = 'default',
-  size = 'medium',
+  size = 'md',
   autoResize = false,
   showCount = false,
   resize = 'vertical',
@@ -82,7 +98,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(({
   const errorCls = error ? `${border.dangerSubtle} ${focusRingOf.danger} ${focusBorder.danger}` : '';
   const resizeCls = autoResize ? 'resize-none overflow-hidden' : RESIZE_CLASSES[resize];
 
-  const classes = cn(baseCls, SIZE_CLASSES[size], VARIANT_CLASSES[variant], errorCls, resizeCls, className);
+  const classes = cn(baseCls, SIZE_CLASSES[normalizarTamano(size)], VARIANT_CLASSES[variant], errorCls, resizeCls, className);
 
   const maxLength = typeof props.maxLength === 'number' ? props.maxLength : undefined;
   const currentLength =

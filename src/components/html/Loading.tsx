@@ -3,9 +3,25 @@ import { QuarterSpinnerIcon, RingSpinnerIcon } from '../icons/icons';
 import { text } from '../../theme/tokens';
 import { cn } from '../../internal/cn';
 
+type LoadingSize = 'sm' | 'md' | 'lg' | 'xl';
+type LoadingSizeAntiguo = 'small' | 'medium' | 'large';
+
+const EQUIVALENCIAS: Record<LoadingSizeAntiguo, LoadingSize> = {
+  small: 'sm', medium: 'md', large: 'lg',
+};
+
+/** `large` y `lg` son el mismo tamaño: esto traduce el nombre viejo al nuevo. */
+export const normalizarTamanoDeCarga = (size: LoadingSize | LoadingSizeAntiguo): LoadingSize =>
+  size in EQUIVALENCIAS ? EQUIVALENCIAS[size as LoadingSizeAntiguo] : size as LoadingSize;
+
 export interface LoadingProps {
   variant?: 'spinner' | 'dots' | 'pulse' | 'bars' | 'ring' | 'cube';
-  size?: 'small' | 'medium' | 'large' | 'xl';
+  /**
+   * `sm | md | lg | xl`, como el resto de la librería. Los nombres largos
+   * —`small`, `medium`, `large`— son los que tenía antes y siguen valiendo:
+   * son el mismo tamaño con otro nombre.
+   */
+  size?: LoadingSize | LoadingSizeAntiguo;
   color?: 'primary' | 'white' | 'gray' | 'success' | 'danger' | 'warning';
   label?: string;
   className?: string;
@@ -17,18 +33,20 @@ export interface LoadingProps {
 
 export const Loading: FC<LoadingProps> = ({
   variant = 'spinner',
-  size = 'medium',
+  size: sizePedido = 'md',
   color = 'primary',
   label,
   className = '',
   overlay = false,
   fullPage = false,
 }) => {
-  const sizeClasses = {
-    small:  'h-4 w-4',
-    medium: 'h-8 w-8',
-    large:  'h-12 w-12',
-    xl:     'h-16 w-16',
+  const size = normalizarTamanoDeCarga(sizePedido);
+
+  const sizeClasses: Record<LoadingSize, string> = {
+    sm: 'h-4 w-4',
+    md: 'h-8 w-8',
+    lg: 'h-12 w-12',
+    xl: 'h-16 w-16',
   };
 
   const colorClasses = {
@@ -45,7 +63,7 @@ export const Loading: FC<LoadingProps> = ({
 
     switch (variant) {
       case 'dots': {
-        const dotSize = size === 'small' ? 'h-1 w-1' : size === 'medium' ? 'h-2 w-2' : size === 'large' ? 'h-3 w-3' : 'h-4 w-4';
+        const dotSize = size === 'sm' ? 'h-1 w-1' : size === 'md' ? 'h-2 w-2' : size === 'lg' ? 'h-3 w-3' : 'h-4 w-4';
         return (
           <div className={`flex space-x-1 ${colorClasses[color]}`}>
             <div className={`rounded-full bg-current animate-bounce ${dotSize}`} style={{ animationDelay: '0s' }} />

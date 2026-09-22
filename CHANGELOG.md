@@ -1,5 +1,50 @@
 # Changelog
 
+## 3.11.0
+
+`TextArea` y `Loading` eran los dos únicos componentes que medían en otro
+idioma. Ya no.
+
+### Un solo vocabulario de tamaños
+
+**Toda la librería usa `sm | md | lg`** —Button, Input, Select, Table, Badge,
+Modal, Switch, Tabs y los demás—, **menos estos dos, que usaban `small |
+medium | large`.** No es un detalle de estilo: quien escribe un formulario pone
+`size="sm"` en el botón, lo repite en el campo de texto de al lado y no pasa
+nada, porque `sm` no existía ahí y el componente se quedaba en su tamaño por
+defecto. Un campo más alto que el resto de la fila, sin ningún error que lo
+explique.
+
+Ahora los dos entienden `sm`, `md` y `lg` (y `xl` en `Loading`, que no tiene
+nombre viejo):
+
+```tsx
+<TextArea label="Notas" size="sm" />
+<Loading size="lg" />
+```
+
+**Los nombres viejos siguen funcionando y no están en desuso a medias: son el
+mismo tamaño con otro nombre.** `medium` es `md`, letra por letra el mismo
+resultado, y hay una prueba que lo fija para que no se separen el día que
+alguien cambie una de las dos tablas de clases. Nada que migrar: el código que
+ya existe no se toca.
+
+### `Table` ya no le pone scroll horizontal a la página entera
+
+El contenedor con `overflow-x-auto` no estaba posicionado, así que **lo que se
+coloca en absoluto dentro de la tabla no tomaba como referencia la tabla, sino
+la página**. El caso real: una cabecera de columna con el rótulo en `sr-only`
+—el «Acciones» de la columna de botones— se salía del contenedor, y con ella
+aparecía una barra de scroll horizontal en toda la página, en un sitio donde
+no había nada que desplazar. Ahora el contenedor es `relative` y lo de dentro
+se queda dentro.
+
+### Iconos: atributos SVG en el nombre que entiende JSX
+
+Varios iconos traían `stroke-linecap`, `stroke-width` o `stroke-dasharray` con
+guion, copiados tal cual del SVG original. En JSX el nombre es `strokeLinecap`,
+`strokeWidth`, `strokeDasharray`. Se corrigieron los que quedaban.
+
 ## 3.10.2
 
 ### `ElementLibraryBuilder`: el lienzo crecía sin parar
