@@ -144,7 +144,7 @@ export const Tabs: FC<TabsProps> = ({
     const base = [
       'inline-flex items-center justify-center font-medium whitespace-nowrap',
       motion.colors,
-      'disabled:opacity-40 disabled:pointer-events-none touch-manipulation',
+      'disabled:opacity-40 disabled:pointer-events-none touch-manipulation cursor-pointer',
       SIZE[size], focusVisibleRing,
       fullWidth ? 'flex-1' : '',
     ];

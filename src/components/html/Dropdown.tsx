@@ -282,7 +282,7 @@ export const Dropdown: FC<DropdownProps> = ({
                     onClick={() => choose(item)}
                     onPointerEnter={() => { if (!item.disabled) setActive(index); }}
                     className={cn(
-                      'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm',
+                      'cursor-pointer', 'flex w-full items-center gap-2.5 px-3 py-2 text-left text-sm',
                       motion.colors,
                       'disabled:opacity-40 disabled:pointer-events-none focus:outline-none',
                       item.danger ? text.danger : text.muted,

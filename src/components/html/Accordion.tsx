@@ -137,7 +137,7 @@ export const Accordion: FC<AccordionProps> = ({
                 onClick={() => toggle(key)}
                 onKeyDown={onKeyDown}
                 className={cn(
-                  'flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium',
+                  'cursor-pointer', 'flex w-full items-center gap-3 px-4 py-3 text-left text-sm font-medium',
                   motion.colors,
                   text.base, bgHover.surface, focusVisibleRing,
                   'disabled:opacity-50 disabled:pointer-events-none touch-manipulation',

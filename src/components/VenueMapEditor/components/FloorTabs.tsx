@@ -136,7 +136,7 @@ export function FloorTabs({
             {!readOnly && isActive && canMoveLeft && (
               <button
                 type="button"
-                className={`rounded ${text.subtle} ${textHover.muted} leading-none ${FOCUS_CLS} ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
+                className={`cursor-pointer rounded ${text.subtle} ${textHover.muted} leading-none ${FOCUS_CLS} ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
                 onClick={e => { e.stopPropagation(); onReorder(floor.id, 'left'); }}
                 title="Mover a la izquierda"
                 aria-label={`Mover ${floor.name} a la izquierda`}
@@ -169,7 +169,7 @@ export function FloorTabs({
             {!readOnly && isActive && canMoveRight && (
               <button
                 type="button"
-                className={`rounded ${text.subtle} ${textHover.muted} leading-none ${FOCUS_CLS} ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
+                className={`cursor-pointer rounded ${text.subtle} ${textHover.muted} leading-none ${FOCUS_CLS} ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
                 onClick={e => { e.stopPropagation(); onReorder(floor.id, 'right'); }}
                 title="Mover a la derecha"
                 aria-label={`Mover ${floor.name} a la derecha`}
@@ -181,7 +181,7 @@ export function FloorTabs({
             {!readOnly && floors.length > 1 && (
               <button
                 type="button"
-                className={`rounded ${text.subtle} ${textHover.danger} leading-none ${FOCUS_CLS} ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
+                className={`cursor-pointer rounded ${text.subtle} ${textHover.danger} leading-none ${FOCUS_CLS} ${coarse ? 'px-2 py-1' : 'px-0.5'}`}
                 onClick={e => { e.stopPropagation(); onDelete(floor.id); }}
                 title="Eliminar planta"
                 aria-label={`Eliminar ${floor.name}`}
@@ -196,7 +196,7 @@ export function FloorTabs({
       {!readOnly && (
         <button
           type="button"
-          className={`flex items-center justify-center ${coarse ? 'w-9 h-9' : 'w-6 h-6'} rounded border border-dashed ${border.base} ${text.subtle} ${borderHover.accent} ${textHover.accent} ${motion.colors} shrink-0 ${FOCUS_CLS}`}
+          className={`cursor-pointer flex items-center justify-center ${coarse ? 'w-9 h-9' : 'w-6 h-6'} rounded border border-dashed ${border.base} ${text.subtle} ${borderHover.accent} ${textHover.accent} ${motion.colors} shrink-0 ${FOCUS_CLS}`}
           onClick={onAdd}
           title="Añadir planta"
           aria-label="Añadir planta"

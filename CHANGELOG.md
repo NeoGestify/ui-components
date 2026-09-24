@@ -1,5 +1,26 @@
 # Changelog
 
+## 3.10.4
+
+### Los botones vuelven a tener cursor de mano
+
+Tailwind v4 dejó de poner `cursor: pointer` a los `<button>` en su preflight:
+ahora se quedan con la flecha del navegador. Por eso la librería lo pone a mano
+en cada botón (`Button`, `ToggleGroup`, `Radio`, `Checkbox`…), pero a muchos
+les faltaba, y pasar el ratón por encima no dejaba claro que se podían pulsar.
+
+Ahora lo tienen `SegmentedControl`, `Tabs`, `Accordion`, `Pagination`,
+`Dropdown` y `Breadcrumb`; los botones de cerrar de `Alert`, `Badge` y `Toast`
+y la acción de `Toast`; los de limpiar de `Input` y `Combobox`; `Calendar`
+(flechas, título, atajos, meses, años y pie) y `DatePicker`; y la barra de
+herramientas, las pestañas de planta y el panel de propiedades del
+`VenueMapEditor`.
+
+Los días de `Calendar` solo lo muestran cuando se pueden elegir: los
+deshabilitados siguen con `cursor-not-allowed` y en `readOnly` con el cursor
+normal. El velo de la hoja móvil del `DatePicker` es un `<button>` para que se
+cierre con teclado, pero no lleva mano: sería raro verla sobre toda la pantalla.
+
 ## 3.10.3
 
 `TextArea` y `Loading` eran los dos únicos componentes que medían en otro

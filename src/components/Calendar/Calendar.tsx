@@ -30,12 +30,12 @@ const SIZE: Record<CalendarSize, { cell: string; text: string; head: string; gap
 const NAV_BTN =
   `inline-flex items-center justify-center rounded-md p-1.5 ${text.subtle} ` +
   `${bgHover.surface} ${textHover.muted} ${focusRing} ` +
-  `disabled:opacity-40 disabled:pointer-events-none ${motion.colors} touch-manipulation`;
+  `disabled:opacity-40 disabled:pointer-events-none ${motion.colors} touch-manipulation cursor-pointer`;
 
 const FOOT_BTN =
   `rounded-md px-2.5 py-1.5 text-sm font-medium ${text.accent} ` +
   `${bgHover.accentSoft} ${focusRing} disabled:opacity-40 disabled:pointer-events-none ` +
-  `${motion.colors} touch-manipulation`;
+  `${motion.colors} touch-manipulation cursor-pointer`;
 
 /** Debajo de esto, `responsive` fuerza un solo mes visible. */
 const NARROW_PX = 640;
@@ -423,6 +423,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
                       : `${text.muted} ${bgHover.surface}`,
               !selected && isToday ? `ring-1 ring-inset ${ringAccentSoft}` : '',
               readOnly && !dayDisabled ? 'cursor-default' : '',
+              !readOnly && !dayDisabled ? 'cursor-pointer' : '',
             );
 
             const state: DayState = {
@@ -503,7 +504,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
         <button
           type="button"
           onClick={openMonthView}
-          className={`flex min-w-0 items-center gap-1 rounded-md px-2 py-1 font-semibold ${text.base}
+          className={`cursor-pointer flex min-w-0 items-center gap-1 rounded-md px-2 py-1 font-semibold ${text.base}
             ${bgHover.surface} ${focusRing} ${motion.colors} touch-manipulation ${sz.head}`}
           aria-label={labels.selectMonth}
           aria-expanded={view !== 'days'}
@@ -539,7 +540,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
               type="button"
               onClick={() => applyPreset(p.range())}
               disabled={disabled || readOnly}
-              className={`rounded-full border ${border.subtle} ${bg.surfaceMuted} px-3 py-1 text-xs font-medium ${text.subtle}
+              className={`cursor-pointer rounded-full border ${border.subtle} ${bg.surfaceMuted} px-3 py-1 text-xs font-medium ${text.subtle}
                 ${bgHover.accentSoft} ${textHover.accent} ${focusRing} disabled:opacity-40
                 ${motion.colors} touch-manipulation`}
             >
@@ -575,7 +576,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
                 key={name}
                 type="button"
                 onClick={() => { goToMonth(new Date(yearPage, i, 1)); setView('days'); }}
-                className={`rounded-lg px-2 py-2.5 text-sm font-medium ${motion.colors} touch-manipulation
+                className={`cursor-pointer rounded-lg px-2 py-2.5 text-sm font-medium ${motion.colors} touch-manipulation
                   ${focusRing} ${isCur
                     ? `${bg.accent} ${text.onAccent}`
                     : `${text.muted} ${bgHover.surface}`}`}
@@ -585,7 +586,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
             );
           })}
           <button type="button" onClick={() => setView('years')}
-            className={`col-span-3 mt-1 rounded-lg px-2 py-2 text-sm font-medium ${text.accent} ${bgHover.accentSoft}
+            className={`cursor-pointer col-span-3 mt-1 rounded-lg px-2 py-2 text-sm font-medium ${text.accent} ${bgHover.accentSoft}
               ${focusRing} ${motion.colors} touch-manipulation`}>
             {yearPage} · {labels.selectYear}
           </button>
@@ -603,7 +604,7 @@ export function Calendar<M extends CalendarMode = 'single'>(props: CalendarProps
                 type="button"
                 disabled={!!outOfBounds}
                 onClick={() => { setYearPage(y); setView('months'); }}
-                className={`rounded-lg px-1 py-2.5 text-sm font-medium ${motion.colors} touch-manipulation
+                className={`cursor-pointer rounded-lg px-1 py-2.5 text-sm font-medium ${motion.colors} touch-manipulation
                   ${focusRing} disabled:opacity-30 disabled:pointer-events-none ${isCur
                     ? `${bg.accent} ${text.onAccent}`
                     : `${text.muted} ${bgHover.surface}`}`}

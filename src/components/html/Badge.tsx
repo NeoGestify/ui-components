@@ -81,7 +81,7 @@ export const Badge: FC<BadgeProps> = ({
         type="button"
         onClick={onRemove}
         aria-label={`${removeLabel}${typeof children === 'string' ? `: ${children}` : ''}`}
-        className={`-mr-0.5 ml-0.5 shrink-0 rounded-full opacity-60 hover:opacity-100 ${focusVisibleRing}`}
+        className={`cursor-pointer -mr-0.5 ml-0.5 shrink-0 rounded-full opacity-60 hover:opacity-100 ${focusVisibleRing}`}
       >
         <CloseIcon className="h-3 w-3" />
       </button>

@@ -89,7 +89,7 @@ export const Alert: FC<AlertProps> = ({
         type="button"
         onClick={onClose}
         aria-label={closeLabel}
-        className={`-mr-1 -mt-1 h-6 w-6 shrink-0 rounded-md ${text.faint} hover:opacity-70 ${focusVisibleRing}`}
+        className={`cursor-pointer -mr-1 -mt-1 h-6 w-6 shrink-0 rounded-md ${text.faint} hover:opacity-70 ${focusVisibleRing}`}
       >
         <CloseIcon className="mx-auto h-4 w-4" />
       </button>

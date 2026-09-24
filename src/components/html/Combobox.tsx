@@ -276,7 +276,7 @@ export const Combobox: FC<ComboboxProps | ComboboxMultipleProps> = (props) => {
               disabled={disabled}
               aria-label={`${messages.clear}: ${etiquetaDe(v)}`}
               onClick={() => setSeleccion(prev => prev.filter(x => x !== v))}
-              className="shrink-0"
+              className="cursor-pointer shrink-0"
             >
               <CloseIcon className="h-3 w-3" />
             </button>
@@ -325,7 +325,7 @@ export const Combobox: FC<ComboboxProps | ComboboxMultipleProps> = (props) => {
             tabIndex={-1}
             aria-label={messages.clear}
             onClick={() => { setSeleccion([]); setQuery(''); inputRef.current?.focus(); }}
-            className={cn('shrink-0', text.faint)}
+            className={cn('cursor-pointer', 'shrink-0', text.faint)}
           >
             <CloseIcon className="h-4 w-4" />
           </button>

@@ -155,7 +155,7 @@ export const SegmentedControl: FC<SegmentedControlProps> = ({
               // `relative` para quedar por encima de la pastilla, que va detrás.
               'relative inline-flex items-center justify-center whitespace-nowrap rounded-md font-medium',
               motion.colors, focusVisibleRing,
-              'disabled:opacity-40 disabled:pointer-events-none touch-manipulation',
+              'disabled:opacity-40 disabled:pointer-events-none touch-manipulation cursor-pointer',
               SIZE[size],
               fullWidth && 'flex-1',
               activo ? text.base : cn(text.subtle, textHover.muted),

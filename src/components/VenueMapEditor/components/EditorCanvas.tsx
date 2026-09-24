@@ -725,7 +725,7 @@ export function EditorCanvas({
           <button
             type="button"
             onClick={() => setWallDraw(null)}
-            className="rounded-full bg-white/20 px-3 py-1 font-medium"
+            className="cursor-pointer rounded-full bg-white/20 px-3 py-1 font-medium"
           >
             Cancelar
           </button>

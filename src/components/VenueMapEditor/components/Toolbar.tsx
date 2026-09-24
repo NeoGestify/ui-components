@@ -41,7 +41,7 @@ function ToolButton({ active, disabled, title, onClick, children, large }: ToolB
       onClick={onClick}
       disabled={disabled}
       className={cn(
-        `flex items-center justify-center rounded ${motion.colors} shrink-0 disabled:opacity-30 disabled:cursor-not-allowed`,
+        'cursor-pointer', `flex items-center justify-center rounded ${motion.colors} shrink-0 disabled:opacity-30 disabled:cursor-not-allowed`,
         FOCUS_CLS,
         large ? 'w-10 h-10' : 'w-8 h-8',
         active
@@ -125,7 +125,7 @@ function TypeChip({ typeDef, active, onClick }: TypeChipProps) {
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        `flex items-center gap-1.5 px-2 py-1 rounded border text-xs whitespace-nowrap ${motion.colors}`,
+        'cursor-pointer', `flex items-center gap-1.5 px-2 py-1 rounded border text-xs whitespace-nowrap ${motion.colors}`,
         FOCUS_CLS,
         active
           ? `${border.accent} ${bg.accentSoft} ${text.accent} font-medium`
@@ -306,7 +306,7 @@ export function Toolbar({
                   type="button"
                   onClick={() => setActiveGroupId(group.id)}
                   className={cn(
-                    `px-3 py-1 text-xs font-medium ${motion.colors} whitespace-nowrap rounded-t`,
+                    'cursor-pointer', `px-3 py-1 text-xs font-medium ${motion.colors} whitespace-nowrap rounded-t`,
                     FOCUS_CLS,
                     group.id === activeGroupId
                       ? `${text.base}`
@@ -321,7 +321,7 @@ export function Toolbar({
                     title={`Eliminar "${group.name}"`}
                     aria-label={`Eliminar librería ${group.name}`}
                     onClick={() => onRemoveLibraryGroup(group.id)}
-                    className={`pr-2 pl-0.5 py-1 rounded ${text.faint} ${textHover.danger} ${motion.colors} leading-none ${FOCUS_CLS}`}
+                    className={`cursor-pointer pr-2 pl-0.5 py-1 rounded ${text.faint} ${textHover.danger} ${motion.colors} leading-none ${FOCUS_CLS}`}
                   >
                     ×
                   </button>

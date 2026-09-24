@@ -69,7 +69,7 @@ export const Pagination: FC<PaginationProps> = ({
   const btn = size === 'sm' ? 'h-8 min-w-8 px-2 text-xs' : 'h-9 min-w-9 px-3 text-sm';
   const baseBtn = cn(
     `inline-flex items-center justify-center gap-1 rounded-md font-medium ${motion.colors}`,
-    'disabled:opacity-40 disabled:pointer-events-none touch-manipulation',
+    'disabled:opacity-40 disabled:pointer-events-none touch-manipulation cursor-pointer',
     btn, focusVisibleRing,
   );
 

@@ -139,7 +139,7 @@ const Toast: FC<{
           <button
             type="button"
             onClick={() => { action.onClick(); onDismiss(id); }}
-            className={cn('mt-2 text-sm font-medium underline underline-offset-2', text.accent)}
+            className={cn('cursor-pointer', 'mt-2 text-sm font-medium underline underline-offset-2', text.accent)}
           >
             {action.label}
           </button>
@@ -151,7 +151,7 @@ const Toast: FC<{
           type="button"
           onClick={() => onDismiss(id)}
           aria-label={closeLabel}
-          className={cn('-m-1 shrink-0 self-start rounded p-1', text.faint, motion.colors)}
+          className={cn('cursor-pointer', '-m-1 shrink-0 self-start rounded p-1', text.faint, motion.colors)}
         >
           <CloseIcon className="h-4 w-4" />
         </button>

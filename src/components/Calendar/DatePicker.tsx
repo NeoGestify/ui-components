@@ -224,7 +224,7 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
     showClear ? 'pr-9' : 'pr-3',
     `${bg.surface} ${textCls.base}`,
     focusRing,
-    'disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation',
+    'disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation cursor-pointer',
     error ? border.dangerSubtle : border.base,
     inputClassName,
   );
@@ -273,7 +273,7 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
             type="button"
             aria-label={labels.clear}
             onClick={() => handleChange(emptyValue)}
-            className={`absolute inset-y-0 right-0 flex items-center rounded-md px-2 ${textCls.faint}
+            className={`cursor-pointer absolute inset-y-0 right-0 flex items-center rounded-md px-2 ${textCls.faint}
               hover:text-[color:var(--nui-text-muted,oklch(37.3%_.034_259.733))]
               dark:hover:text-[color:var(--nui-text-muted-dark,oklch(87.2%_.01_258.338))] ${focusVisibleRing}`}
           >
@@ -325,7 +325,7 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
             {/* Asa: pista visual de que la hoja se puede cerrar. */}
             <button
               type="button"
-              className="flex w-full justify-center pt-2"
+              className="cursor-pointer flex w-full justify-center pt-2"
               onClick={() => setOpenState(false)}
             >
               <span className="sr-only">{closeLabel}</span>
@@ -336,7 +336,7 @@ export function DatePicker<M extends CalendarMode = 'single'>(props: DatePickerP
               <button
                 type="button"
                 onClick={() => setOpenState(false)}
-                className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-medium ${bg.accent} ${textCls.onAccent}
+                className={`cursor-pointer flex-1 rounded-lg px-4 py-2.5 text-sm font-medium ${bg.accent} ${textCls.onAccent}
                   ${bgHover.accent} ${focusRing} focus:ring-offset-2 ${motion.colors} touch-manipulation`}
               >
                 {labels.apply}

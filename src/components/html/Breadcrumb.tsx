@@ -69,7 +69,7 @@ export const Breadcrumb: FC<BreadcrumbProps> = ({
                   <button
                     type="button"
                     onClick={item.onClick}
-                    className={`inline-flex items-center gap-1.5 truncate rounded ${text.subtle} ${textHover.muted} ${focusVisibleRing}`}
+                    className={`cursor-pointer inline-flex items-center gap-1.5 truncate rounded ${text.subtle} ${textHover.muted} ${focusVisibleRing}`}
                   >
                     {item.icon}
                     {item.label}

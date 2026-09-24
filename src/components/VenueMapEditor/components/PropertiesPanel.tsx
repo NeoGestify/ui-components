@@ -57,11 +57,11 @@ const CONTROL_CLS =
 const FOCUS_CLS =
   focusVisibleRing;
 const BTN_CLS =
-  `w-full text-xs px-3 py-1.5 rounded border ${border.subtle} ` +
+  `w-full cursor-pointer text-xs px-3 py-1.5 rounded border ${border.subtle} ` +
   `${text.muted} ${bgHover.surface} ${motion.colors} ` +
   FOCUS_CLS;
 const DANGER_BTN_CLS =
-  'w-full text-xs px-3 py-1.5 rounded ' +
+  'w-full cursor-pointer text-xs px-3 py-1.5 rounded ' +
   'bg-[color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_8%,white)] ' +
   'dark:bg-[color-mix(in_oklab,var(--nui-danger-dark,oklch(63.7%_.237_25.331))_18%,transparent)] ' +
   'border border-[color:color-mix(in_oklab,var(--nui-danger,oklch(57.7%_.245_27.325))_25%,transparent)] ' +
@@ -150,7 +150,7 @@ function PanelHeader({
           type="button"
           onClick={onClose}
           aria-label="Cerrar panel"
-          className={`${text.faint} ${textHover.muted} px-2 -my-1 text-base leading-none rounded ${FOCUS_CLS}`}
+          className={`cursor-pointer ${text.faint} ${textHover.muted} px-2 -my-1 text-base leading-none rounded ${FOCUS_CLS}`}
         >
           ×
         </button>
@@ -378,7 +378,7 @@ export function PropertiesPanel({
             <button
               type="button"
               onClick={() => setGeom({ r: 0 })}
-              className={`border ${border.subtle} rounded px-1.5 py-1 text-xs ${text.subtle} ${bgHover.surface} ${motion.colors} ${FOCUS_CLS}`}
+              className={`cursor-pointer border ${border.subtle} rounded px-1.5 py-1 text-xs ${text.subtle} ${bgHover.surface} ${motion.colors} ${FOCUS_CLS}`}
             >
               Resetear
             </button>

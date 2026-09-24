@@ -263,7 +263,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(({
               onClick={handleClear}
               tabIndex={-1}
               aria-label={clearText}
-              className={`absolute inset-y-0 right-0 z-10 flex items-center pr-3 ${text.faint} ${textHover.muted}`}
+              className={`cursor-pointer absolute inset-y-0 right-0 z-10 flex items-center pr-3 ${text.faint} ${textHover.muted}`}
             >
               <CloseIcon className="w-4 h-4" />
             </button>
