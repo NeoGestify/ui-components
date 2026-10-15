@@ -10,6 +10,14 @@ const SIZE: Record<ProgressSize, string> = {
   xs: 'h-1', sm: 'h-1.5', md: 'h-2.5', lg: 'h-4',
 };
 
+/**
+ * Alto de la pista cuando va en cuadros. Más alto que la raya continua: un
+ * cuadro de 1,5 px de alto deja de leerse como cuadro y se ve como un guion.
+ */
+const SEGMENT_SIZE: Record<ProgressSize, string> = {
+  xs: 'h-2', sm: 'h-3', md: 'h-4', lg: 'h-5',
+};
+
 const FILL: Record<ProgressVariant, string> = {
   accent: bg.accent, success: bg.success, warning: bg.warning,
   danger: bg.danger, info: bg.info, over: bg.over,
@@ -176,6 +184,21 @@ export function fillStyle(placed: PlacedMark[], pct: number): CSSProperties {
 }
 
 /**
+ * Cuántos cuadros se encienden con `pct` (0 a 100) sobre `segments`.
+ *
+ * Redondea al más cercano, salvo en los bordes: cualquier valor por encima de 0
+ * enciende al menos uno —un 1 % no puede verse igual que nada— y solo el 100 %
+ * los enciende todos, para que un 98 % no se lea como lleno. Con un solo
+ * cuadro no hay término medio: se enciende con cualquier valor.
+ */
+export function litSegments(pct: number, segments: number): number {
+  const total = Math.max(1, Math.floor(segments));
+  if (!(pct > 0)) return 0;
+  if (pct >= 100 || total === 1) return total;
+  return Math.min(total - 1, Math.max(1, Math.round((pct / 100) * total)));
+}
+
+/**
  * Dónde va la etiqueta de una marca que cae en `pct`.
  *
  * Centrada bajo su raya con `translateX(-50%)`, salvo en los extremos: en el
@@ -213,6 +236,16 @@ export interface ProgressProps extends Omit<HTMLAttributes<HTMLDivElement>, 'chi
    * repartir.
    */
   marks?: ProgressMark[];
+  /**
+   * Dibuja la barra en cuadros, como el medidor de un panel, en vez de una raya
+   * continua: el número es cuántos cuadros tiene la pista. Se lee de un vistazo
+   * cuánto falta, sobre todo con varias barras una debajo de otra.
+   *
+   * Las marcas se siguen dibujando encima, pero su `fill` no tiñe los cuadros:
+   * cada cuadro va entero del color de la variante. En `indeterminate` no
+   * aplica: ahí no hay cuánto encender.
+   */
+  segments?: number;
 }
 
 /**
@@ -239,6 +272,12 @@ export interface ProgressProps extends Omit<HTMLAttributes<HTMLDivElement>, 'chi
  * />
  * ```
  *
+ * En cuadros, como un medidor:
+ *
+ * ```tsx
+ * <Progress value={76} segments={32} label="Semanal" showValue />
+ * ```
+ *
  * Y tiñendo los tramos: rojo hasta el mínimo y de ahí un degradado hasta el
  * verde del máximo, con un color por banderín. Del máximo al tope no hay
  * banderín que mande, así que ese trozo se queda con el color de la variante.
@@ -252,7 +291,7 @@ export interface ProgressProps extends Omit<HTMLAttributes<HTMLDivElement>, 'chi
  */
 export const Progress: FC<ProgressProps> = ({
   value = 0, max = 100, variant = 'accent', size = 'md',
-  label, showValue = false, indeterminate = false, valueText, marks,
+  label, showValue = false, indeterminate = false, valueText, marks, segments,
   animate, className = '', style, ...props
 }) => {
   const safeMax = max > 0 ? max : 100;
@@ -265,14 +304,34 @@ export const Progress: FC<ProgressProps> = ({
   const labelled = placed.filter((m) => m.mark.label !== undefined);
   const described = placed.filter((m) => m.mark.label === undefined && m.mark.description);
 
-  const track = (
+  const segmented = !indeterminate && segments !== undefined && segments >= 1;
+  const aria = {
+    role: 'progressbar',
+    'aria-valuemin': 0,
+    'aria-valuemax': indeterminate ? undefined : safeMax,
+    'aria-valuenow': indeterminate ? undefined : clamped,
+    'aria-valuetext': indeterminate ? undefined : (valueText ?? `${pct} %`),
+    'aria-busy': indeterminate || undefined,
+  } as const;
+
+  const track = segmented ? (
+    // Sin `overflow-hidden`: los cuadros no se salen, y las rayas de las marcas
+    // pueden ir dentro sin recortarse.
+    // Los apagados van del color del texto, translúcidos, y no de `surfaceMuted`: entre
+    // cuadros separados se ve el fondo, y en un tema oscuro ese tono se confunde con él.
+    <div {...aria} className={`flex w-full gap-0.5 ${SEGMENT_SIZE[size]} ${text.subtle}`}>
+      {Array.from({ length: Math.floor(segments) }, (_, i) => (
+        <span
+          key={i}
+          className={`h-full flex-1 rounded-[2px] ${motion.colors} ${
+            i < litSegments(pct, segments) ? FILL[variant] : 'bg-current opacity-15'
+          }`}
+        />
+      ))}
+    </div>
+  ) : (
     <div
-      role="progressbar"
-      aria-valuemin={0}
-      aria-valuemax={indeterminate ? undefined : safeMax}
-      aria-valuenow={indeterminate ? undefined : clamped}
-      aria-valuetext={indeterminate ? undefined : (valueText ?? `${pct} %`)}
-      aria-busy={indeterminate || undefined}
+      {...aria}
       className={`w-full overflow-hidden rounded-full ${bg.surfaceMuted} ${SIZE[size]}`}
     >
       {indeterminate ? (

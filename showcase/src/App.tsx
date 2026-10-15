@@ -506,6 +506,14 @@ function App() {
               <Progress value={45} label="Subiendo archivo" showValue />
               <Progress className="mt-3" indeterminate label="Procesando..." variant="info" />
 
+              <h4 className="font-semibold text-gray-900 dark:text-white mt-6 mb-1 text-sm">En cuadros: un medidor</h4>
+              <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">
+                Con <code>segments</code> la pista se parte en cuadros. Varias barras juntas se comparan de un vistazo.
+              </p>
+              <Progress value={60} segments={32} size="sm" label="Sesion (5 h)" showValue />
+              <Progress className="mt-3" value={76} segments={32} size="sm" variant="warning" label="Semanal" showValue />
+              <Progress className="mt-3" value={0} segments={32} size="sm" label="Por modelo" showValue />
+
               <h4 className="font-semibold text-gray-900 dark:text-white mt-6 mb-1 text-sm">Con marcas: la barra como escala</h4>
               <p className="text-gray-500 dark:text-gray-400 text-xs mb-3">
                 Un stock no se lee con un porcentaje sino con sus topes al lado. La cuenta de <code>max</code> es de

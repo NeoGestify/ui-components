@@ -1,5 +1,26 @@
 # Changelog
 
+## 3.10.5
+
+### `Progress` en cuadros
+
+`Progress` tiene un modo nuevo, `segments`: la pista se parte en ese número de
+cuadros, como el medidor de un panel, en vez de ser una raya continua.
+
+```tsx
+<Progress value={76} segments={32} label="Semanal" showValue />
+```
+
+Sirve cuando hay varias barras una debajo de otra (el consumo de una cuenta por
+ventana, por ejemplo): los cuadros encendidos se cuentan y se comparan sin leer
+el número. Los bordes están cuidados: cualquier valor por encima de 0 enciende
+al menos un cuadro, y solo el 100 % los enciende todos, así que un 1 % no se
+confunde con nada ni un 98 % con lleno.
+
+En cuadros la pista es un poco más alta para el mismo `size`, porque un cuadro
+de 1,5 px se ve como un guion. Las marcas se dibujan igual, pero su `fill` no
+tiñe los cuadros, y con `indeterminate` se ignora.
+
 ## 3.10.4
 
 ### Los botones vuelven a tener cursor de mano
