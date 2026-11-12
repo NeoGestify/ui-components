@@ -1,5 +1,20 @@
 # Changelog
 
+## 3.10.6
+
+### Cabecera y pie del color de su panel
+
+La cabecera y el pie de `Modal` y `Drawer`, y el pie de `Card`, eran una banda de
+otro tono (`surface-band`: gray-50 en claro, gray-900 en oscuro). En oscuro, el
+panel quedaba con dos franjas casi negras arriba y abajo que no separaban nada:
+para eso ya está el borde. Ahora `surface-band` vale lo mismo que `surface`
+(blanco / gray-800), y si un tema no lo define, la clase toma el `surface` del
+tema: cabecera, cuerpo y pie son un solo panel, separados por su línea.
+
+Quien quiera la banda de antes la pone en su tema:
+`--nui-surface-band: oklch(98.5% .002 247.839)` y
+`--nui-surface-band-dark: oklch(21% .034 264.665)`.
+
 ## 3.10.5
 
 ### `Progress` en cuadros

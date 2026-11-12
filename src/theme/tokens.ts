@@ -37,10 +37,11 @@ export const NUI_DEFAULTS = {
   'surface-muted':  ['oklch(98.5% .002 247.839)',     'oklch(37.3% .034 259.733)'], // gray-50 / gray-700
   'surface-hover':  ['oklch(96.7% .003 264.542)',     'oklch(37.3% .034 259.733)'], // gray-100 / gray-700
   'surface-sunken': ['oklch(96.7% .003 264.542)',     'oklch(21% .034 264.665)'],   // gray-100 / gray-900
-  // Bandas de cabecera y pie DENTRO de un panel. En claro se separan
-  // aclarándose y en oscuro oscureciéndose: una banda más clara que su panel
-  // parece elevada, y una cabecera no está elevada, está hundida.
-  'surface-band':   ['oklch(98.5% .002 247.839)',     'oklch(21% .034 264.665)'],   // gray-50 / gray-900
+  // Cabecera y pie DENTRO de un panel (modal, drawer, pie de una tarjeta): del
+  // mismo color que el panel, separados solo por su borde. Antes eran una
+  // banda de otro tono (gray-50 / gray-900), y en oscuro el panel quedaba con
+  // dos franjas negras arriba y abajo. Sin definirlo, la clase toma `surface`.
+  'surface-band':   ['#fff',                          'oklch(27.8% .033 256.848)'], // white / gray-800 (= surface)
   // Marcadores de carga. No es una superficie: tiene que separarse del panel que
   // hay debajo, no integrarse con él. Con `surface-muted` (gray-50) el bloque
   // quedaba a 1,5 puntos de luminosidad del blanco y no se veía; en oscuro sí
@@ -105,7 +106,7 @@ export const bg = {
   surface:       'bg-[var(--nui-surface,#fff)] dark:bg-[var(--nui-surface-dark,oklch(27.8%_.033_256.848))]',
   surfaceMuted:  'bg-[var(--nui-surface-muted,oklch(98.5%_.002_247.839))] dark:bg-[var(--nui-surface-muted-dark,oklch(37.3%_.034_259.733))]',
   surfaceSunken: 'bg-[var(--nui-surface-sunken,oklch(96.7%_.003_264.542))] dark:bg-[var(--nui-surface-sunken-dark,oklch(21%_.034_264.665))]',
-  surfaceBand:   'bg-[var(--nui-surface-band,oklch(98.5%_.002_247.839))] dark:bg-[var(--nui-surface-band-dark,oklch(21%_.034_264.665))]',
+  surfaceBand:   'bg-[var(--nui-surface-band,var(--nui-surface,#fff))] dark:bg-[var(--nui-surface-band-dark,var(--nui-surface-dark,oklch(27.8%_.033_256.848)))]',
   accent:        'bg-[var(--nui-accent,oklch(51.1%_.262_276.966))] dark:bg-[var(--nui-accent-dark,oklch(58.5%_.233_277.117))]',
   accentSoft:    'bg-[var(--nui-accent-soft,oklch(96.2%_.018_272.314))] dark:bg-[var(--nui-accent-soft-dark,oklch(58.5%_.233_277.117_/_.15))]',
   danger:        'bg-[var(--nui-danger,oklch(57.7%_.245_27.325))] dark:bg-[var(--nui-danger-dark,oklch(63.7%_.237_25.331))]',

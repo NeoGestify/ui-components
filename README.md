@@ -160,7 +160,7 @@ are right on the first paint instead of after hydration.
 | `surface-muted` | Headers, footers, prefixes | gray-50 / gray-700 |
 | `surface-hover` | Row and button hover | gray-100 / gray-700 |
 | `surface-sunken` | Page background | gray-100 / gray-900 |
-| `surface-band` | Header and footer bands **inside** a panel (modal, card) | gray-50 / gray-900 |
+| `surface-band` | Header and footer **inside** a panel (modal, drawer, card footer); unset, it follows `surface` | white / gray-800 |
 | `surface-inverted` | Inverted table header | gray-800 / gray-900 |
 | `skeleton` | Loading placeholders (`Skeleton`, `Table` while loading) | gray-200 / gray-700 |
 | `border` | Field borders | gray-300 / gray-600 |
